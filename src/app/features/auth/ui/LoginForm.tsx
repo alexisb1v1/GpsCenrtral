@@ -25,7 +25,7 @@ export default function LoginForm() {
     const result = await loginUseCase.execute({
       email,
       password,
-      tenantSlug
+      tenant: tenantSlug
     });
 
     result.match(

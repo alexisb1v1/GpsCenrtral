@@ -7,7 +7,7 @@ import { AuthRepository } from '../repositories/auth.repository';
 export interface LoginParams {
   email: string;
   password?: string; // Opcional dependiendo del tipo de auth, pero usualmente requerido
-  tenantSlug: string;
+  tenant: string;
 }
 
 export class LoginUseCase {

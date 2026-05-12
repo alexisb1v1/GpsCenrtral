@@ -1,0 +1,163 @@
+.header {
+  height: 80px;
+  background-color: white;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.center {
+  flex: 1;
+  max-width: 600px;
+  margin: 0 40px;
+}
+
+.searchWrapper {
+  display: flex;
+  align-items: center;
+  background-color: #f1f5f9;
+  border-radius: 100px;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.searchWrapper.focused {
+  background-color: white;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+
+.searchIcon {
+  color: #64748b;
+  margin-right: 12px;
+}
+
+.searchInput {
+  background: none;
+  border: none;
+  flex: 1;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+}
+
+.searchShortcut {
+  background-color: #e2e8f0;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  color: #64748b;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.iconBtn:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 16px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile:hover {
+  background-color: #f8fafc;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.profileName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.profileRole {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #e2e8f0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+  }
+  .center {
+    display: none; /* Hide search on small mobile top bar, will use mobile specific search */
+  }
+  .profileInfo {
+    display: none;
+  }
+}
