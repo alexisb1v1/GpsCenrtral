@@ -70,7 +70,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
         </div>
 
         <div className={styles.footer}>
-          <span>Presiona <kbd>ESC</kbd> para cerrar</span>
+          <span>Presiona <kbd className={styles.kbdKey}>ESC</kbd> para cerrar</span>
           <a href="#" className={styles.viewAll}>Ver todos los resultados</a>
         </div>
       </div>
