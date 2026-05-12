@@ -1,0 +1,34 @@
+name: Deploy GPS Central Web
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=/api/v1 \
+            --build-arg NEXT_PUBLIC_DEFAULT_TENANT=vectura \
+            -t ghcr.io/${{ github.repository_owner }}/gps-central-web:${{ github.sha }} \
+            -t ghcr.io/${{ github.repository_owner }}/gps-central-web:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/gps-central-web:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/gps-central-web:latest
