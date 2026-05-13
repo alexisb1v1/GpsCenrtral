@@ -4,9 +4,12 @@ import React, { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import { TenantApiService } from '@/app/features/tenant/services/tenant-api.service';
+import { StorageApiService } from '@/app/shared/services/storage-api.service';
+import { ImageUploader } from '@/app/shared/components/ImageUploader';
 import styles from '../../TenantsForm.module.css';
 
 const tenantApiService = new TenantApiService();
+const storageApiService = new StorageApiService();
 
 interface EditTenantPageProps {
   params: Promise<{ id: string }>;
@@ -15,11 +18,11 @@ interface EditTenantPageProps {
 export default function EditTenantPage({ params }: EditTenantPageProps) {
   const router = useRouter();
   const { id } = use(params);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
-  
+
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const taxIdRef = useRef<HTMLInputElement>(null);
@@ -28,8 +31,20 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
     message: '', type: 'success', visible: false
   });
 
-  const [formData, setFormData] = useState({
-    name: '', subdomain: '', address: '', phone: '', taxId: '', logoUrl: '',
+  const [formData, setFormData] = useState<{
+    name: string;
+    subdomain: string;
+    address: string;
+    phone: string;
+    taxId: string;
+    logoUrl: string | File | null;
+    loginUrl: string | File | null;
+    primaryColor: string;
+    accentColor: string;
+    statusColor: string;
+    isActive: boolean;
+  }>({
+    name: '', subdomain: '', address: '', phone: '', taxId: '', logoUrl: null, loginUrl: null,
     primaryColor: '#004AC6', accentColor: '#2563EB', statusColor: '#10B981', isActive: true
   });
 
@@ -46,7 +61,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
           const t = result.data;
           setFormData({
             name: t.name || '', subdomain: t.subdomain || '', address: t.address || '',
-            phone: t.phone || '', taxId: t.taxId || '', logoUrl: t.logoUrl || '',
+            phone: t.phone || '', taxId: t.taxId || '', logoUrl: t.logoUrl || null, loginUrl: t.loginUrl || null,
             primaryColor: t.primaryColor || '#004AC6', accentColor: t.accentColor || '#2563EB',
             statusColor: t.statusDotColor || '#10B981', isActive: t.isActive !== undefined ? t.isActive : true
           });
@@ -66,15 +81,43 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
       else if (!formData.phone) phoneRef.current?.focus();
       return;
     }
+    
     setIsSaving(true);
     try {
-      const result = await tenantApiService.update(id, {...formData, statusDotColor: formData.statusColor});
+      let finalLogoUrl = typeof formData.logoUrl === 'string' ? formData.logoUrl : '';
+      let finalLoginUrl = typeof formData.loginUrl === 'string' ? formData.loginUrl : '';
+
+      // Subir Logo si es un archivo nuevo
+      if (formData.logoUrl instanceof File) {
+        const logoRes = await storageApiService.uploadBrandingImage(formData.logoUrl, formData.taxId, 'logo');
+        if (logoRes.success) finalLogoUrl = logoRes.data.url;
+      }
+
+      // Subir Login Background si es un archivo nuevo
+      if (formData.loginUrl instanceof File) {
+        const loginRes = await storageApiService.uploadBrandingImage(formData.loginUrl, formData.taxId, 'login-background');
+        if (loginRes.success) finalLoginUrl = loginRes.data.url;
+      }
+
+      // Extraemos statusColor para no enviarlo (el backend espera statusDotColor)
+      const { statusColor, logoUrl, loginUrl, ...payload } = formData;
+
+      const result = await tenantApiService.update(id, { 
+        ...payload, 
+        logoUrl: finalLogoUrl,
+        loginUrl: finalLoginUrl,
+        statusDotColor: statusColor 
+      });
+
       if (result.success) {
         showNotification('¡Cambios guardados!', 'success');
         setTimeout(() => router.push('/admin/tenants'), 1500);
       }
-    } catch (e) { showNotification('Error inesperado.', 'error'); } 
-    finally { setIsSaving(false); }
+    } catch (e: any) { 
+      showNotification(e.message || 'Error inesperado.', 'error'); 
+    } finally { 
+      setIsSaving(false); 
+    }
   };
 
   if (isLoading) return <div className={styles.loadingState}>Cargando configuración...</div>;
@@ -93,7 +136,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
               Estado Activo
             </div>
             <label className={styles.switch}>
-              <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.checked})} />
+              <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
               <span className={styles.slider}></span>
             </label>
           </div>
@@ -103,25 +146,31 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
           <div className={styles.formSection}>
             <div className={styles.sectionTitle}><span className="material-symbols-rounded">business_center</span><h3>Información de la Empresa</h3></div>
             <div className={styles.inputGrid}>
-              <div className={styles.inputGroup}><label>Nombre de la empresa</label><input ref={nameRef} type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className={showErrors && !formData.name ? styles.inputError : ''} /></div>
-              <div className={styles.inputGroup}><label>Subdominio</label><div className={styles.subdomainInput}><input type="text" value={formData.subdomain} disabled style={{background: '#f1f5f9', color: '#64748b'}} /><span className={styles.domainSuffix}>.vectura.app</span></div></div>
-              <div className={styles.fullWidth}><div className={styles.inputGroup}><label>Dirección Fiscal</label><input type="text" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} /></div></div>
-              <div className={styles.inputGroup}><label>Teléfono de contacto</label><input ref={phoneRef} type="text" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className={showErrors && !formData.phone ? styles.inputError : ''} /></div>
-              <div className={styles.inputGroup}><label>RUC / Tax ID</label><input ref={taxIdRef} type="text" value={formData.taxId} onChange={(e) => setFormData({...formData, taxId: e.target.value.replace(/\D/g, '').substring(0, 11)})} className={showErrors && !validateRUC(formData.taxId) ? styles.inputError : ''} /></div>
+              <div className={styles.inputGroup}><label>Nombre de la empresa</label><input ref={nameRef} type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={showErrors && !formData.name ? styles.inputError : ''} /></div>
+              <div className={styles.inputGroup}><label>Subdominio</label><div className={styles.subdomainInput}><input type="text" value={formData.subdomain} disabled style={{ background: '#f1f5f9', color: '#64748b' }} /><span className={styles.domainSuffix}>.centralafbv.com</span></div></div>
+              <div className={styles.fullWidth}><div className={styles.inputGroup}><label>Dirección Fiscal</label><input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div></div>
+              <div className={styles.inputGroup}><label>Teléfono de contacto</label><input ref={phoneRef} type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={showErrors && !formData.phone ? styles.inputError : ''} /></div>
+              <div className={styles.inputGroup}><label>RUC / Tax ID</label><input ref={taxIdRef} type="text" value={formData.taxId} onChange={(e) => setFormData({ ...formData, taxId: e.target.value.replace(/\D/g, '').substring(0, 11) })} className={showErrors && !validateRUC(formData.taxId) ? styles.inputError : ''} /></div>
             </div>
           </div>
 
           <div className={styles.formSection} style={{ marginBottom: 0 }}>
             <div className={styles.sectionTitle}><span className="material-symbols-rounded">palette</span><h3>Personalización Visual</h3></div>
-            
-            <div className={styles.logoRow}>
-              <div className={styles.logoPreviewBox}>
-                {formData.logoUrl ? <img src={formData.logoUrl} alt="Logo" /> : <span className="material-symbols-rounded">image</span>}
-              </div>
-              <div className={styles.inputGroup} style={{ flex: 1 }}>
-                <label>Logo URL</label>
-                <input type="text" placeholder="https://dominio.com/logo.png" value={formData.logoUrl} onChange={(e) => setFormData({...formData, logoUrl: e.target.value})} />
-              </div>
+
+            <div className={styles.inputGrid} style={{ marginBottom: '24px' }}>
+              <ImageUploader 
+                label="Logo Corporativo"
+                value={formData.logoUrl}
+                onChange={(file) => setFormData({ ...formData, logoUrl: file })}
+                placeholder="Seleccionar logo"
+              />
+              <ImageUploader 
+                label="Fondo de Login"
+                value={formData.loginUrl}
+                onChange={(file) => setFormData({ ...formData, loginUrl: file })}
+                aspectRatio="16/9"
+                placeholder="Seleccionar imagen de fondo"
+              />
             </div>
 
             <div className={styles.visualGrid}>
@@ -129,7 +178,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
                 <div className={styles.colorInfo}><h4>Color Primario</h4><p>Acciones principales</p></div>
                 <div className={styles.colorAction}>
                   <span className={styles.colorValue}>{formData.primaryColor.toUpperCase()}</span>
-                  <input type="color" value={formData.primaryColor} onChange={(e) => setFormData({...formData, primaryColor: e.target.value})} className={styles.colorBox} style={{backgroundColor: formData.primaryColor}} />
+                  <input type="color" value={formData.primaryColor} onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })} className={styles.colorBox} style={{ backgroundColor: formData.primaryColor }} />
                 </div>
               </div>
 
@@ -137,7 +186,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
                 <div className={styles.colorInfo}><h4>Color Punto de Estado</h4><p>Indicadores de flota</p></div>
                 <div className={styles.colorAction}>
                   <span className={styles.colorValue}>{formData.statusColor.toUpperCase()}</span>
-                  <input type="color" value={formData.statusColor} onChange={(e) => setFormData({...formData, statusColor: e.target.value})} className={styles.colorBox} style={{backgroundColor: formData.statusColor}} />
+                  <input type="color" value={formData.statusColor} onChange={(e) => setFormData({ ...formData, statusColor: e.target.value })} className={styles.colorBox} style={{ backgroundColor: formData.statusColor }} />
                 </div>
               </div>
 
@@ -145,15 +194,19 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
                 <div className={styles.colorInfo}><h4>Color de Acento</h4><p>UI Feedback & Highlight</p></div>
                 <div className={styles.colorAction}>
                   <span className={styles.colorValue}>{formData.accentColor.toUpperCase()}</span>
-                  <input type="color" value={formData.accentColor} onChange={(e) => setFormData({...formData, accentColor: e.target.value})} className={styles.colorBox} style={{backgroundColor: formData.accentColor}} />
+                  <input type="color" value={formData.accentColor} onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })} className={styles.colorBox} style={{ backgroundColor: formData.accentColor }} />
                 </div>
               </div>
 
-              {/* VISTA PREVIA PREMIUM RESTAURADA */}
               <div className={styles.previewContainer}>
                 <div className={styles.previewSidebar} style={{ backgroundColor: formData.primaryColor }}>
                   <div className={styles.previewLogoCircle}>
-                    {formData.logoUrl ? <img src={formData.logoUrl} alt="Logo" /> : null}
+                    {formData.logoUrl ? (
+                      <img 
+                        src={typeof formData.logoUrl === 'string' ? formData.logoUrl : URL.createObjectURL(formData.logoUrl)} 
+                        alt="Logo" 
+                      />
+                    ) : null}
                   </div>
                   <div className={styles.previewNavItems}>
                     <div className={styles.previewNavItem} />

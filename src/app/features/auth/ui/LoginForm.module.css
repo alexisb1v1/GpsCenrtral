@@ -30,7 +30,7 @@
 .overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0, 74, 198, 0.1), transparent, rgba(247, 249, 251, 0.95));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), transparent, rgba(255, 255, 255, 0.8));
 }
 
 .heroContent {
@@ -70,7 +70,7 @@
   border-radius: 12px;
   color: white;
   margin-bottom: 12px;
-  box-shadow: 0 8px 16px rgba(0, 74, 198, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .brandName {
@@ -217,7 +217,7 @@
 
 .input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(0, 74, 198, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
   outline: none;
 }
 
@@ -235,5 +235,15 @@
   gap: 8px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 74, 198, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.submitBtn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.submitBtn:active {
+  transform: translateY(0);
 }

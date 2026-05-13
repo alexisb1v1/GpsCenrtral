@@ -8,6 +8,8 @@ export default async function BrandingProvider() {
   const host = headersList.get('host');
   const slug = await getTenantSlug(host || undefined);
   
+  console.log(`[Branding] Aplicando identidad visual para: host=${host}, slug=${slug}`);
+
   // Si no hay slug (caso raro) o el fetch falla, no inyectamos nada y dejamos los estilos base
   const result = await getTenantBrandingUseCase.execute(slug);
 

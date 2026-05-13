@@ -4,15 +4,18 @@ import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import { TenantApiService } from '@/app/features/tenant/services/tenant-api.service';
+import { StorageApiService } from '@/app/shared/services/storage-api.service';
+import { ImageUploader } from '@/app/shared/components/ImageUploader';
 import styles from '../TenantsForm.module.css';
 
 const tenantApiService = new TenantApiService();
+const storageApiService = new StorageApiService();
 
 export default function CreateTenantPage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
-  
+
   const nameRef = useRef<HTMLInputElement>(null);
   const subdomainRef = useRef<HTMLInputElement>(null);
   const taxIdRef = useRef<HTMLInputElement>(null);
@@ -22,8 +25,20 @@ export default function CreateTenantPage() {
     message: '', type: 'success', visible: false
   });
 
-  const [formData, setFormData] = useState({
-    name: '', subdomain: '', address: '', phone: '', taxId: '', logoUrl: '',
+  const [formData, setFormData] = useState<{
+    name: string;
+    subdomain: string;
+    address: string;
+    phone: string;
+    taxId: string;
+    logoUrl: string | File | null;
+    loginUrl: string | File | null;
+    primaryColor: string;
+    accentColor: string;
+    statusColor: string;
+    isActive: boolean;
+  }>({
+    name: '', subdomain: '', address: '', phone: '', taxId: '', logoUrl: null, loginUrl: null,
     primaryColor: '#004AC6', accentColor: '#2563EB', statusColor: '#10B981', isActive: true
   });
 
@@ -44,15 +59,43 @@ export default function CreateTenantPage() {
       showNotification('Verifica los campos obligatorios.', 'error');
       return;
     }
+    
     setIsSaving(true);
     try {
-      const result = await tenantApiService.create({...formData, statusDotColor: formData.statusColor});
+      let finalLogoUrl = typeof formData.logoUrl === 'string' ? formData.logoUrl : '';
+      let finalLoginUrl = typeof formData.loginUrl === 'string' ? formData.loginUrl : '';
+
+      // Subir Logo si es un archivo
+      if (formData.logoUrl instanceof File) {
+        const logoRes = await storageApiService.uploadBrandingImage(formData.logoUrl, formData.taxId, 'logo');
+        if (logoRes.success) finalLogoUrl = logoRes.data.url;
+      }
+
+      // Subir Login Background si es un archivo
+      if (formData.loginUrl instanceof File) {
+        const loginRes = await storageApiService.uploadBrandingImage(formData.loginUrl, formData.taxId, 'login-background');
+        if (loginRes.success) finalLoginUrl = loginRes.data.url;
+      }
+
+      // Extraemos statusColor para no enviarlo (el backend espera statusDotColor)
+      const { statusColor, logoUrl, loginUrl, ...payload } = formData;
+
+      const result = await tenantApiService.create({ 
+        ...payload, 
+        logoUrl: finalLogoUrl,
+        loginUrl: finalLoginUrl,
+        statusDotColor: statusColor 
+      });
+
       if (result.success) {
         showNotification('¡Tenant creado con éxito!', 'success');
         setTimeout(() => router.push('/admin/tenants'), 1500);
       }
-    } catch (e) { showNotification('Error inesperado.', 'error'); } 
-    finally { setIsSaving(false); }
+    } catch (e: any) { 
+      showNotification(e.message || 'Error inesperado.', 'error'); 
+    } finally { 
+      setIsSaving(false); 
+    }
   };
 
   return (
@@ -69,7 +112,7 @@ export default function CreateTenantPage() {
               Estado Activo
             </div>
             <label className={styles.switch}>
-              <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({...formData, isActive: e.target.checked})} />
+              <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
               <span className={styles.slider}></span>
             </label>
           </div>
@@ -79,34 +122,39 @@ export default function CreateTenantPage() {
           <div className={styles.formSection}>
             <div className={styles.sectionTitle}><span className="material-symbols-rounded">business_center</span><h3>Información de la Empresa</h3></div>
             <div className={styles.inputGrid}>
-              <div className={styles.inputGroup}><label>Nombre de la empresa</label><input ref={nameRef} type="text" placeholder="Ej. Transportes Global S.A." value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className={showErrors && !formData.name ? styles.inputError : ''} /></div>
-              <div className={styles.inputGroup}><label>Subdominio</label><div className={styles.subdomainInput}><input ref={subdomainRef} type="text" placeholder="empresa" value={formData.subdomain} onChange={(e) => setFormData({...formData, subdomain: e.target.value.toLowerCase()})} /><span className={styles.domainSuffix}>.vectura.app</span></div></div>
-              <div className={styles.fullWidth}><div className={styles.inputGroup}><label>Dirección Fiscal</label><input type="text" placeholder="Calle Industrial 402, Parque Logístico" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} /></div></div>
-              <div className={styles.inputGroup}><label>Teléfono de contacto</label><input ref={phoneRef} type="text" placeholder="+54 11 4567 8900" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className={showErrors && !formData.phone ? styles.inputError : ''} /></div>
-              <div className={styles.inputGroup}><label>RUC / Tax ID</label><input ref={taxIdRef} type="text" placeholder="20-12345678-9" value={formData.taxId} onChange={(e) => setFormData({...formData, taxId: e.target.value.replace(/\D/g, '').substring(0, 11)})} className={showErrors && !validateRUC(formData.taxId) ? styles.inputError : ''} /></div>
+              <div className={styles.inputGroup}><label>Nombre de la empresa</label><input ref={nameRef} type="text" placeholder="Ej. Transportes Global S.A." value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={showErrors && !formData.name ? styles.inputError : ''} /></div>
+              <div className={styles.inputGroup}><label>Subdominio</label><div className={styles.subdomainInput}><input ref={subdomainRef} type="text" placeholder="empresa" value={formData.subdomain} onChange={(e) => setFormData({ ...formData, subdomain: e.target.value.toLowerCase() })} /><span className={styles.domainSuffix}>.centralafbv.com</span></div></div>
+              <div className={styles.fullWidth}><div className={styles.inputGroup}><label>Dirección Fiscal</label><input type="text" placeholder="Calle Industrial 402, Parque Logístico" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div></div>
+              <div className={styles.inputGroup}><label>Teléfono de contacto</label><input ref={phoneRef} type="text" placeholder="+54 11 4567 8900" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={showErrors && !formData.phone ? styles.inputError : ''} /></div>
+              <div className={styles.inputGroup}><label>RUC / Tax ID</label><input ref={taxIdRef} type="text" placeholder="20-12345678-9" value={formData.taxId} onChange={(e) => setFormData({ ...formData, taxId: e.target.value.replace(/\D/g, '').substring(0, 11) })} className={showErrors && !validateRUC(formData.taxId) ? styles.inputError : ''} /></div>
             </div>
           </div>
 
           <div className={styles.formSection} style={{ marginBottom: 0 }}>
             <div className={styles.sectionTitle}><span className="material-symbols-rounded">palette</span><h3>Personalización Visual</h3></div>
-            
-            <div className={styles.logoRow}>
-              <div className={styles.logoPreviewBox}>
-                {formData.logoUrl ? <img src={formData.logoUrl} alt="Logo" /> : <span className="material-symbols-rounded">image</span>}
-              </div>
-              <div className={styles.inputGroup} style={{ flex: 1 }}>
-                <label>Logo URL</label>
-                <input type="text" placeholder="https://dominio.com/logo.png" value={formData.logoUrl} onChange={(e) => setFormData({...formData, logoUrl: e.target.value})} />
-              </div>
+
+            <div className={styles.inputGrid} style={{ marginBottom: '24px' }}>
+              <ImageUploader 
+                label="Logo Corporativo"
+                value={formData.logoUrl}
+                onChange={(file) => setFormData({ ...formData, logoUrl: file })}
+                placeholder="Seleccionar logo"
+              />
+              <ImageUploader 
+                label="Fondo de Login"
+                value={formData.loginUrl}
+                onChange={(file) => setFormData({ ...formData, loginUrl: file })}
+                aspectRatio="16/9"
+                placeholder="Seleccionar imagen de fondo"
+              />
             </div>
 
             <div className={styles.visualGrid}>
-              {/* Colores en el nuevo orden ordenado */}
               <div className={styles.colorCard}>
                 <div className={styles.colorInfo}><h4>Color Primario</h4><p>Acciones principales</p></div>
                 <div className={styles.colorAction}>
                   <span className={styles.colorValue}>{formData.primaryColor.toUpperCase()}</span>
-                  <input type="color" value={formData.primaryColor} onChange={(e) => setFormData({...formData, primaryColor: e.target.value})} className={styles.colorBox} style={{backgroundColor: formData.primaryColor}} />
+                  <input type="color" value={formData.primaryColor} onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })} className={styles.colorBox} style={{ backgroundColor: formData.primaryColor }} />
                 </div>
               </div>
 
@@ -114,7 +162,7 @@ export default function CreateTenantPage() {
                 <div className={styles.colorInfo}><h4>Color Punto de Estado</h4><p>Indicadores de flota</p></div>
                 <div className={styles.colorAction}>
                   <span className={styles.colorValue}>{formData.statusColor.toUpperCase()}</span>
-                  <input type="color" value={formData.statusColor} onChange={(e) => setFormData({...formData, statusColor: e.target.value})} className={styles.colorBox} style={{backgroundColor: formData.statusColor}} />
+                  <input type="color" value={formData.statusColor} onChange={(e) => setFormData({ ...formData, statusColor: e.target.value })} className={styles.colorBox} style={{ backgroundColor: formData.statusColor }} />
                 </div>
               </div>
 
@@ -122,15 +170,19 @@ export default function CreateTenantPage() {
                 <div className={styles.colorInfo}><h4>Color de Acento</h4><p>UI Feedback & Highlight</p></div>
                 <div className={styles.colorAction}>
                   <span className={styles.colorValue}>{formData.accentColor.toUpperCase()}</span>
-                  <input type="color" value={formData.accentColor} onChange={(e) => setFormData({...formData, accentColor: e.target.value})} className={styles.colorBox} style={{backgroundColor: formData.accentColor}} />
+                  <input type="color" value={formData.accentColor} onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })} className={styles.colorBox} style={{ backgroundColor: formData.accentColor }} />
                 </div>
               </div>
 
-              {/* VISTA PREVIA PREMIUM RESTAURADA */}
               <div className={styles.previewContainer}>
                 <div className={styles.previewSidebar} style={{ backgroundColor: formData.primaryColor }}>
                   <div className={styles.previewLogoCircle}>
-                    {formData.logoUrl ? <img src={formData.logoUrl} alt="Logo" /> : null}
+                    {formData.logoUrl ? (
+                      <img 
+                        src={typeof formData.logoUrl === 'string' ? formData.logoUrl : URL.createObjectURL(formData.logoUrl)} 
+                        alt="Logo" 
+                      />
+                    ) : null}
                   </div>
                   <div className={styles.previewNavItems}>
                     <div className={styles.previewNavItem} />

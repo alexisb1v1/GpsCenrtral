@@ -6,6 +6,9 @@ export interface Tenant {
   slug: string;
   domain: string | null;
   status: TenantStatus;
+  address?: string | null;
+  phone?: string | null;
+  taxId?: string | null;
   createdAt: Date;
   branding?: TenantBranding;
 }
