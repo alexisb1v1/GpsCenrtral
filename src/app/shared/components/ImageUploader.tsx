@@ -3,8 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import styles from './ImageUploader.module.css';
-import { optimizeImage } from '../utils/image-optimizer';
-import { getBrandingImageUrl } from '../utils/image-url';
+import { optimizeImage } from '@/app/shared/utils/image-optimizer';
+import { getBrandingImageUrl } from '@/app/shared/utils/image-url';
 
 interface ImageUploaderProps {
   label: string;

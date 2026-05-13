@@ -8,7 +8,7 @@ import { loginUseCase } from '../index';
 import { getTenantBrandingUseCase } from '../../tenant/index';
 import { getTenantSlugClient } from '@/shared/utils/tenant.utils';
 import { TenantBranding } from '../../tenant/models/tenant.model';
-import { getBrandingImageUrl } from '@/shared/utils/image-url';
+import { getBrandingImageUrl } from '@/app/shared/utils/image-url';
 
 export default function LoginForm() {
   const router = useRouter();
