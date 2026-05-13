@@ -1,4 +1,5 @@
-import { Tenant, TenantBranding, TenantBrandingDto } from '../models/tenant.model';
+import { Tenant, TenantBranding } from '../models/tenant.model';
+import { TenantBrandingDto } from '../dto/tenant.dto';
 
 export const tenantBrandingDtoToModel = (dto: TenantBrandingDto): TenantBranding => ({
   name: dto.name,

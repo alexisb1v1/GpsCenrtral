@@ -19,11 +19,3 @@ export interface TenantBranding {
     status: string;
   };
 }
-
-export interface TenantBrandingDto {
-  name: string;
-  logoUrl: string | null;
-  primaryColor: string;
-  accentColor: string;
-  statusDotColor: string;
-}
