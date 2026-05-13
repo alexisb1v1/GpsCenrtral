@@ -7,19 +7,17 @@
 export function extractTenantSlug(host: string | null): string {
   if (!host) return 'default';
 
-  // Si estamos en localhost (ej: localhost:3000), devolvemos un valor de prueba o el default
-  if (host.includes('localhost') || host.includes('127.0.0.1')) {
-    return process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'vectura';
+  // Si es un dominio real (no localhost), priorizamos la extracción del subdominio
+  if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+    const parts = host.split('.');
+    if (parts.length >= 2) {
+      // Si el dominio es centralafbv.com, el slug es la primera parte
+      return parts[0];
+    }
   }
 
-  const parts = host.split('.');
-  
-  // Si hay al menos un subdominio antes del dominio principal (ej: sub.domain.com)
-  if (parts.length >= 3) {
-    return parts[0];
-  }
-
-  return 'default';
+  // Fallback para desarrollo
+  return process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'vectura';
 }
 
 /**

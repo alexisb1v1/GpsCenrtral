@@ -7,7 +7,7 @@ import { BrandingClientProvider } from '@/app/shared/providers/BrandingContext';
 
 export default async function BrandingProvider({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
-  const host = headersList.get('host');
+  const host = headersList.get('x-forwarded-host') || headersList.get('host');
   const slug = await getTenantSlug(host || undefined);
   
   console.log(`[Branding] Aplicando identidad visual para: host=${host}, slug=${slug}`);
@@ -72,6 +72,13 @@ export default async function BrandingProvider({ children }: { children: React.R
             </div>
           </div>
         );
+      }
+
+      if (slug !== 'vectura' && slug !== 'default') {
+        console.warn(`[Branding] Falló la carga para "${slug}". Detalles del error:`, {
+          code: error.code,
+          message: error.message
+        });
       }
 
       return (
