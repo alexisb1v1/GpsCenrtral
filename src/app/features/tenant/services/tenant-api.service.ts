@@ -36,8 +36,13 @@ export class TenantApiService {
       
       return {
         success: false,
+        errorCode: data.errorCode || 'ERR_UNKNOWN',
         errorMessage: errorMessage,
-        statusCode: response.status
+        data: null as unknown as T,
+        statusCode: response.status,
+        meta: {
+          timestamp: new Date().toISOString()
+        }
       } as ApiResponseDto<T>;
     }
 
