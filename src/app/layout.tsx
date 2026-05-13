@@ -33,8 +33,9 @@ export default function RootLayout({
       <body>
         <ToastProvider>
           <ConfirmProvider>
-            <BrandingProvider />
-            {children}
+            <BrandingProvider>
+              {children}
+            </BrandingProvider>
           </ConfirmProvider>
         </ToastProvider>
       </body>

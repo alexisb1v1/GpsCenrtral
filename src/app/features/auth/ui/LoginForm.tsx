@@ -10,36 +10,19 @@ import { getTenantSlugClient } from '@/shared/utils/tenant.utils';
 import { TenantBranding } from '../../tenant/models/tenant.model';
 import { getBrandingImageUrl } from '@/app/shared/utils/image-url';
 
+import { useBranding } from '@/app/shared/providers/BrandingContext';
+
 export default function LoginForm() {
   const router = useRouter();
+  const { branding, slug } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [branding, setBranding] = useState<TenantBranding | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
 
-  useEffect(() => {
-    const fetchBranding = async () => {
-      const slug = getTenantSlugClient();
-      const result = await getTenantBrandingUseCase.execute(slug);
-      result.match(
-        (data) => setBranding(data),
-        () => { /* Mantener tema base si falla o está bloqueado */ }
-      );
-    };
-    fetchBranding();
-  }, []);
-
-  // Inyectar variables CSS dinámicamente en el cliente para asegurar que el tema se aplique
-  useEffect(() => {
-    if (branding) {
-      document.documentElement.style.setProperty('--primary', branding.colors.primary);
-      document.documentElement.style.setProperty('--accent', branding.colors.accent);
-      document.documentElement.style.setProperty('--success', branding.colors.status);
-    }
-  }, [branding]);
+  // Ya no necesitamos fetchBranding aquí porque viene del BrandingProvider (SSR)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -3,7 +3,9 @@ import { getTenantBrandingUseCase } from '../index';
 import { getTenantSlug } from '@/shared/utils/tenant.utils';
 import { headers } from 'next/headers';
 
-export default async function BrandingProvider() {
+import { BrandingClientProvider } from '@/app/shared/providers/BrandingContext';
+
+export default async function BrandingProvider({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
   const host = headersList.get('host');
   const slug = await getTenantSlug(host || undefined);
@@ -15,19 +17,21 @@ export default async function BrandingProvider() {
 
   return result.match(
     (branding) => (
-      <style id="tenant-branding-tokens">
-        {`
-          :root {
-            --primary: ${branding.colors.primary};
-            --success: ${branding.colors.status};
-            --accent: ${branding.colors.accent};
-          }
-        `}
-      </style>
+      <BrandingClientProvider branding={branding} slug={slug}>
+        <style id="tenant-branding-tokens">
+          {`
+            :root {
+              --primary: ${branding.colors.primary};
+              --success: ${branding.colors.status};
+              --accent: ${branding.colors.accent};
+            }
+          `}
+        </style>
+        {children}
+      </BrandingClientProvider>
     ),
     (error) => {
       // Si el error indica que la empresa está inactiva (prohibido)
-      // Mostramos una pantalla de bloqueo premium
       if (error.code === 'FORBIDDEN' && slug !== 'vectura') {
         return (
           <div style={{
@@ -70,10 +74,11 @@ export default async function BrandingProvider() {
         );
       }
 
-      if (slug !== 'vectura') {
-        console.warn(`[Branding] No se pudo cargar la configuración para "${slug}". Usando tema base.`, error);
-      }
-      return null;
+      return (
+        <BrandingClientProvider branding={null} slug={slug}>
+          {children}
+        </BrandingClientProvider>
+      );
     }
   );
 }
