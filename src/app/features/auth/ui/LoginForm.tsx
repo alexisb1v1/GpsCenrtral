@@ -1,11 +1,11 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './LoginForm.module.css';
 import { Mail, Lock, Eye, EyeOff, LogIn, BusFront, Loader2 } from 'lucide-react';
 import { loginUseCase } from '../index';
+import { getTenantBrandingUseCase } from '../../tenant/index';
 import { getTenantSlugClient } from '@/shared/utils/tenant.utils';
+import { TenantBranding } from '../../tenant/models/tenant.model';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -13,7 +13,20 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [branding, setBranding] = useState<TenantBranding | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      const slug = getTenantSlugClient();
+      const result = await getTenantBrandingUseCase.execute(slug);
+      result.match(
+        (data) => setBranding(data),
+        () => console.log('Usando branding por defecto')
+      );
+    };
+    fetchBranding();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +65,8 @@ export default function LoginForm() {
         <img 
           className={styles.bgImage} 
           style={{ opacity: 0.8 }}
-          src="/imagelogin.png" 
-          alt="Vectura Background"
+          src={branding?.loginBackground || "/imagelogin.png"} 
+          alt={`${branding?.name || 'Vectura'} Background`}
         />
         <div className={styles.overlay}></div>
         
@@ -71,9 +84,19 @@ export default function LoginForm() {
           
           <div className={styles.logoArea}>
             <div className={styles.logoIcon}>
-              <BusFront size={48} strokeWidth={1.5} />
+              {branding?.logo ? (
+                <img 
+                  src={branding.logo} 
+                  alt={branding.name} 
+                  style={{ width: '48px', height: '48px', objectFit: 'contain' }} 
+                />
+              ) : (
+                <BusFront size={48} strokeWidth={1.5} />
+              )}
             </div>
-            <span className={styles.brandName} style={{ color: 'var(--primary)' }}>Vectura</span>
+            <span className={styles.brandName} style={{ color: 'var(--primary)' }}>
+              {branding?.name || 'Vectura'}
+            </span>
           </div>
 
           <div className={styles.glassCard}>

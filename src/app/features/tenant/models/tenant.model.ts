@@ -13,6 +13,7 @@ export interface Tenant {
 export interface TenantBranding {
   name: string;
   logo: string | null;
+  loginBackground: string | null;
   colors: {
     primary: string;
     accent: string;

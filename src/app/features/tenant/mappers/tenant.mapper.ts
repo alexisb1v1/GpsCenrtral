@@ -4,6 +4,7 @@ import { TenantBrandingDto } from '../dto/tenant.dto';
 export const tenantBrandingDtoToModel = (dto: TenantBrandingDto): TenantBranding => ({
   name: dto.name,
   logo: dto.logoUrl,
+  loginBackground: dto.loginUrl,
   colors: {
     primary: dto.primaryColor,
     accent: dto.accentColor,
