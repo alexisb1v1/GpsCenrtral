@@ -2,9 +2,11 @@
 
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Save, X, Palette, Smartphone, Globe, Shield, Activity, Phone, MapPin, Building2, Hash, ExternalLink, ArrowLeft, Loader2, Check } from 'lucide-react';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import { TenantApiService } from '@/app/features/tenant/services/tenant-api.service';
 import { StorageApiService } from '@/app/shared/services/storage-api.service';
+import { useToast } from '@/app/shared/providers/ToastProvider';
 import { ImageUploader } from '@/app/shared/components/ImageUploader';
 import styles from '../TenantsForm.module.css';
 
@@ -20,10 +22,6 @@ export default function CreateTenantPage() {
   const subdomainRef = useRef<HTMLInputElement>(null);
   const taxIdRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
-
-  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error', visible: boolean }>({
-    message: '', type: 'success', visible: false
-  });
 
   const [formData, setFormData] = useState<{
     name: string;
@@ -42,10 +40,6 @@ export default function CreateTenantPage() {
     primaryColor: '#004AC6', accentColor: '#2563EB', statusColor: '#10B981', isActive: true
   });
 
-  const showNotification = (message: string, type: 'success' | 'error') => {
-    setNotification({ message, type, visible: true });
-    setTimeout(() => setNotification(prev => ({ ...prev, visible: false })), 4000);
-  };
 
   const validateRUC = (ruc: string) => /^\d{11}$/.test(ruc);
 
@@ -56,7 +50,7 @@ export default function CreateTenantPage() {
       else if (!formData.subdomain) subdomainRef.current?.focus();
       else if (!validateRUC(formData.taxId)) taxIdRef.current?.focus();
       else if (!formData.phone) phoneRef.current?.focus();
-      showNotification('Verifica los campos obligatorios.', 'error');
+      showError('Datos incompletos', 'Por favor verifica los campos obligatorios.');
       return;
     }
     
@@ -65,19 +59,16 @@ export default function CreateTenantPage() {
       let finalLogoUrl = typeof formData.logoUrl === 'string' ? formData.logoUrl : '';
       let finalLoginUrl = typeof formData.loginUrl === 'string' ? formData.loginUrl : '';
 
-      // Subir Logo si es un archivo
       if (formData.logoUrl instanceof File) {
         const logoRes = await storageApiService.uploadBrandingImage(formData.logoUrl, formData.taxId, 'logo');
         if (logoRes.success) finalLogoUrl = logoRes.data.url;
       }
 
-      // Subir Login Background si es un archivo
       if (formData.loginUrl instanceof File) {
         const loginRes = await storageApiService.uploadBrandingImage(formData.loginUrl, formData.taxId, 'login-background');
         if (loginRes.success) finalLoginUrl = loginRes.data.url;
       }
 
-      // Extraemos statusColor para no enviarlo (el backend espera statusDotColor)
       const { statusColor, logoUrl, loginUrl, ...payload } = formData;
 
       const result = await tenantApiService.create({ 
@@ -88,11 +79,13 @@ export default function CreateTenantPage() {
       });
 
       if (result.success) {
-        showNotification('¡Tenant creado con éxito!', 'success');
+        showSuccess('Tenant creado', 'La empresa ha sido registrada con éxito.');
         setTimeout(() => router.push('/admin/tenants'), 1500);
+      } else {
+        showError('Error al crear', result.errorMessage || 'No se pudo completar la operación.');
       }
     } catch (e: any) { 
-      showNotification(e.message || 'Error inesperado.', 'error'); 
+      showError('Error inesperado', 'Ocurrió un problema al procesar la solicitud.');
     } finally { 
       setIsSaving(false); 
     }
@@ -133,20 +126,25 @@ export default function CreateTenantPage() {
           <div className={styles.formSection} style={{ marginBottom: 0 }}>
             <div className={styles.sectionTitle}><span className="material-symbols-rounded">palette</span><h3>Personalización Visual</h3></div>
 
-            <div className={styles.inputGrid} style={{ marginBottom: '24px' }}>
-              <ImageUploader 
-                label="Logo Corporativo"
-                value={formData.logoUrl}
-                onChange={(file) => setFormData({ ...formData, logoUrl: file })}
-                placeholder="Seleccionar logo"
-              />
-              <ImageUploader 
-                label="Fondo de Login"
-                value={formData.loginUrl}
-                onChange={(file) => setFormData({ ...formData, loginUrl: file })}
-                aspectRatio="16/9"
-                placeholder="Seleccionar imagen de fondo"
-              />
+            <div className={styles.brandingGrid}>
+              <div className={styles.uploaderWrapper}>
+                <ImageUploader 
+                  label="Logo Corporativo"
+                  value={formData.logoUrl}
+                  onChange={(file) => setFormData({ ...formData, logoUrl: file })}
+                  aspectRatio="1/1"
+                  placeholder="Seleccionar logo"
+                />
+              </div>
+              <div className={styles.uploaderWrapper}>
+                <ImageUploader 
+                  label="Fondo de Login"
+                  value={formData.loginUrl}
+                  onChange={(file) => setFormData({ ...formData, loginUrl: file })}
+                  aspectRatio="16/9"
+                  placeholder="Seleccionar imagen de fondo"
+                />
+              </div>
             </div>
 
             <div className={styles.visualGrid}>
@@ -218,7 +216,6 @@ export default function CreateTenantPage() {
           <div className={styles.infoCard}><span className={`material-symbols-rounded ${styles.infoIcon}`}>history</span><h4>Auditoría de Cambios</h4><p>Se guarda un registro histórico de todas las modificaciones de configuración.</p></div>
         </div>
       </div>
-      {notification.visible && <div className={styles.toast}><p>{notification.message}</p></div>}
     </DashboardLayout>
   );
 }

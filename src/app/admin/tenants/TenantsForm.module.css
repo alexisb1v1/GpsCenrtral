@@ -187,4 +187,25 @@ input:checked + .slider { background-color: #2563eb; }
 input:checked + .slider:before { transform: translateX(22px); }
 
 .inputError { border-color: #ef4444 !important; }
+
+/* Grid de Branding Mejorado */
+.brandingGrid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.uploaderWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .brandingGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; }

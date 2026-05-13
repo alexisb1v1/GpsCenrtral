@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { Palette } from 'lucide-react';
+import { useToast } from '@/app/shared/providers/ToastProvider';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import { TenantApiService } from '@/app/features/tenant/services/tenant-api.service';
 import { StorageApiService } from '@/app/shared/services/storage-api.service';
@@ -27,9 +29,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
   const phoneRef = useRef<HTMLInputElement>(null);
   const taxIdRef = useRef<HTMLInputElement>(null);
 
-  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error', visible: boolean }>({
-    message: '', type: 'success', visible: false
-  });
+  const { success: showSuccess, error: showError } = useToast();
 
   const [formData, setFormData] = useState<{
     name: string;
@@ -48,10 +48,6 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
     primaryColor: '#004AC6', accentColor: '#2563EB', statusColor: '#10B981', isActive: true
   });
 
-  const showNotification = (message: string, type: 'success' | 'error') => {
-    setNotification({ message, type, visible: true });
-    setTimeout(() => setNotification(prev => ({ ...prev, visible: false })), 4000);
-  };
 
   useEffect(() => {
     const fetchTenant = async () => {
@@ -79,6 +75,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
       if (!formData.name) nameRef.current?.focus();
       else if (!validateRUC(formData.taxId)) taxIdRef.current?.focus();
       else if (!formData.phone) phoneRef.current?.focus();
+      showError('Datos incompletos', 'Por favor verifica los campos obligatorios.');
       return;
     }
     
@@ -110,11 +107,13 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
       });
 
       if (result.success) {
-        showNotification('¡Cambios guardados!', 'success');
+        showSuccess('¡Cambios guardados!', 'La configuración se ha actualizado correctamente.');
         setTimeout(() => router.push('/admin/tenants'), 1500);
+      } else {
+        showError('Error al guardar', result.errorMessage || 'No se pudo completar la operación.');
       }
     } catch (e: any) { 
-      showNotification(e.message || 'Error inesperado.', 'error'); 
+      showError('Error inesperado', 'Ocurrió un problema al procesar la solicitud.');
     } finally { 
       setIsSaving(false); 
     }
@@ -155,22 +154,29 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
           </div>
 
           <div className={styles.formSection} style={{ marginBottom: 0 }}>
-            <div className={styles.sectionTitle}><span className="material-symbols-rounded">palette</span><h3>Personalización Visual</h3></div>
-
-            <div className={styles.inputGrid} style={{ marginBottom: '24px' }}>
-              <ImageUploader 
-                label="Logo Corporativo"
-                value={formData.logoUrl}
-                onChange={(file) => setFormData({ ...formData, logoUrl: file })}
-                placeholder="Seleccionar logo"
-              />
-              <ImageUploader 
-                label="Fondo de Login"
-                value={formData.loginUrl}
-                onChange={(file) => setFormData({ ...formData, loginUrl: file })}
-                aspectRatio="16/9"
-                placeholder="Seleccionar imagen de fondo"
-              />
+            <h3 className={styles.sectionTitle}>
+              <Palette size={20} />
+              Personalización Visual
+            </h3>
+            <div className={styles.brandingGrid}>
+              <div className={styles.uploaderWrapper}>
+                <ImageUploader 
+                  label="Logo Corporativo"
+                  value={formData.logoUrl}
+                  onChange={(file) => setFormData({ ...formData, logoUrl: file })}
+                  aspectRatio="1/1"
+                  placeholder="Seleccionar logo"
+                />
+              </div>
+              <div className={styles.uploaderWrapper}>
+                <ImageUploader 
+                  label="Fondo de Login"
+                  value={formData.loginUrl}
+                  onChange={(file) => setFormData({ ...formData, loginUrl: file })}
+                  aspectRatio="16/9"
+                  placeholder="Seleccionar imagen de fondo"
+                />
+              </div>
             </div>
 
             <div className={styles.visualGrid}>
@@ -242,7 +248,6 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
           <div className={styles.infoCard}><span className={`material-symbols-rounded ${styles.infoIcon}`}>history</span><h4>Auditoría de Cambios</h4><p>Se guarda un registro histórico de todas las modificaciones de configuración.</p></div>
         </div>
       </div>
-      {notification.visible && <div className={styles.toast}><p>{notification.message}</p></div>}
     </DashboardLayout>
   );
 }
