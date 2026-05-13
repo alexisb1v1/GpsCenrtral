@@ -24,15 +24,33 @@ export class TenantApiService {
     };
   }
 
+  private async handleResponse<T>(response: Response): Promise<ApiResponseDto<T>> {
+    const data = await response.json();
+    
+    if (!response.ok) {
+      // Extraer mensaje del backend (NestJS suele enviar 'message' como string o array de strings)
+      let errorMessage = data.errorMessage || data.message || 'Error desconocido en el servidor';
+      if (Array.isArray(errorMessage)) {
+        errorMessage = errorMessage.join('. ');
+      }
+      
+      return {
+        success: false,
+        errorMessage: errorMessage,
+        statusCode: response.status
+      } as ApiResponseDto<T>;
+    }
+
+    return data;
+  }
+
   async fetchBranding(slug: string): Promise<ApiResponseDto<TenantBrandingDto>> {
     const response = await fetch(`${API_CONFIG.BASE_URL}/tenants/branding/${slug}`, {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
       cache: 'no-store',
     });
-
-    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-    return response.json();
+    return this.handleResponse<TenantBrandingDto>(response);
   }
 
   async getAll(): Promise<ApiResponseDto<any[]>> {
@@ -41,8 +59,7 @@ export class TenantApiService {
       headers: this.getAuthHeaders(),
       cache: 'no-store',
     });
-    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-    return response.json();
+    return this.handleResponse<any[]>(response);
   }
 
   async getById(id: string): Promise<ApiResponseDto<any>> {
@@ -51,8 +68,7 @@ export class TenantApiService {
       headers: this.getAuthHeaders(),
       cache: 'no-store',
     });
-    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-    return response.json();
+    return this.handleResponse<any>(response);
   }
 
   async create(data: any): Promise<ApiResponseDto<any>> {
@@ -61,8 +77,7 @@ export class TenantApiService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-    return response.json();
+    return this.handleResponse<any>(response);
   }
 
   async update(id: string, data: any): Promise<ApiResponseDto<any>> {
@@ -71,8 +86,7 @@ export class TenantApiService {
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-    return response.json();
+    return this.handleResponse<any>(response);
   }
 
   async delete(id: string): Promise<ApiResponseDto<void>> {
@@ -80,7 +94,6 @@ export class TenantApiService {
       method: 'DELETE',
       headers: this.getAuthHeaders(),
     });
-    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-    return response.json();
+    return this.handleResponse<void>(response);
   }
 }

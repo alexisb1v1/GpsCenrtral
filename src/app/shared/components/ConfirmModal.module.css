@@ -1,0 +1,113 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  transform-origin: center;
+  animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.iconWrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tipos */
+.danger .iconWrapper { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.warning .iconWrapper { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.info .iconWrapper { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+}
+
+.message {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.footer {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.cancelBtn {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.cancelBtn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.confirmBtn {
+  color: white;
+}
+
+.danger .confirmBtn { background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+.danger .confirmBtn:hover { background: #dc2626; transform: translateY(-2px); }
+
+.warning .confirmBtn { background: #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+.warning .confirmBtn:hover { background: #d97706; transform: translateY(-2px); }
+
+.info .confirmBtn { background: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+.info .confirmBtn:hover { background: #2563eb; transform: translateY(-2px); }

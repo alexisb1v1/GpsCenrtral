@@ -17,6 +17,7 @@ export default function CreateTenantPage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const { success: showSuccess, error: showError } = useToast();
 
   const nameRef = useRef<HTMLInputElement>(null);
   const subdomainRef = useRef<HTMLInputElement>(null);
@@ -79,13 +80,13 @@ export default function CreateTenantPage() {
       });
 
       if (result.success) {
-        showSuccess('Tenant creado', 'La empresa ha sido registrada con éxito.');
+        showSuccess('¡Tenant creado!', 'La empresa ha sido registrada con éxito.');
         setTimeout(() => router.push('/admin/tenants'), 1500);
       } else {
-        showError('Error al crear', result.errorMessage || 'No se pudo completar la operación.');
+        showError('Validación fallida', result.errorMessage || 'No se pudo completar la operación.');
       }
     } catch (e: any) { 
-      showError('Error inesperado', 'Ocurrió un problema al procesar la solicitud.');
+      showError('Error de red', 'No se pudo conectar con el servidor central.');
     } finally { 
       setIsSaving(false); 
     }

@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import { getAllTenantsUseCase, Tenant } from '@/app/features/tenant';
+import { useConfirm } from '@/app/shared/providers/ConfirmProvider';
+import { useToast } from '@/app/shared/providers/ToastProvider';
 import styles from './Tenants.module.css';
 
 export default function TenantsPage() {
@@ -40,22 +42,32 @@ export default function TenantsPage() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
+  const { confirm } = useConfirm();
+  const { success: showSuccess, error: showError } = useToast();
+
   const handleDelete = async (id: string, name: string) => {
-    if (window.confirm(`¿Estás seguro de que deseas eliminar a "${name}"? Esta acción no se puede deshacer.`)) {
+    const isConfirmed = await confirm({
+      title: "¿Eliminar Empresa?",
+      message: `¿Estás seguro de que deseas eliminar a "${name}"? Esta acción borrará todos sus datos de forma permanente.`,
+      confirmText: "Sí, eliminar definitivamente",
+      cancelText: "No, mantener empresa",
+      type: "danger"
+    });
+
+    if (isConfirmed) {
       try {
-        // Usamos el servicio directamente para el borrado
-        const api = new (require('@/app/features/tenant/services/tenant-api.service').TenantApiService)();
+        const { TenantApiService } = require('@/app/features/tenant/services/tenant-api.service');
+        const api = new TenantApiService();
         const result = await api.delete(id);
         
         if (result.success) {
-          alert('Empresa eliminada correctamente.');
-          loadTenants(); // Recargamos la lista
+          showSuccess('Empresa eliminada', `La empresa ${name} ha sido borrada del sistema.`);
+          loadTenants();
         } else {
-          alert('Error al eliminar: ' + result.errorMessage);
+          showError('Error al eliminar', result.errorMessage || 'No se pudo completar la operación.');
         }
       } catch (error) {
-        console.error('Error deleting tenant:', error);
-        alert('Ocurrió un error inesperado al intentar eliminar.');
+        showError('Error inesperado', 'Ocurrió un problema al intentar eliminar la empresa.');
       }
     }
   };
