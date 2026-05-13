@@ -3,6 +3,7 @@ export const ERROR_CODES = {
   NETWORK_ERROR:    { code: 'NET_001', message: 'Error de conexión con el servidor' },
   NOT_FOUND:        { code: 'RES_001', message: 'Recurso no encontrado' },
   UNAUTHORIZED:     { code: 'AUTH_001', message: 'Sesión expirada o no autorizado' },
+  FORBIDDEN:        { code: 'FORBIDDEN', message: 'Acceso denegado o restringido' },
   VALIDATION_ERROR: { code: 'VAL_001', message: 'Datos de entrada inválidos' },
   INTERNAL_ERROR:   { code: 'INT_001', message: 'Error interno de la aplicación' },
   CONFLICT:         { code: 'BIZ_001', message: 'Conflicto de negocio o dato duplicado' },

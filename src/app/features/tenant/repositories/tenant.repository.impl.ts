@@ -64,6 +64,13 @@ export class TenantRepositoryImpl implements TenantRepository {
   }
 
   private handleApiError(response: any): DomainError {
-    return new DomainError(response.errorMessage || 'Error de servidor', response.errorCode || 'SERVER_ERROR');
+    let code = response.errorCode || 'SERVER_ERROR';
+    
+    // Mapeo de códigos de backend a dominio frontend
+    if (code === 'AUTH_002' || response.statusCode === 403) {
+      code = ERROR_CODES.FORBIDDEN.code;
+    }
+
+    return new DomainError(response.errorMessage || 'Error de servidor', code);
   }
 }
