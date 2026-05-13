@@ -26,7 +26,7 @@ export default function LoginForm() {
       const result = await getTenantBrandingUseCase.execute(slug);
       result.match(
         (data) => setBranding(data),
-        () => console.log('Usando branding por defecto')
+        () => { /* Mantener tema base si falla o está bloqueado */ }
       );
     };
     fetchBranding();

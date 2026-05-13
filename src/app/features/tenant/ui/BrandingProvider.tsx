@@ -65,18 +65,6 @@ export default async function BrandingProvider() {
               <p style={{ fontSize: '15px', color: '#64748b', lineHeight: '1.6', marginBottom: '24px' }}>
                 La instancia para <strong>{slug}</strong> se encuentra temporalmente inactiva o suspendida. Por favor, contacte con el administrador del sistema.
               </p>
-              <a href="https://centralafbv.com" style={{
-                display: 'inline-block',
-                padding: '12px 24px',
-                backgroundColor: '#1e293b',
-                color: 'white',
-                borderRadius: '12px',
-                textDecoration: 'none',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}>
-                Volver al Portal Central
-              </a>
             </div>
           </div>
         );
