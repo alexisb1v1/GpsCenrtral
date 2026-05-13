@@ -1,15 +1,22 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import styles from './DashboardLayout.module.css';
 import BottomNav from '@/app/features/dashboard/ui/components/BottomNav';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
     <div className={styles.layout}>
-      <Sidebar />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
       <div className={styles.mainContent}>
-        <TopBar />
+        <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
         <main className={styles.pageContent}>
           {children}
         </main>

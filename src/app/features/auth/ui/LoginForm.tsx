@@ -30,9 +30,12 @@ export default function LoginForm() {
 
     result.match(
       (session) => {
-        // Éxito: Redirigir al dashboard
+        // Éxito: Redirigir al dashboard de forma limpia
         console.log('Login exitoso:', session.user.name);
-        router.push('/'); 
+        setIsLoading(false);
+        // Usamos location.href para asegurar que el middleware de Next.js 
+        // capture la nueva cookie en la primera petición del dashboard
+        window.location.href = '/dashboard';
       },
       (err) => {
         // Error: Mostrar mensaje al usuario

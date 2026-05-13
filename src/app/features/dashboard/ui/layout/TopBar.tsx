@@ -1,26 +1,70 @@
 'use client';
-
-import React, { useState } from 'react';
-import { Search, Bell, HelpCircle, Grid } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import styles from './TopBar.module.css';
+import Cookies from 'js-cookie';
 import SearchResults from '@/app/features/dashboard/ui/components/SearchResults';
+import { getTenantSlugClient } from '@/shared/utils/tenant.utils';
 
-export default function TopBar() {
+interface TopBarProps {
+  onMenuClick?: () => void;
+}
+
+export default function TopBar({ onMenuClick }: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [tenantName, setTenantName] = useState('Vectura');
+  const [userName, setUserName] = useState('Usuario');
+  const [userRole, setUserRole] = useState('Administrador');
+
+  useEffect(() => {
+    // Cargar nombre del tenant
+    const slug = getTenantSlugClient();
+    if (slug && slug !== 'default') {
+      const formattedName = slug.charAt(0).toUpperCase() + slug.slice(1);
+      setTenantName(formattedName);
+    }
+
+    // Cargar datos del usuario desde la sesión
+    const sessionStr = Cookies.get('gps_central_session');
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr);
+        if (session.user?.name) {
+          setUserName(session.user.name);
+          // Opcional: Si el objeto user tiene el rol, usarlo
+          if (session.user.role) {
+            setUserRole(session.user.role);
+          }
+        }
+      } catch (e) {}
+    }
+  }, []);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <header className={styles.header}>
       <div className={styles.left}>
-        <h1 className={styles.title}>Panel de Control - Paradero</h1>
+        <button className={styles.menuBtn} onClick={onMenuClick}>
+          <span className="material-symbols-rounded">menu</span>
+        </button>
+        <span className={styles.mobileLogo}>{tenantName}</span>
+        <h1 className={styles.title}>Panel de Control</h1>
       </div>
 
       <div className={styles.center}>
         <div className={`${styles.searchWrapper} ${isSearchFocused ? styles.focused : ''}`}>
-          <Search size={18} className={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Buscar unidad o ticket..." 
+          <span className={`material-symbols-rounded ${styles.searchIcon}`}>search</span>
+          <input
+            type="text"
+            placeholder="Buscar unidad o ticket..."
             className={styles.searchInput}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -29,11 +73,11 @@ export default function TopBar() {
           {searchQuery && (
             <div className={styles.searchShortcut}>ESC</div>
           )}
-          
+
           {searchQuery && isSearchFocused && (
-            <SearchResults 
-              query={searchQuery} 
-              onClose={() => setIsSearchFocused(false)} 
+            <SearchResults
+              query={searchQuery}
+              onClose={() => setIsSearchFocused(false)}
             />
           )}
         </div>
@@ -41,23 +85,25 @@ export default function TopBar() {
 
       <div className={styles.right}>
         <button className={styles.iconBtn}>
-          <Bell size={20} />
+          <span className="material-symbols-rounded">notifications</span>
           <span className={styles.badge} />
         </button>
         <button className={styles.iconBtn}>
-          <HelpCircle size={20} />
+          <span className="material-symbols-rounded">help</span>
         </button>
         <button className={styles.iconBtn}>
-          <Grid size={20} />
+          <span className="material-symbols-rounded">grid_view</span>
         </button>
-        
+
         <div className={styles.profile}>
           <div className={styles.profileInfo}>
-            <span className={styles.profileName}>Marcos Pérez</span>
-            <span className={styles.profileRole}>Fleet Manager</span>
+            <span className={styles.profileName}>{userName}</span>
+            <span className={styles.profileRole}>{userRole}</span>
           </div>
           <div className={styles.avatar}>
-            <img src="https://ui-avatars.com/api/?name=Marcos+Perez&background=0D8ABC&color=fff" alt="User" />
+            <div className={styles.initialsAvatar}>
+              {getInitials(userName)}
+            </div>
           </div>
         </div>
       </div>

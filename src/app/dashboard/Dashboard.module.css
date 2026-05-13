@@ -103,6 +103,59 @@
   border-radius: 50%;
 }
 
+/* Dashboard Structure */
+.dashboardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.statsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.principalStat {
+  width: 100%;
+}
+
+.secondaryStats {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.mainGrid {
+  display: flex;
+  gap: 24px;
+}
+
+.contentColumn {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sideColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mobileQuickActions, .mobileAlerts {
+  display: none;
+}
+
+.desktopQuickActions, .desktopAlerts {
+  display: block;
+}
+
 /* Responsive */
 @media (max-width: 1280px) {
   .grid {
@@ -111,6 +164,24 @@
   .rightColumn {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .mainGrid {
+    flex-direction: column;
+  }
+  
+  .sideColumn {
+    display: none; /* In mobile, map might be hidden or moved */
+  }
+  
+  .mobileQuickActions, .mobileAlerts {
+    display: block;
+  }
+  
+  .desktopQuickActions, .desktopAlerts {
+    display: none;
   }
 }
 

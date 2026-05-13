@@ -1,26 +1,18 @@
-import React from 'react';
-import { CreditCard, ShieldAlert, ChevronRight } from 'lucide-react';
 import styles from './QuickActions.module.css';
 
 export default function QuickActions() {
   return (
-    <div className={styles.container}>
+    <div className={styles.wrapper}>
       <h3 className={styles.title}>Acciones Rápidas</h3>
-      <div className={styles.actions}>
+      <div className={styles.actionsGrid}>
         <button className={`${styles.actionBtn} ${styles.primary}`}>
-          <div className={styles.iconWrapper}>
-            <CreditCard size={20} />
-          </div>
+          <span className="material-symbols-rounded" style={{ fontSize: '36px' }}>payments</span>
           <span className={styles.label}>Registrar Pago</span>
-          <ChevronRight size={18} className={styles.chevron} />
         </button>
 
         <button className={`${styles.actionBtn} ${styles.secondary}`}>
-          <div className={styles.iconWrapper}>
-            <ShieldAlert size={20} />
-          </div>
+          <span className="material-symbols-rounded" style={{ fontSize: '36px' }}>gavel</span>
           <span className={styles.label}>Registrar Penalidad</span>
-          <ChevronRight size={18} className={styles.chevron} />
         </button>
       </div>
     </div>

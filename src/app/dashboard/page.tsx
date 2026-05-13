@@ -4,73 +4,91 @@ import StatsCard from '@/app/features/dashboard/ui/components/StatsCard';
 import MonitoringTable from '@/app/features/dashboard/ui/components/MonitoringTable';
 import QuickActions from '@/app/features/dashboard/ui/components/QuickActions';
 import AlertsList from '@/app/features/dashboard/ui/components/AlertsList';
+import PreviousTickets from '@/app/features/dashboard/ui/components/PreviousTickets';
 import { Route, Clock, CreditCard, MapPin } from 'lucide-react';
 import styles from './Dashboard.module.css';
 
 export default function DashboardPage() {
   return (
     <DashboardLayout>
-      <div className={styles.grid}>
-        {/* Left Column: Stats and Table */}
-        <div className={styles.leftColumn}>
-          <div className={styles.statsRow}>
+      <div className={styles.dashboardContainer}>
+        {/* Mobile-First Order: Stats */}
+        <div className={styles.statsSection}>
+          <div className={styles.principalStat}>
             <StatsCard 
-              label="Unidades en Ruta" 
-              value="24" 
-              trend="+12%" 
+              label="Pagos de Hoy" 
+              value="$4,250.00" 
+              trend="+12% vs ayer" 
               trendType="success"
-              icon={Route}
-              subtitle="Real-time"
+              iconName="payments"
+              color="#2563eb"
+              variant="principal"
+            />
+          </div>
+          <div className={styles.secondaryStats}>
+            <StatsCard 
+              label="En Ruta" 
+              value="18" 
+              iconName="directions_bus"
               color="#2563eb"
             />
             <StatsCard 
-              label="Pendientes de Salida" 
-              value="08" 
-              trend="Alerta" 
-              trendType="warning"
-              icon={Clock}
-              subtitle="Prioridad"
-              color="#d97706"
+              label="Pendientes" 
+              value="04" 
+              iconName="schedule"
+              color="#dc2626"
+              trendType="error"
             />
-            <StatsCard 
-              label="Pagos Registrados Hoy" 
-              value="$1,450" 
-              icon={CreditCard}
-              subtitle="Hoy"
-              color="#16a34a"
-            />
-          </div>
-
-          <div className={styles.tableSection}>
-            <MonitoringTable />
           </div>
         </div>
 
-        {/* Right Column: Actions, Map, Alerts */}
-        <div className={styles.rightColumn}>
-          <QuickActions />
-          
-          <div className={styles.mapWidget}>
-            <div className={styles.mapHeader}>
-              <span className={styles.mapTitle}>Paradero Actual</span>
-              <h4 className={styles.locationName}>Estación Central Sur</h4>
-              <p className={styles.locationDetail}>Capacidad: 12 unidades en dársena</p>
+        {/* Column Grid for Desktop / Stack for Mobile */}
+        <div className={styles.mainGrid}>
+          {/* Left Column (Desktop) / Main Flow (Mobile) */}
+          <div className={styles.contentColumn}>
+            <div className={styles.mobileQuickActions}>
+              <QuickActions />
             </div>
-            <div className={styles.mapPlaceholder}>
-              <img src="/map_placeholder.png" alt="Map" className={styles.mapImage} />
-              <div className={styles.mapOverlay}>
-                <MapPin className={styles.mapPin} size={32} />
-              </div>
+            
+            <div className={styles.tableSection}>
+              <MonitoringTable />
             </div>
-            <div className={styles.mapFooter}>
-              <div className={styles.statusBadge}>
-                <span className={styles.dot} />
-                Operando normalmente
-              </div>
+
+            <div className={styles.historySection}>
+              <PreviousTickets />
+            </div>
+            
+            <div className={styles.mobileAlerts}>
+              <AlertsList />
             </div>
           </div>
 
-          <AlertsList />
+          {/* Right Column (Desktop only, hidden or moved in Mobile) */}
+          <div className={styles.sideColumn}>
+            <div className={styles.desktopQuickActions}>
+              <QuickActions />
+            </div>
+            
+            <div className={styles.mapWidget}>
+              {/* ... map content ... */}
+              <div className={styles.mapHeader}>
+                <span className={styles.mapTitle}>Paradero Actual</span>
+                <h4 className={styles.locationName}>Estación Central Sur</h4>
+              </div>
+              <div className={styles.mapPlaceholder}>
+                <img src="/map_placeholder.png" alt="Map" className={styles.mapImage} />
+                <div className={styles.mapOverlay}>
+                  <span className={`material-symbols-rounded ${styles.mapPin}`} style={{ fontSize: '32px' }}>
+                    location_on
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.desktopAlerts}>
+              <AlertsList />
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>

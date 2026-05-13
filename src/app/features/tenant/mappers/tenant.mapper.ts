@@ -1,6 +1,4 @@
-// src/app/features/tenant/mappers/tenant.mapper.ts
-import { TenantBrandingDto } from '../dto/tenant.dto';
-import { TenantBranding } from '../models/tenant.model';
+import { Tenant, TenantBranding } from '../models/tenant.model';
 
 export const tenantBrandingDtoToModel = (dto: TenantBrandingDto): TenantBranding => ({
   name: dto.name,
@@ -10,4 +8,13 @@ export const tenantBrandingDtoToModel = (dto: TenantBrandingDto): TenantBranding
     accent: dto.accentColor,
     status: dto.statusDotColor,
   },
+});
+
+export const tenantDtoToModel = (dto: any): Tenant => ({
+  id: dto.id,
+  name: dto.name,
+  slug: dto.subdomain || 'n/a',
+  domain: dto.subdomain || 'n/a',
+  status: dto.isActive ? 'active' : 'inactive',
+  createdAt: new Date(dto.createdAt),
 });
