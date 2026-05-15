@@ -86,7 +86,7 @@ export default function UsersPage() {
           setUsers(data);
           setIsLoading(false);
         },
-        (err) => {
+        (err: { message: string }) => {
           console.error('[UsersPage] Error en el caso de uso:', err);
           setError(err.message);
           setIsLoading(false);
@@ -122,7 +122,7 @@ export default function UsersPage() {
             showSuccess('Usuario eliminado', `El usuario ${name} ha sido borrado del sistema.`);
             if (branding?.id) loadUsers(branding.id);
           },
-          (err) => {
+          (err: { message: string }) => {
             showError('Error al eliminar', err.message);
           }
         );
@@ -156,7 +156,7 @@ export default function UsersPage() {
           showSuccess('Contraseña restablecida', `La contraseña de ${resetModal.userName} fue actualizada correctamente.`);
           closeResetModal();
         },
-        (err) => showError('Error al restablecer', err.message)
+        (err: { message: string }) => showError('Error al restablecer', err.message)
       );
     } catch {
       showError('Error inesperado', 'Ocurrió un problema al restablecer la contraseña.');

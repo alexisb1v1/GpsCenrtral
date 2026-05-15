@@ -60,7 +60,7 @@ export default function UserForm({ initialData, isEdit = false }: UserFormProps)
     const result = await getAllTenantsUseCase.execute();
     result.match(
       (data) => setTenants(data),
-      (err) => console.error('Error loading tenants for select', err)
+      (err: unknown) => console.error('Error loading tenants for select', err)
     );
   };
 
@@ -81,7 +81,7 @@ export default function UserForm({ initialData, isEdit = false }: UserFormProps)
             showSuccess('Usuario actualizado', `Los datos de ${formData.name} han sido guardados.`);
             router.push('/admin/users');
           },
-          (err) => showError('Error al actualizar', err.message)
+          (err: { message: string }) => showError('Error al actualizar', err.message)
         );
       } else {
         const result = await createUserUseCase.execute(formData);
@@ -91,7 +91,7 @@ export default function UserForm({ initialData, isEdit = false }: UserFormProps)
             showSuccess('Usuario creado', `El usuario ${formData.name} ha sido registrado exitosamente.`);
             router.push('/admin/users');
           },
-          (err) => showError('Error al crear', err.message)
+          (err: { message: string }) => showError('Error al crear', err.message)
         );
       }
     } catch (error) {

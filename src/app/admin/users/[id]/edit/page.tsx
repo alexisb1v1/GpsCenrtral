@@ -29,7 +29,7 @@ export default function EditUserPage() {
         setUser(data);
         setIsLoading(false);
       },
-      (err) => {
+      (err: { message: string }) => {
         setError(err.message);
         setIsLoading(false);
       }
