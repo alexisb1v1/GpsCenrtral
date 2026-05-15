@@ -10,4 +10,5 @@ export interface UserRepository {
   create(data: CreateUserRequest): Promise<Result<User, DomainError>>;
   update(id: string, data: UpdateUserRequest): Promise<Result<User, DomainError>>;
   delete(id: string): Promise<Result<void, DomainError>>;
+  resetPassword(userId: string, newPassword: string): Promise<Result<void, DomainError>>;
 }

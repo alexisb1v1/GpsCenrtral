@@ -1,30 +1,33 @@
-// src/app/features/user/repositories/user.repository.ts
-import { Result } from 'neverthrow';
-import { User } from '../models/user.model';
-import { DomainError } from '@/shared/errors/error-codes';
-import { CreateUserRequest, UpdateUserRequest } from '../dto/user.dto';
-
-export interface UserRepository {
-  getByTenant(tenantId: string): Promise<Result<User[], DomainError>>;
-  getById(id: string): Promise<Result<User, DomainError>>;
-  create(data: CreateUserRequest): Promise<Result<User, DomainError>>;
-  update(id: string, data: UpdateUserRequest): Promise<Result<User, DomainError>>;
-  delete(id: string): Promise<Result<void, DomainError>>;
-  resetPassword(userId: string, newPassword: string): Promise<Result<void, DomainError>>;
-}
-
 // src/app/features/user/repositories/user.repository.impl.ts
 import { ok, err, Result } from 'neverthrow';
+import { User, UserRole } from '../models/user.model';
+import { DomainError } from '@/shared/errors/error-codes';
+import { CreateUserRequest, UpdateUserRequest, UserDto } from '../dto/user.dto';
 import { UserApiService } from '../services/user-api.service';
+import { UserRepository } from './user.repository';
 
 export class UserRepositoryImpl implements UserRepository {
   constructor(private readonly apiService: UserApiService) {}
+
+  /** Convierte el DTO de la API al modelo de dominio */
+  private toDomain(dto: UserDto): User {
+    return {
+      id: dto.id,
+      tenantId: dto.tenantId,
+      name: dto.name,
+      email: dto.email,
+      role: dto.role as UserRole,
+      isActive: dto.isActive,
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+    };
+  }
 
   async getByTenant(tenantId: string): Promise<Result<User[], DomainError>> {
     try {
       const response = await this.apiService.getByTenant(tenantId);
       if (response.success) {
-        return ok(response.data);
+        return ok(response.data.map(dto => this.toDomain(dto)));
       }
       return err(this.handleApiError(response));
     } catch (error) {
@@ -36,7 +39,7 @@ export class UserRepositoryImpl implements UserRepository {
     try {
       const response = await this.apiService.getById(id);
       if (response.success) {
-        return ok(response.data);
+        return ok(this.toDomain(response.data));
       }
       return err(this.handleApiError(response));
     } catch (error) {
@@ -48,7 +51,7 @@ export class UserRepositoryImpl implements UserRepository {
     try {
       const response = await this.apiService.create(data);
       if (response.success) {
-        return ok(response.data);
+        return ok(this.toDomain(response.data));
       }
       return err(this.handleApiError(response));
     } catch (error) {
@@ -60,7 +63,7 @@ export class UserRepositoryImpl implements UserRepository {
     try {
       const response = await this.apiService.update(id, data);
       if (response.success) {
-        return ok(response.data);
+        return ok(this.toDomain(response.data));
       }
       return err(this.handleApiError(response));
     } catch (error) {

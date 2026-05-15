@@ -5,7 +5,9 @@ export interface UserDto {
   name: string;
   email: string;
   role: string;
+  isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CreateUserRequest {
