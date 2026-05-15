@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
 import Cookies from 'js-cookie';
-import { getTenantSlugClient } from '@/shared/utils/tenant.utils';
 import { logoutUseCase } from '@/app/features/auth';
+import { useBranding } from '@/app/shared/providers/BrandingContext';
 
 const mainMenuItems = [
   { id: 'dashboard', label: 'Panel de Control', icon: 'dashboard', href: '/dashboard' },
@@ -31,17 +31,10 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const [tenantName, setTenantName] = useState('Vectura');
+  const { branding } = useBranding();
   const [userName, setUserName] = useState('Usuario');
 
   useEffect(() => {
-    // Cargar nombre del tenant
-    const slug = getTenantSlugClient();
-    if (slug && slug !== 'default') {
-      const formattedName = slug.charAt(0).toUpperCase() + slug.slice(1);
-      setTenantName(formattedName);
-    }
-
     // Cargar nombre del usuario desde la sesión
     const sessionStr = Cookies.get('gps_central_session');
     if (sessionStr) {
@@ -55,6 +48,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       }
     }
   }, []);
+
+  const tenantDisplayName = branding?.name || 'Vectura';
+  const primaryColor = branding?.colors?.primary || '#0052cc';
 
   const handleLogout = async () => {
     await logoutUseCase.execute();
@@ -96,7 +92,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <div className={styles.logoContainer}>
           <div className={styles.logo}>
-            <span className={styles.brand} style={{ color: '#0052cc' }}>Vectura Admin</span>
+            <span className={styles.brand} style={{ color: primaryColor }}>{tenantDisplayName}</span>
             <span className={styles.subBrand}>Fleet Operations</span>
           </div>
         </div>

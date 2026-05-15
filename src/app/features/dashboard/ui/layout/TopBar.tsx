@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './TopBar.module.css';
 import Cookies from 'js-cookie';
 import SearchResults from '@/app/features/dashboard/ui/components/SearchResults';
-import { getTenantSlugClient } from '@/shared/utils/tenant.utils';
+import { useBranding } from '@/app/shared/providers/BrandingContext';
 
 interface TopBarProps {
   onMenuClick?: () => void;
@@ -12,18 +12,13 @@ interface TopBarProps {
 export default function TopBar({ onMenuClick }: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [tenantName, setTenantName] = useState('Vectura');
+  const { branding } = useBranding();
   const [userName, setUserName] = useState('Usuario');
   const [userRole, setUserRole] = useState('Administrador');
 
-  useEffect(() => {
-    // Cargar nombre del tenant
-    const slug = getTenantSlugClient();
-    if (slug && slug !== 'default') {
-      const formattedName = slug.charAt(0).toUpperCase() + slug.slice(1);
-      setTenantName(formattedName);
-    }
+  const tenantName = branding?.name || 'Vectura';
 
+  useEffect(() => {
     // Cargar datos del usuario desde la sesión
     const sessionStr = Cookies.get('gps_central_session');
     if (sessionStr) {
@@ -31,7 +26,6 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
         const session = JSON.parse(sessionStr);
         if (session.user?.name) {
           setUserName(session.user.name);
-          // Opcional: Si el objeto user tiene el rol, usarlo
           if (session.user.role) {
             setUserRole(session.user.role);
           }
