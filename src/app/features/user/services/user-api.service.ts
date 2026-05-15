@@ -1,13 +1,14 @@
+// src/app/features/user/services/user-api.service.ts
 import Cookies from 'js-cookie';
 import { API_CONFIG } from '@/core/config/api.config';
-import { TenantBrandingDto } from '../dto/tenant.dto';
+import { UserDto, CreateUserRequest, UpdateUserRequest } from '../dto/user.dto';
 import { ApiResponseDto } from '@/shared/dto/api-response.dto';
 
-export class TenantApiService {
+export class UserApiService {
   private getAuthHeaders() {
     const sessionStr = Cookies.get('gps_central_session');
     let token = '';
-    
+
     if (sessionStr) {
       try {
         const session = JSON.parse(sessionStr);
@@ -26,14 +27,13 @@ export class TenantApiService {
 
   private async handleResponse<T>(response: Response): Promise<ApiResponseDto<T>> {
     const data = await response.json();
-    
+
     if (!response.ok) {
-      // Extraer mensaje del backend (NestJS suele enviar 'message' como string o array de strings)
       let errorMessage = data.errorMessage || data.message || 'Error desconocido en el servidor';
       if (Array.isArray(errorMessage)) {
         errorMessage = errorMessage.join('. ');
       }
-      
+
       return {
         success: false,
         errorCode: data.errorCode || 'ERR_UNKNOWN',
@@ -49,65 +49,56 @@ export class TenantApiService {
     return data;
   }
 
-  async fetchBranding(slug: string): Promise<ApiResponseDto<TenantBrandingDto>> {
-    try {
-      const url = `${API_CONFIG.BASE_URL}/tenants/branding/${slug}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        cache: 'no-store',
-      });
-      return this.handleResponse<TenantBrandingDto>(response);
-    } catch (error: any) {
-      console.error(`[TenantApiService] Fallo fatal al conectar con ${API_CONFIG.BASE_URL}:`, {
-        message: error.message,
-        code: error.code,
-        errno: error.errno
-      });
-      throw error;
-    }
-  }
-
-  async getAll(): Promise<ApiResponseDto<any[]>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/tenants`, {
+  async getByTenant(tenantId: string): Promise<ApiResponseDto<UserDto[]>> {
+    const url = tenantId ? `/users/tenant/${tenantId}` : '/users/tenant';
+    const response = await fetch(`${API_CONFIG.BASE_URL}${url}`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
       cache: 'no-store',
     });
-    return this.handleResponse<any[]>(response);
+    return this.handleResponse<UserDto[]>(response);
   }
 
-  async getById(id: string): Promise<ApiResponseDto<any>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/tenants/${id}`, {
+  async getById(id: string): Promise<ApiResponseDto<UserDto>> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${id}`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
       cache: 'no-store',
     });
-    return this.handleResponse<any>(response);
+    return this.handleResponse<UserDto>(response);
   }
 
-  async create(data: any): Promise<ApiResponseDto<any>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/tenants`, {
+  async create(data: CreateUserRequest): Promise<ApiResponseDto<UserDto>> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/users/create`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    return this.handleResponse<any>(response);
+    return this.handleResponse<UserDto>(response);
   }
 
-  async update(id: string, data: any): Promise<ApiResponseDto<any>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/tenants/${id}`, {
+  async update(id: string, data: UpdateUserRequest): Promise<ApiResponseDto<UserDto>> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${id}`, {
       method: 'PUT',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    return this.handleResponse<any>(response);
+    return this.handleResponse<UserDto>(response);
   }
 
   async delete(id: string): Promise<ApiResponseDto<void>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/tenants/${id}`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${id}`, {
       method: 'DELETE',
       headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<void>(response);
+  }
+
+  async resetPassword(userId: string, newPassword: string): Promise<ApiResponseDto<void>> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/user/reset-password/${userId}`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ newPassword }),
     });
     return this.handleResponse<void>(response);
   }

@@ -19,6 +19,7 @@ export function BrandingClientProvider({
   branding: TenantBranding | null;
   slug: string;
 }) {
+  console.log('[BrandingContext] Recibido branding:', branding);
   return (
     <BrandingContext.Provider value={{ branding, slug }}>
       {children}

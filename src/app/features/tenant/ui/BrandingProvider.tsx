@@ -5,15 +5,24 @@ import { headers } from 'next/headers';
 
 import { BrandingClientProvider } from '@/app/shared/providers/BrandingContext';
 
+import { API_CONFIG } from '@/core/config/api.config';
+
 export default async function BrandingProvider({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
   const host = headersList.get('x-forwarded-host') || headersList.get('host');
   const slug = await getTenantSlug(host || undefined);
   
   console.log(`[Branding] Aplicando identidad visual para: host=${host}, slug=${slug}`);
+  console.log(`[Branding] URL Base usada en el servidor: ${API_CONFIG.BASE_URL}`);
 
   // Si no hay slug (caso raro) o el fetch falla, no inyectamos nada y dejamos los estilos base
   const result = await getTenantBrandingUseCase.execute(slug);
+  
+  if (result.isOk()) {
+    console.log('[BrandingProvider] Branding cargado con éxito:', { id: result.value.id, name: result.value.name });
+  } else {
+    console.warn('[BrandingProvider] Error cargando branding:', result.error.message);
+  }
 
   return result.match(
     (branding) => (

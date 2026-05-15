@@ -2,6 +2,7 @@ import { Tenant, TenantBranding } from '../models/tenant.model';
 import { TenantBrandingDto } from '../dto/tenant.dto';
 
 export const tenantBrandingDtoToModel = (dto: TenantBrandingDto): TenantBranding => ({
+  id: dto.id,
   name: dto.name,
   logo: dto.logoUrl,
   loginBackground: dto.loginUrl,
@@ -23,6 +24,7 @@ export const tenantDtoToModel = (dto: any): Tenant => ({
   taxId: dto.taxId,
   createdAt: new Date(dto.createdAt),
   branding: {
+    id: dto.id,
     name: dto.name,
     logo: dto.logoUrl,
     loginBackground: dto.loginUrl,

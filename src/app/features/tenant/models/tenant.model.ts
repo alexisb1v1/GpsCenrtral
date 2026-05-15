@@ -14,6 +14,7 @@ export interface Tenant {
 }
 
 export interface TenantBranding {
+  id: string;
   name: string;
   logo: string | null;
   loginBackground: string | null;
