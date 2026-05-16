@@ -1,10 +1,9 @@
-// src/app/features/user/services/user-api.service.ts
 import Cookies from 'js-cookie';
 import { API_CONFIG } from '@/core/config/api.config';
-import { UserDto, CreateUserRequest, UpdateUserRequest } from '../dto/user.dto';
+import { VehicleDto, CreateVehicleDto, UpdateVehicleDto } from '../dto/vehicle.dto';
 import { ApiResponseDto } from '@/shared/dto/api-response.dto';
 
-export class UserApiService {
+export class VehicleApiService {
   private getAuthHeaders() {
     const sessionStr = Cookies.get('gps_central_session');
     let token = '';
@@ -26,7 +25,13 @@ export class UserApiService {
   }
 
   private async handleResponse<T>(response: Response): Promise<ApiResponseDto<T>> {
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (e) {
+      data = { message: 'Error al parsear respuesta del servidor' };
+    }
 
     if (!response.ok) {
       let errorMessage = data.errorMessage || data.message || 'Error desconocido en el servidor';
@@ -49,56 +54,47 @@ export class UserApiService {
     return data;
   }
 
-  async getByTenant(tenantId: string): Promise<ApiResponseDto<UserDto[]>> {
-    const url = tenantId ? `/users/tenant/${tenantId}` : '/users/tenant';
-    const response = await fetch(`${API_CONFIG.BASE_URL}${url}`, {
+  async getAll(tenantId?: string): Promise<ApiResponseDto<VehicleDto[]>> {
+    const queryParams = tenantId ? `?tenantId=${tenantId}` : '';
+    const response = await fetch(`${API_CONFIG.BASE_URL}/vehicles${queryParams}`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
       cache: 'no-store',
     });
-    return this.handleResponse<UserDto[]>(response);
+    return this.handleResponse<VehicleDto[]>(response);
   }
 
-  async getById(id: string): Promise<ApiResponseDto<UserDto>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${id}`, {
+  async getById(id: string): Promise<ApiResponseDto<VehicleDto>> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/vehicles/${id}`, {
       method: 'GET',
       headers: this.getAuthHeaders(),
       cache: 'no-store',
     });
-    return this.handleResponse<UserDto>(response);
+    return this.handleResponse<VehicleDto>(response);
   }
 
-  async create(data: CreateUserRequest): Promise<ApiResponseDto<UserDto>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/users/create`, {
+  async create(data: CreateVehicleDto): Promise<ApiResponseDto<VehicleDto>> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/vehicles/create`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    return this.handleResponse<UserDto>(response);
+    return this.handleResponse<VehicleDto>(response);
   }
 
-  async update(id: string, data: UpdateUserRequest): Promise<ApiResponseDto<UserDto>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${id}`, {
+  async update(id: string, data: UpdateVehicleDto): Promise<ApiResponseDto<VehicleDto>> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/vehicles/${id}`, {
       method: 'PUT',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(data),
     });
-    return this.handleResponse<UserDto>(response);
+    return this.handleResponse<VehicleDto>(response);
   }
 
   async delete(id: string): Promise<ApiResponseDto<void>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${id}`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/vehicles/${id}`, {
       method: 'DELETE',
       headers: this.getAuthHeaders(),
-    });
-    return this.handleResponse<void>(response);
-  }
-
-  async resetPassword(userId: string, newPassword: string): Promise<ApiResponseDto<void>> {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/users/reset-password/${userId}`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ newPassword }),
     });
     return this.handleResponse<void>(response);
   }

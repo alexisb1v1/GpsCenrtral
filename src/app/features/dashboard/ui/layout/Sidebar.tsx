@@ -16,9 +16,9 @@ const mainMenuItems = [
 ];
 
 const adminMenuItems = [
-  { id: 'tenants', label: 'Gestión de Tenants', icon: 'corporate_fare', href: '/admin/tenants' },
-  { id: 'vehicles', label: 'Vehículos', icon: 'local_shipping', href: '/admin/vehicles' },
-  { id: 'drivers', label: 'Choferes', icon: 'badge', href: '/admin/drivers' },
+  { id: 'tenants', label: 'Gestión de Empresas', icon: 'corporate_fare', href: '/admin/tenants' },
+  { id: 'vehicles', label: 'Gestión de Flota', icon: 'directions_bus', href: '/admin/vehicles' },
+  { id: 'drivers', label: 'Gestión de Conductores', icon: 'badge', href: '/admin/drivers' },
   { id: 'routes', label: 'Rutas y Paraderos', icon: 'alt_route', href: '/admin/routes' },
   { id: 'users', label: 'Gestión de Usuarios', icon: 'group', href: '/admin/users' },
   { id: 'branding', label: 'Personalización', icon: 'palette', href: '/admin/branding' },

@@ -34,7 +34,7 @@ export default function UserForm({ initialData, isEdit = false }: UserFormProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Si es vectura, cargar todos los tenants para el select
+    // Si es vectura, cargar todos los tenants para el select (tanto en creación como en edición)
     if (slug === 'vectura') {
       loadTenants();
     }
@@ -195,7 +195,13 @@ export default function UserForm({ initialData, isEdit = false }: UserFormProps)
                 <input 
                   type="text" 
                   className={styles.input} 
-                  value={isEdit ? (initialData?.tenantId || formData.tenantId) : (branding?.name || formData.tenantId)}
+                  value={
+                    isEdit
+                      ? (tenants.find(t => t.id === (initialData?.tenantId || formData.tenantId))?.name
+                         || branding?.name
+                         || formData.tenantId)
+                      : (branding?.name || formData.tenantId)
+                  }
                   required
                   disabled
                 />
