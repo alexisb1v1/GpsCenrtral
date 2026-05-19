@@ -18,4 +18,6 @@ export interface CreateUserRequest {
   password?: string;
 }
 
-export interface UpdateUserRequest extends Partial<CreateUserRequest> {}
+export interface UpdateUserRequest extends Partial<CreateUserRequest> {
+  isActive?: boolean;
+}

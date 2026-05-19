@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
-import { getUsersByTenantUseCase, User, USER_ROLES, resetPasswordUseCase } from '@/app/features/user';
+import { getUsersByTenantUseCase, User, USER_ROLES, resetPasswordUseCase, updateUserUseCase } from '@/app/features/user';
 import { getAllTenantsUseCase } from '@/app/features/tenant';
 import { useConfirm } from '@/app/shared/providers/ConfirmProvider';
 import { useToast } from '@/app/shared/providers/ToastProvider';
@@ -36,8 +36,6 @@ export default function UsersPage() {
   const isVectura = slug === 'vectura';
 
   useEffect(() => {
-    console.log('[UsersPage] Inicializando...', { brandingId: branding?.id, slug });
-    
     if (isVectura) {
       loadTenants();
       loadUsers(''); // Carga global para vectura
@@ -68,32 +66,27 @@ export default function UsersPage() {
     const result = await getAllTenantsUseCase.execute();
     result.match(
       (data) => setTenants(data),
-      () => console.warn('Error cargando tenants para el filtro')
+      () => {}
     );
   };
 
   const loadUsers = async (tenantId: string) => {
-    console.log('[UsersPage] Cargando usuarios para tenantId:', tenantId || 'GLOBAL');
     setIsLoading(true);
     
     try {
       const result = await getUsersByTenantUseCase.execute(tenantId);
-      console.log('[UsersPage] Resultado de carga:', result.isOk() ? 'Éxito' : 'Error');
       
       result.match(
         (data) => {
-          console.log('[UsersPage] Usuarios recibidos:', data.length);
           setUsers(data);
           setIsLoading(false);
         },
         (err: { message: string }) => {
-          console.error('[UsersPage] Error en el caso de uso:', err);
           setError(err.message);
           setIsLoading(false);
         }
       );
     } catch (e) {
-      console.error('[UsersPage] Error inesperado en loadUsers:', e);
       setError('Error al procesar la sesión.');
       setIsLoading(false);
     }
@@ -105,9 +98,9 @@ export default function UsersPage() {
 
   const handleDelete = async (id: string, name: string) => {
     const isConfirmed = await confirm({
-      title: "¿Eliminar Usuario?",
-      message: `¿Estás seguro de que deseas eliminar a "${name}"? Esta acción no se puede deshacer.`,
-      confirmText: "Sí, eliminar usuario",
+      title: "¿Desactivar Usuario?",
+      message: `¿Estás seguro de que deseas desactivar a "${name}"? Esta acción inhabilitará su acceso al sistema.`,
+      confirmText: "Sí, desactivar",
       cancelText: "Cancelar",
       type: "danger"
     });
@@ -119,15 +112,51 @@ export default function UsersPage() {
         
         result.match(
           () => {
-            showSuccess('Usuario eliminado', `El usuario ${name} ha sido borrado del sistema.`);
-            if (branding?.id) loadUsers(branding.id);
+            showSuccess('Usuario desactivado', `El usuario ${name} ha sido desactivado del sistema.`);
+            if (isVectura) {
+              loadUsers(selectedTenantFilter);
+            } else if (branding?.id) {
+              loadUsers(branding.id);
+            }
           },
           (err: { message: string }) => {
-            showError('Error al eliminar', err.message);
+            showError('Error al desactivar', err.message);
           }
         );
       } catch (error) {
-        showError('Error inesperado', 'Ocurrió un problema al intentar eliminar el usuario.');
+        showError('Error inesperado', 'Ocurrió un problema al intentar desactivar el usuario.');
+      }
+    }
+  };
+
+  const handleActivate = async (id: string, name: string) => {
+    const isConfirmed = await confirm({
+      title: "¿Activar Usuario?",
+      message: `¿Estás seguro de que deseas activar a "${name}"? Esta acción restablecerá su acceso al sistema.`,
+      confirmText: "Sí, activar",
+      cancelText: "Cancelar",
+      type: "info"
+    });
+
+    if (isConfirmed) {
+      try {
+        const result = await updateUserUseCase.execute(id, { isActive: true });
+        
+        result.match(
+          () => {
+            showSuccess('Usuario activado', `El usuario ${name} ha sido activado del sistema.`);
+            if (isVectura) {
+              loadUsers(selectedTenantFilter);
+            } else if (branding?.id) {
+              loadUsers(branding.id);
+            }
+          },
+          (err: { message: string }) => {
+            showError('Error al activar', err.message);
+          }
+        );
+      } catch (error) {
+        showError('Error inesperado', 'Ocurrió un problema al intentar activar el usuario.');
       }
     }
   };
@@ -167,6 +196,11 @@ export default function UsersPage() {
 
   const filteredUsers = users.filter(u => {
     if (activeTab === 'Todos') return true;
+    if (activeTab === 'Desactivos') return !u.isActive;
+    
+    // Para las pestañas de perfiles específicos, solo mostramos los activos
+    if (!u.isActive) return false;
+    
     if (activeTab === 'Administradores') return u.role === 'ADMIN' || u.role === 'SUPERADMIN';
     if (activeTab === 'Controladores') return u.role === 'OPERATOR';
     if (activeTab === 'Choferes') return u.role === 'DRIVER';
@@ -247,7 +281,7 @@ export default function UsersPage() {
         <div className={styles.card}>
           <div className={styles.tableHeader}>
             <div className={styles.tabs}>
-              {['Todos', 'Administradores', 'Controladores', 'Choferes'].map(tab => (
+              {['Todos', 'Administradores', 'Controladores', 'Choferes', 'Desactivos'].map(tab => (
                 <button 
                   key={tab} 
                   className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
@@ -290,7 +324,13 @@ export default function UsersPage() {
             <div className={styles.loading}>
               <span className="material-symbols-rounded" style={{ fontSize: '48px', color: '#ef4444', marginBottom: '1rem' }}>error</span>
               <p>{error}</p>
-              <button onClick={() => branding?.id && loadUsers(branding.id)} className={styles.addBtn} style={{ marginTop: '1rem' }}>Reintentar</button>
+              <button 
+                onClick={() => loadUsers(isVectura ? selectedTenantFilter : branding?.id || '')} 
+                className={styles.addBtn} 
+                style={{ marginTop: '1rem' }}
+              >
+                Reintentar
+              </button>
             </div>
           ) : (
             <div className={styles.tableWrapper}>
@@ -300,6 +340,7 @@ export default function UsersPage() {
                     <th>NOMBRE</th>
                     <th>EMAIL</th>
                     <th>ROL</th>
+                    <th>ESTADO</th>
                     <th>FECHA DE CREACIÓN</th>
                     <th>ACCIONES</th>
                   </tr>
@@ -327,6 +368,11 @@ export default function UsersPage() {
                         </span>
                       </td>
                       <td>
+                        <span className={`${styles.statusBadge} ${user.isActive ? styles.statusActive : styles.statusInactive}`}>
+                          {user.isActive ? 'Activo' : 'Desactivo'}
+                        </span>
+                      </td>
+                      <td>
                         <span className={styles.dateCell}>
                           {user.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES', {
                             day: '2-digit',
@@ -337,34 +383,46 @@ export default function UsersPage() {
                       </td>
                       <td>
                         <div className={styles.actions}>
-                          <button 
-                            className={styles.actionBtn} 
-                            onClick={() => router.push(`/admin/users/${user.id}/edit`)}
-                            title="Editar"
-                          >
-                            <span className="material-symbols-rounded">edit</span>
-                          </button>
-                          <button 
-                            className={`${styles.actionBtn} ${styles.resetBtn}`} 
-                            onClick={() => openResetModal(user.id, user.name)}
-                            title="Restablecer contraseña"
-                          >
-                            <span className="material-symbols-rounded">lock_reset</span>
-                          </button>
-                          <button 
-                            className={`${styles.actionBtn} ${styles.deleteBtn}`} 
-                            onClick={() => handleDelete(user.id, user.name)}
-                            title="Eliminar"
-                          >
-                            <span className="material-symbols-rounded">delete</span>
-                          </button>
+                          {user.isActive ? (
+                            <>
+                              <button 
+                                className={styles.actionBtn} 
+                                onClick={() => router.push(`/admin/users/${user.id}/edit`)}
+                                title="Editar"
+                              >
+                                <span className="material-symbols-rounded">edit</span>
+                              </button>
+                              <button 
+                                className={`${styles.actionBtn} ${styles.resetBtn}`} 
+                                onClick={() => openResetModal(user.id, user.name)}
+                                title="Restablecer contraseña"
+                              >
+                                <span className="material-symbols-rounded">lock_reset</span>
+                              </button>
+                              <button 
+                                className={`${styles.actionBtn} ${styles.deleteBtn}`} 
+                                onClick={() => handleDelete(user.id, user.name)}
+                                title="Desactivar"
+                              >
+                                <span className="material-symbols-rounded">block</span>
+                              </button>
+                            </>
+                          ) : (
+                            <button 
+                              className={`${styles.actionBtn} ${styles.activateBtn}`} 
+                              onClick={() => handleActivate(user.id, user.name)}
+                              title="Activar"
+                            >
+                              <span className="material-symbols-rounded">check_circle</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
                   ))}
                   {filteredUsers.length === 0 && (
                     <tr>
-                      <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
                         No se encontraron usuarios en esta categoría.
                       </td>
                     </tr>

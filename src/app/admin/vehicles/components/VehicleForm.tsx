@@ -62,7 +62,7 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
     const result = await getAllTenantsUseCase.execute();
     result.match(
       (data) => setTenants(data),
-      () => console.warn('Error cargando empresas')
+      () => {}
     );
   };
 

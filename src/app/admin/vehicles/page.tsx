@@ -39,7 +39,7 @@ export default function VehiclesPage() {
     const result = await getAllTenantsUseCase.execute();
     result.match(
       (data: any) => setTenants(data),
-      () => console.warn('Error cargando tenants para el filtro')
+      () => {}
     );
   };
 
