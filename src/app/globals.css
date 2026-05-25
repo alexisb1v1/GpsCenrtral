@@ -4,14 +4,14 @@
 
 :root {
   /* --- Exact Tokens from Tailwind Config --- */
-  --primary: #004ac6;
-  --primary-container: #2563eb;
+  --primary: #2563eb;
+  --primary-container: #1d4ed8;
   --on-primary: #ffffff;
   --background: #f7f9fb;
-  --on-background: #191c1e;
-  --on-surface-variant: #434655;
-  --outline: #737686;
-  --outline-variant: #c3c6d7;
+  --on-background: #1e293b;
+  --on-surface-variant: #64748b;
+  --outline: #cbd5e1;
+  --outline-variant: #e2e8f0;
   --surface-container-lowest: #ffffff;
   
   /* Typography Scale */

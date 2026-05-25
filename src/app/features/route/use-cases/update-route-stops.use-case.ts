@@ -13,7 +13,7 @@ export interface UpdateRouteStopParam {
 export class UpdateRouteStopsUseCase {
   constructor(private readonly repository: RouteRepository) {}
 
-  async execute(id: string, stops: UpdateRouteStopParam[], name?: string, isActive?: boolean, coordinates?: { lat: number; lng: number }[]) {
-    return await this.repository.updateStops(id, stops, name, isActive, coordinates);
+  async execute(id: string, stops: UpdateRouteStopParam[], direction: 'IDA' | 'VUELTA', name?: string, isActive?: boolean, coordinates?: { lat: number; lng: number }[]) {
+    return await this.repository.updateStops(id, stops, direction, name, isActive, coordinates);
   }
 }

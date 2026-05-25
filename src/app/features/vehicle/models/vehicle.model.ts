@@ -7,7 +7,7 @@ export enum VehicleStatus {
 export interface Vehicle {
   id: string;
   plate: string;
-  traccarDeviceId: number | null;
+  traccarDeviceId: string | null;
   year: number;
   status: VehicleStatus;
   passengerCapacity: number | null;

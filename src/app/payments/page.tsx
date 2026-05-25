@@ -1,0 +1,375 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { PaymentApiService, DailyTicketDto } from '@/app/features/payments/services/payment-api.service';
+import { VehicleApiService } from '@/app/features/vehicle/services/vehicle-api.service';
+import { DriverApiService } from '@/app/features/driver/services/driver-api.service';
+import { RouteApiService } from '@/app/features/route/services/route-api.service';
+import { VehicleDto } from '@/app/features/vehicle/dto/vehicle.dto';
+import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
+import styles from './page.module.css';
+
+const paymentApi = new PaymentApiService();
+const vehicleApi = new VehicleApiService();
+const driverApi = new DriverApiService();
+const routeApi = new RouteApiService();
+
+export default function PaymentsPage() {
+  const [tickets, setTickets] = useState<DailyTicketDto[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [timeFilter, setTimeFilter] = useState<'hoy' | 'semana'>('hoy');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [routes, setRoutes] = useState<any[]>([]);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    loadData();
+  }, [timeFilter]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // 1. Cargar tickets del backend real
+      const ticketsRes = await paymentApi.getTickets();
+      
+      // 2. Cargar vehículos
+      const vehiclesRes = await vehicleApi.getAll();
+
+      // 3. Cargar rutas
+      const routesRes = await routeApi.getList();
+      
+      if (ticketsRes.success && ticketsRes.data) {
+        setTickets(ticketsRes.data);
+      }
+      if (vehiclesRes.success && vehiclesRes.data) {
+        setVehicles(vehiclesRes.data);
+      }
+      if (routesRes.success && routesRes.data) {
+        setRoutes(routesRes.data);
+      }
+    } catch (e) {
+      console.error('Error al cargar datos en gestión de tickets:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filtrado de tickets por búsqueda
+  const filteredTickets = tickets.filter(ticket => {
+    const searchLower = searchTerm.toLowerCase();
+    const ticketIdMatch = ticket.id.toLowerCase().includes(searchLower) || `#TK-${ticket.id.substring(0, 4)}`.toLowerCase().includes(searchLower);
+    const vehicleMatch = ticket.vehicle?.plate.toLowerCase().includes(searchLower) || ticket.vehicle?.number.toLowerCase().includes(searchLower);
+    const driverMatch = ticket.driver?.name.toLowerCase().includes(searchLower);
+    
+    // Si la relación en el ticket está incompleta, buscamos en local
+    let localVehicleMatch = false;
+    if (!ticket.vehicle && vehicles.length > 0) {
+      const v = vehicles.find(item => item.id === ticket.vehicleId);
+      if (v) {
+        localVehicleMatch = v.plate.toLowerCase().includes(searchLower) || ((v as any).number && (v as any).number.toLowerCase().includes(searchLower));
+      }
+    }
+
+    return ticketIdMatch || vehicleMatch || driverMatch || localVehicleMatch;
+  });
+
+  // Paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTickets = filteredTickets.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+
+  // Cálculos dinámicos de KPIs
+  const totalRecaudadoHoy = tickets.reduce((sum, ticket) => sum + Number(ticket.totalAmount), 0);
+  
+  const totalUnidades = vehicles.length || 1;
+  const unidadesPagadas = new Set(tickets.map(t => t.vehicleId)).size;
+  const porcentajePagadas = Math.round((unidadesPagadas / totalUnidades) * 100);
+
+  const totalPendientes = totalUnidades - unidadesPagadas;
+  const tarifaEstimada = 60.50; // Tarifa estándar
+  const montoPendiente = totalPendientes * tarifaEstimada;
+
+  // Formateadores
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(val);
+  };
+
+  const getPaymentMethodDetails = (method: string) => {
+    switch (method.toUpperCase()) {
+      case 'TRANSFERENCIA':
+      case 'TRANSFERENCIA_BANCARIA':
+        return { label: 'Transferencia', icon: 'account_balance', color: '#0ea5e9' };
+      case 'TARJETA':
+        return { label: 'Tarjeta', icon: 'credit_card', color: '#8b5cf6' };
+      case 'BILLETERA_DIGITAL':
+        return { label: 'Billetera Digital', icon: 'smartphone', color: '#ec4899' };
+      default:
+        return { label: 'Efectivo', icon: 'payments', color: '#10b981' };
+    }
+  };
+
+  const getStatusBadgeStyle = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'ACTIVE':
+        return { background: '#dcfce7', color: '#15803d', label: 'Pagado' };
+      case 'VOIDED':
+        return { background: '#fee2e2', color: '#b91c1c', label: 'Anulado' };
+      default:
+        return { background: '#fef3c7', color: '#d97706', label: 'Pendiente' };
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className={styles.container}>
+        {/* Header Section */}
+        <div className={styles.headerSection}>
+          <div className={styles.titleGroup}>
+            <h1 className={styles.title}>Gestión de Tickets Diarios</h1>
+            <p className={styles.subtitle}>
+              Control administrativo de la flota urbana al {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          </div>
+          <Link href="/payments/new" className={styles.btnRegister}>
+            <span className="material-symbols-rounded">add_circle</span>
+            Registrar Nuevo Pago
+          </Link>
+        </div>
+
+        {/* KPIs Grid */}
+        <div className={styles.kpisGrid}>
+          {/* KPI 1: Recaudado */}
+          <div className={styles.statsCard}>
+            <div className={styles.statsIcon} style={{ color: '#2563eb', backgroundColor: '#eff6ff' }}>
+              <span className="material-symbols-rounded">monetization_on</span>
+            </div>
+            <div className={styles.statsInfo}>
+              <span className={styles.statsLabel}>Total Recaudado Hoy</span>
+              <div className={styles.statsValueRow}>
+                <span className={styles.statsValue}>{formatCurrency(totalRecaudadoHoy)}</span>
+                <span className={styles.statsTrend} style={{ color: '#16a34a' }}>+12.5% vs ayer</span>
+              </div>
+            </div>
+          </div>
+
+          {/* KPI 2: Unidades con pago */}
+          <div className={styles.statsCard}>
+            <div className={styles.statsIcon} style={{ color: '#16a34a', backgroundColor: '#f0fdf4' }}>
+              <span className="material-symbols-rounded">directions_bus</span>
+            </div>
+            <div className={styles.statsInfo}>
+              <span className={styles.statsLabel}>Unidades Con Pago</span>
+              <div className={styles.statsValueRow}>
+                <span className={styles.statsValue}>{porcentajePagadas}%</span>
+                <span className={styles.statsTrend}>
+                  {unidadesPagadas} de {totalUnidades} u.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* KPI 3: Pagos pendientes */}
+          <div className={styles.statsCard}>
+            <div className={styles.statsIcon} style={{ color: '#dc2626', backgroundColor: '#fef2f2' }}>
+              <span className="material-symbols-rounded">schedule</span>
+            </div>
+            <div className={styles.statsInfo}>
+              <span className={styles.statsLabel}>Pagos Pendientes</span>
+              <div className={styles.statsValueRow}>
+                <span className={styles.statsValue}>{formatCurrency(montoPendiente)}</span>
+                <span className={styles.statsTrend} style={{ color: '#ef4444' }}>
+                  {totalPendientes} pend.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Table Card */}
+        <div className={styles.mainCard}>
+          {/* Toolbar */}
+          <div className={styles.toolbar}>
+            <h3 className={styles.toolbarTitle}>Detalle de Tickets</h3>
+            <div className={styles.toolbarActions}>
+              <div className={styles.searchWrapper}>
+                <span className="material-symbols-rounded">search</span>
+                <input
+                  type="text"
+                  placeholder="Buscar tickets, conductores, placas..."
+                  className={styles.searchInput}
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+              
+              <div className={styles.segmentedControl}>
+                <button
+                  className={`${styles.segmentBtn} ${timeFilter === 'hoy' ? styles.segmentActive : ''}`}
+                  onClick={() => setTimeFilter('hoy')}
+                >
+                  Hoy
+                </button>
+                <button
+                  className={`${styles.segmentBtn} ${timeFilter === 'semana' ? styles.segmentActive : ''}`}
+                  onClick={() => setTimeFilter('semana')}
+                >
+                  Semana
+                </button>
+              </div>
+
+              <button className={styles.btnAction} onClick={loadData}>
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>refresh</span>
+                Actualizar
+              </button>
+            </div>
+          </div>
+
+          {/* Table View */}
+          <div className={styles.tableContainer}>
+            {loading ? (
+              <div className={styles.emptyState}>
+                <span className="material-symbols-rounded" style={{ fontSize: '48px', color: 'var(--primary)', animation: 'spin 1.5s linear infinite' }}>sync</span>
+                <p className={styles.emptyStateTitle}>Cargando información real...</p>
+              </div>
+            ) : currentTickets.length === 0 ? (
+              <div className={styles.emptyState}>
+                <span className="material-symbols-rounded" style={{ fontSize: '48px' }}>payments</span>
+                <h4 className={styles.emptyStateTitle}>No se encontraron tickets</h4>
+                <p className={styles.emptyStateDesc}>Registra salidas para comenzar a ver el recaudo e iniciar el monitoreo de unidades.</p>
+              </div>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.th}>ID Ticket</th>
+                    <th className={styles.th}>Vehículo</th>
+                    <th className={styles.th}>Conductor</th>
+                    <th className={styles.th}>Ruta</th>
+                    <th className={styles.th}>Sentido</th>
+                    <th className={styles.th}>Monto Total</th>
+                    <th className={styles.th}>Pago</th>
+                    <th className={styles.th}>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentTickets.map((ticket) => {
+                    // Resolver información enriquecida local si el join no viniera completo
+                    const vehicleObj = ticket.vehicle || vehicles.find(v => v.id === ticket.vehicleId);
+                    const driverName = ticket.driver?.name || "No asignado";
+                    
+                    // Obtener ruta asignada
+                    let routeName = "Sin Ruta";
+                    if (ticket.routeId) {
+                      const r = routes.find(item => item.id === ticket.routeId);
+                      if (r) {
+                        routeName = r.name;
+                      }
+                    }
+
+                    // Obtener sentido inicial desde daily_rounds
+                    const firstRound = ticket.rounds?.find(r => r.roundNumber === 1);
+                    const senseLabel = firstRound?.direction || 'IDA';
+
+                    const payMethod = getPaymentMethodDetails(ticket.paymentMethod);
+                    const statusStyle = getStatusBadgeStyle(ticket.status);
+
+                    return (
+                      <tr key={ticket.id} className={styles.tr}>
+                        <td className={styles.td}>
+                          <span className={styles.ticketId}>#TK-{ticket.id.substring(0, 5).toUpperCase()}</span>
+                        </td>
+                        <td className={styles.td}>
+                          <div className={styles.vehicleCell}>
+                            <div className={styles.vehicleIconWrapper}>
+                              <span className="material-symbols-rounded">directions_bus</span>
+                            </div>
+                            <div>
+                              <div className={styles.vehicleName}>Placa: {vehicleObj?.plate || "---"}</div>
+                              <small style={{ color: 'var(--outline)', fontSize: '11px' }}>Interno: {(vehicleObj as any)?.number || "---"}</small>
+                            </div>
+                          </div>
+                        </td>
+                        <td className={styles.td}>
+                          <span className={styles.conductorName}>{driverName}</span>
+                        </td>
+                        <td className={styles.td}>
+                          <span className={styles.routeBadge}>{routeName}</span>
+                        </td>
+                        <td className={styles.td}>
+                          <span 
+                            className={styles.senseBadge}
+                            style={{
+                              background: senseLabel === 'IDA' ? '#eff6ff' : '#faf5ff',
+                              color: senseLabel === 'IDA' ? '#2563eb' : '#7c3aed'
+                            }}
+                          >
+                            {senseLabel}
+                          </span>
+                        </td>
+                        <td className={styles.td}>
+                          <span className={styles.amount}>{formatCurrency(Number(ticket.totalAmount))}</span>
+                        </td>
+                        <td className={styles.td}>
+                          <div className={styles.payMethodCell} style={{ color: payMethod.color }}>
+                            <span className={`material-symbols-rounded ${styles.payMethodIcon}`} style={{ color: payMethod.color }}>{payMethod.icon}</span>
+                            <span>{payMethod.label}</span>
+                          </div>
+                        </td>
+                        <td className={styles.td}>
+                          <span className={styles.statusBadge} style={{ background: statusStyle.background, color: statusStyle.color }}>
+                            {statusStyle.label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Pagination Section */}
+          {!loading && filteredTickets.length > itemsPerPage && (
+            <div className={styles.pagination}>
+              <span className={styles.paginationText}>
+                Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, filteredTickets.length)} de {filteredTickets.length} tickets
+              </span>
+              <div className={styles.paginationButtons}>
+                <button
+                  className={styles.btnPageNav}
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                >
+                  <span className="material-symbols-rounded">chevron_left</span>
+                </button>
+                {Array.from({ length: totalPages }).map((_, index) => (
+                  <button
+                    key={index}
+                    className={`${styles.btnPage} ${currentPage === index + 1 ? styles.pageActive : ''}`}
+                    onClick={() => setCurrentPage(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+                <button
+                  className={styles.btnPageNav}
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                >
+                  <span className="material-symbols-rounded">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

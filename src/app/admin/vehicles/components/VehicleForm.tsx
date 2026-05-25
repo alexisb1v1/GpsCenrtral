@@ -34,7 +34,7 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
   // Form State
   const [formData, setFormData] = useState({
     plate: vehicle?.plate || '',
-    traccarDeviceId: vehicle?.traccarDeviceId || 0,
+    uniqueId: vehicle?.traccarDeviceId || '',
     year: vehicle?.year || new Date().getFullYear(),
     status: vehicle?.status || VehicleStatus.OPERATIVO,
     passengerCapacity: vehicle?.passengerCapacity || 0,
@@ -85,7 +85,7 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
     const { name, value } = e.target;
     setFormData(prev => ({ 
       ...prev, 
-      [name]: name === 'year' || name === 'passengerCapacity' || name === 'traccarDeviceId' ? parseInt(value) || 0 : value 
+      [name]: name === 'year' || name === 'passengerCapacity' ? parseInt(value) || 0 : value 
     }));
   };
 
@@ -101,7 +101,12 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
     try {
       let result;
       if (isEdit && vehicle) {
-        result = await updateVehicleUseCase.execute(vehicle.id, formData);
+        // Al actualizar, mapeamos uniqueId (campo del form) → traccarDeviceId (campo del backend)
+        const { uniqueId, ...restFormData } = formData;
+        result = await updateVehicleUseCase.execute(vehicle.id, {
+          ...restFormData,
+          traccarDeviceId: uniqueId || undefined,
+        });
       } else {
         result = await createVehicleUseCase.execute(formData as CreateVehicleDto);
       }
@@ -201,13 +206,13 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
               />
             </div>
             <div className={styles.field}>
-              <label>Traccar Device ID</label>
+              <label>Identificador (IMEI / ID App)</label>
               <input 
-                type="number" 
-                name="traccarDeviceId" 
+                type="text" 
+                name="uniqueId" 
                 className={styles.input} 
-                placeholder="ID del Dispositivo GPS" 
-                value={formData.traccarDeviceId}
+                placeholder="Ej. 864455001122334" 
+                value={formData.uniqueId}
                 onChange={handleChange}
               />
             </div>

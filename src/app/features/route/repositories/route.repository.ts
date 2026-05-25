@@ -9,7 +9,7 @@ export interface RouteRepository {
   updateStops(
     id: string,
     stops: {
-      geofenceId?: string;
+      traccarGeofenceId?: number;
       name: string;
       lat: number;
       lng: number;
@@ -17,6 +17,7 @@ export interface RouteRepository {
       minutesFromStart: number;
       polygonCoordinates?: { lat: number; lng: number }[];
     }[],
+    direction: 'IDA' | 'VUELTA',
     name?: string,
     isActive?: boolean,
     coordinates?: { lat: number; lng: number }[]

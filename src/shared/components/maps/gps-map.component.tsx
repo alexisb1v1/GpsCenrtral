@@ -29,6 +29,8 @@ export interface MapVehicle {
   speed: number;
   isActive: boolean;
   lastUpdated: string;
+  dailyTicketId?: string | null;
+  hasActiveTicket?: boolean;
 }
 
 export interface GpsMapProps {
@@ -42,6 +44,7 @@ export interface GpsMapProps {
 
   // --- DATOS GEOGRÁFICOS ---
   routesCoordinates?: MapCoordinate[]; // Lista de puntos que forman la línea de la ruta
+  alternativeRouteCoordinates?: MapCoordinate[]; // Lista de puntos de la otra dirección (guía visual)
   stops?: MapStop[];                  // Lista de paraderos / puntos de control
 
   // --- MONITOREO EN TIEMPO REAL ---
@@ -60,6 +63,7 @@ export interface GpsMapProps {
 export default function GpsMap({
   mode,
   routesCoordinates = [],
+  alternativeRouteCoordinates = [],
   stops = [],
   vehicles = [],
   activeVehicleId,
@@ -78,8 +82,21 @@ export default function GpsMap({
     stopsRef.current = stops;
   }, [stops]);
 
+  // Referencias para evitar bugs de stale closures en los callbacks de Leaflet Geoman
+  const onRouteChangedRef = useRef(onRouteChanged);
+  const onStopsChangedRef = useRef(onStopsChanged);
+
+  useEffect(() => {
+    onRouteChangedRef.current = onRouteChanged;
+  }, [onRouteChanged]);
+
+  useEffect(() => {
+    onStopsChangedRef.current = onStopsChanged;
+  }, [onStopsChanged]);
+
   // Referencias para capas del mapa y evitar duplicaciones
   const routePolylineRef = useRef<any>(null);
+  const alternativePolylineRef = useRef<any>(null);
   const stopMarkersRef = useRef<any[]>([]);
   const vehicleMarkersRef = useRef<Map<string, any>>(new Map());
 
@@ -101,13 +118,13 @@ export default function GpsMap({
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      // Evitar doble inicialización en React StrictMode u operaciones concurrentes
-      if (mapContainerRef.current && (mapContainerRef.current as any)._leaflet_id) {
+      // Evitar doble inicialización o si el contenedor se desmontó durante la carga asíncrona
+      if (!mapContainerRef.current || (mapContainerRef.current as any)._leaflet_id) {
         return;
       }
 
       // Crear mapa
-      mapInstance = L.map(mapContainerRef.current!).setView(center, zoom);
+      mapInstance = L.map(mapContainerRef.current).setView(center, zoom);
       mapRef.current = mapInstance;
 
       // Capa de mapas OpenStreetMap (Mapa premium de calles)
@@ -146,17 +163,17 @@ export default function GpsMap({
           const { layer, shape } = e;
 
           // Si el usuario dibuja una polilínea (Ruta)
-          if ((shape === 'Line' || shape === 'Polyline') && onRouteChanged) {
+          if ((shape === 'Line' || shape === 'Polyline') && onRouteChangedRef.current) {
             const pathPoints = layer.getLatLngs().map((latlng: any) => ({
               lat: latlng.lat,
               lng: latlng.lng,
             }));
-            onRouteChanged(pathPoints);
+            onRouteChangedRef.current(pathPoints);
             layer.remove(); // Eliminamos la capa dibujada temporalmente para que la controle React
           }
 
           // Si el usuario coloca un marcador, polígono o rectángulo (Paradero)
-          if ((shape === 'Marker' || shape === 'Polygon' || shape === 'Rectangle') && onStopsChanged) {
+          if ((shape === 'Marker' || shape === 'Polygon' || shape === 'Rectangle') && onStopsChangedRef.current) {
             let lat = 0;
             let lng = 0;
             let polygonCoordinates: MapCoordinate[] = [];
@@ -189,7 +206,7 @@ export default function GpsMap({
               minutesFromStart: currentStopsList.length > 0 ? (currentStopsList[currentStopsList.length - 1].minutesFromStart + 10) : 0,
               polygonCoordinates: polygonCoordinates.length > 0 ? polygonCoordinates : undefined,
             };
-            onStopsChanged([...currentStopsList, newStop]);
+            onStopsChangedRef.current([...currentStopsList, newStop]);
             layer.remove(); // Eliminamos el elemento temporal para que React tome el control
           }
         });
@@ -238,9 +255,12 @@ export default function GpsMap({
   // 2. Sincronización dinámica de los datos geográficos en el mapa
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
-    const map = mapRef.current;
+    const currentMap = mapRef.current;
 
     const syncLayers = async () => {
+      // Si el mapa ya se destruyó o se desmontó en React, cancelamos de inmediato
+      if (!mapRef.current || !mapContainerRef.current) return;
+
       const L = await import('leaflet');
 
       // --- A. DIBUJAR RUTA (Polilínea) ---
@@ -249,14 +269,30 @@ export default function GpsMap({
         routePolylineRef.current = null;
       }
 
+      // --- A.1. DIBUJAR RUTA DE GUÍA ALTERNATIVA (Línea punteada) ---
+      if (alternativePolylineRef.current) {
+        alternativePolylineRef.current.remove();
+        alternativePolylineRef.current = null;
+      }
+
+      if (alternativeRouteCoordinates.length > 0) {
+        const altLatlngs = alternativeRouteCoordinates.map(c => [c.lat, c.lng]);
+        alternativePolylineRef.current = L.polyline(altLatlngs as any, {
+          color: '#ef4444', // Rojo Carmín Brillante (Vuelta)
+          weight: 6,
+          opacity: 0.85,
+          lineJoin: 'round',
+        }).addTo(currentMap);
+      }
+
       if (routesCoordinates.length > 0) {
         const latlngs = routesCoordinates.map(c => [c.lat, c.lng]);
         routePolylineRef.current = L.polyline(latlngs as any, {
-          color: '#2563eb', // Azul Vectura
-          weight: 5,
-          opacity: 0.8,
+          color: '#2563eb', // Azul Vectura (Ida)
+          weight: 6,
+          opacity: 0.85,
           lineJoin: 'round',
-        }).addTo(map);
+        }).addTo(currentMap);
 
         if (mode === 'admin') {
           // Permitir editar el trayecto visualmente
@@ -269,7 +305,7 @@ export default function GpsMap({
               lat: latlng.lat,
               lng: latlng.lng,
             }));
-            if (onRouteChanged) onRouteChanged(newCoords);
+            onRouteChangedRef.current?.(newCoords);
           });
         }
       }
@@ -299,7 +335,7 @@ export default function GpsMap({
             fillOpacity: 0.15,
             weight: 2,
             dashArray: '5, 5',
-          }).addTo(map);
+          }).addTo(currentMap);
           stopMarkersRef.current.push(polyLayer);
         }
 
@@ -330,7 +366,7 @@ export default function GpsMap({
         const marker = L.marker([stop.lat, stop.lng], {
           icon: stopIcon,
           draggable: mode === 'admin',
-        }).addTo(map);
+        }).addTo(currentMap);
 
         // Popup con información estilizada
         marker.bindPopup(`
@@ -351,7 +387,7 @@ export default function GpsMap({
               lat,
               lng,
             };
-            if (onStopsChanged) onStopsChanged(updatedStops);
+            onStopsChangedRef.current?.(updatedStops);
           });
 
           // Doble click para eliminar paradero
@@ -359,7 +395,7 @@ export default function GpsMap({
             const updatedStops = stops
               .filter((_, idx) => idx !== index)
               .map((s, idx) => ({ ...s, stopOrder: idx + 1 }));
-            if (onStopsChanged) onStopsChanged(updatedStops);
+            onStopsChangedRef.current?.(updatedStops);
           });
         }
 
@@ -411,18 +447,39 @@ export default function GpsMap({
 
         const marker = L.marker([vehicle.lat, vehicle.lng], {
           icon: vehicleIcon,
-        }).addTo(map);
+        }).addTo(currentMap);
+
+        const ticketStatusHtml = vehicle.hasActiveTicket !== undefined 
+          ? `
+            <p style="margin: 0 0 6px 0; color: #475569; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+              <strong>Salida:</strong> 
+              <span style="
+                background-color: ${vehicle.hasActiveTicket ? '#dcfce7' : '#fee2e2'};
+                color: ${vehicle.hasActiveTicket ? '#15803d' : '#b91c1c'};
+                font-weight: 700;
+                padding: 1px 6px;
+                border-radius: 4px;
+                font-size: 10px;
+                text-transform: uppercase;
+                display: inline-block;
+              ">
+                ${vehicle.hasActiveTicket ? 'Pagado' : 'Pendiente'}
+              </span>
+            </p>
+          `
+          : '';
 
         marker.bindPopup(`
-          <div style="font-family: 'Inter', sans-serif; padding: 6px; min-width: 170px;">
-            <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 14px; display: flex; align-items: center; gap: 6px; font-weight: 700;">
+          <div style="font-family: 'Inter', sans-serif; padding: 6px; min-width: 180px;">
+            <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 14px; display: flex; align-items: center; gap: 6px; font-weight: 700; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
               <span class="material-symbols-rounded" style="color: #2563eb; font-size: 18px;">directions_bus</span>
               ${vehicle.plate}
             </h4>
             <p style="margin: 0 0 4px 0; color: #475569; font-size: 12px;"><strong>Chofer:</strong> ${vehicle.driverName || 'No asignado'}</p>
             <p style="margin: 0 0 4px 0; color: #475569; font-size: 12px;"><strong>Velocidad:</strong> ${vehicle.speed} km/h</p>
-            <p style="margin: 0 0 4px 0; color: #475569; font-size: 12px;"><strong>Estado:</strong> <span style="color: ${vehicle.isActive ? '#10b981' : '#ef4444'}; font-weight: 600;">${vehicle.isActive ? 'Activo' : 'Inactivo'}</span></p>
-            <p style="margin: 0; color: #94a3b8; font-size: 10px; border-top: 1px solid #e2e8f0; padding-top: 4px; marginTop: 4px;"><strong>Actualizado:</strong> ${new Date(vehicle.lastUpdated).toLocaleTimeString()}</p>
+            <p style="margin: 0 0 4px 0; color: #475569; font-size: 12px;"><strong>Movimiento:</strong> <span style="color: ${vehicle.isActive ? '#10b981' : '#64748b'}; font-weight: 600;">${vehicle.isActive ? 'En movimiento' : 'Detenido'}</span></p>
+            ${ticketStatusHtml}
+            <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 10px; border-top: 1px solid #f1f5f9; padding-top: 4px;"><strong>Actualizado:</strong> ${new Date(vehicle.lastUpdated).toLocaleTimeString()}</p>
           </div>
         `);
 
@@ -430,13 +487,13 @@ export default function GpsMap({
 
         // Centrado dinámico si es la unidad activa elegida
         if (activeVehicleId && activeVehicleId === vehicle.id) {
-          map.setView([vehicle.lat, vehicle.lng], map.getZoom(), { animate: true });
+          currentMap.setView([vehicle.lat, vehicle.lng], currentMap.getZoom(), { animate: true });
         }
       });
     };
 
     syncLayers();
-  }, [mapLoaded, routesCoordinates, stops, vehicles, activeVehicleId]);
+  }, [mapLoaded, routesCoordinates, alternativeRouteCoordinates, stops, vehicles, activeVehicleId]);
 
   return (
     <div style={{

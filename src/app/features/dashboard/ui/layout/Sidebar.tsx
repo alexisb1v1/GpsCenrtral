@@ -10,7 +10,7 @@ import { useBranding } from '@/app/shared/providers/BrandingContext';
 const mainMenuItems = [
   { id: 'dashboard', label: 'Panel de Control', icon: 'dashboard', href: '/dashboard' },
   { id: 'fleet', label: 'Monitoreo de Flota', icon: 'directions_bus', href: '/fleet' },
-  { id: 'payments', label: 'Pagos', icon: 'payments', href: '/payments' },
+  { id: 'payments', label: 'Registro de Salida', icon: 'payments', href: '/payments' },
   { id: 'penalties', label: 'Sanciones', icon: 'gavel', href: '/penalties' },
   { id: 'history', label: 'Historial de Salidas', icon: 'history', href: '/history' },
 ];

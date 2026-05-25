@@ -1,4 +1,3 @@
-/* src/app/admin/routes/[id]/stops/page.tsx */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -6,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import { getRouteDetailUseCase, updateRouteStopsUseCase, Route } from '@/app/features/route';
-import { getGeofencesListUseCase, Geofence } from '@/app/features/geofence';
 import { useToast } from '@/app/shared/providers/ToastProvider';
 import styles from './Stops.module.css';
 
@@ -19,21 +17,14 @@ const GpsMap = dynamic(
 interface ExtendedRouteStop {
   id?: string;
   routeId?: string;
-  geofenceId?: string;
-  name?: string;
-  lat?: number;
-  lng?: number;
+  traccarGeofenceId?: number;
+  type?: 'START' | 'CHECKPOINT' | 'END';
+  name: string;
+  lat: number;
+  lng: number;
   stopOrder: number;
   minutesFromStart: number;
   polygonCoordinates?: { lat: number; lng: number }[];
-  geofence?: {
-    id: string;
-    name: string;
-    type: string;
-    status: string;
-    lat?: number;
-    lng?: number;
-  };
 }
 
 export default function RouteStopsPage() {
@@ -43,12 +34,21 @@ export default function RouteStopsPage() {
   const { success: showSuccess, error: showError } = useToast();
 
   const [route, setRoute] = useState<Route | null>(null);
-  const [geofences, setGeofences] = useState<Geofence[]>([]);
-  const [currentStops, setCurrentStops] = useState<ExtendedRouteStop[]>([]);
+  const [direction, setDirection] = useState<'IDA' | 'VUELTA'>('IDA');
+  const [outboundStops, setOutboundStops] = useState<ExtendedRouteStop[]>([]);
+  const [inboundStops, setInboundStops] = useState<ExtendedRouteStop[]>([]);
+  const [outboundPath, setOutboundPath] = useState<{ lat: number; lng: number }[]>([]);
+  const [inboundPath, setInboundPath] = useState<{ lat: number; lng: number }[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string>('Sin guardar');
-  const [routePath, setRoutePath] = useState<{ lat: number; lng: number }[]>([]);
+
+  // Estados derivados dinámicos basados en la pestaña activa
+  const currentStops = direction === 'IDA' ? outboundStops : inboundStops;
+  const setCurrentStops = direction === 'IDA' ? setOutboundStops : setInboundStops;
+  const routePath = direction === 'IDA' ? outboundPath : inboundPath;
+  const setRoutePath = direction === 'IDA' ? setOutboundPath : setInboundPath;
 
   // Estados editables del formulario
   const [routeName, setRouteName] = useState('');
@@ -63,49 +63,59 @@ export default function RouteStopsPage() {
 
   useEffect(() => {
     if (id) {
-      loadData();
+      loadData(true);
     }
   }, [id]);
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadData = async (showLoadingOverlay = false) => {
+    if (showLoadingOverlay) {
+      setIsLoading(true);
+    }
     // 1. Cargar detalle de la ruta y sus paraderos actuales
     const routeResult = await getRouteDetailUseCase.execute(id);
-    // 2. Cargar geocercas activas del tenant
-    const geofencesResult = await getGeofencesListUseCase.execute();
 
     routeResult.match(
       (routeData) => {
         setRoute(routeData);
         setRouteName(routeData.name);
         setRouteStatus(routeData.isActive);
-        setRoutePath(routeData.coordinates || []); // Cargar coordenadas del trayecto de la ruta
-        // Ordenar paradas por stopOrder antes de guardarlo en estado
-        const sortedStops = [...(routeData.stops || [])].sort((a, b) => a.stopOrder - b.stopOrder);
         
-        // Mapear paradas asegurando latitud/longitud e integrando geometrías
-        const mappedStops: ExtendedRouteStop[] = sortedStops.map(s => ({
+        // Cargar trayectos por separado
+        setOutboundPath(routeData.outboundCoordinates || []);
+        setInboundPath(routeData.inboundCoordinates || []);
+
+        const allStops = routeData.stops || [];
+
+        // 1. Cargar y ordenar paradas de IDA
+        const rawOutbound = allStops.filter(s => s.direction === 'IDA');
+        const sortedOutbound = [...rawOutbound].sort((a, b) => a.stopOrder - b.stopOrder);
+        const mappedOutbound: ExtendedRouteStop[] = sortedOutbound.map(s => ({
           ...s,
-          lat: (s.geofence as any)?.lat ?? (s as any).lat,
-          lng: (s.geofence as any)?.lng ?? (s as any).lng,
-          name: s.geofence?.name ?? (s as any).name,
-          polygonCoordinates: s.polygonCoordinates // Cargar polígono del paradero
+          lat: s.lat ?? 0,
+          lng: s.lng ?? 0,
+          name: s.name || `Paradero ${s.stopOrder}`,
+          polygonCoordinates: s.polygonCoordinates
         }));
-        
-        setCurrentStops(mappedStops);
+        setOutboundStops(mappedOutbound);
+
+        // 2. Cargar y ordenar paradas de VUELTA
+        const rawInbound = allStops.filter(s => s.direction === 'VUELTA');
+        const sortedInbound = [...rawInbound].sort((a, b) => a.stopOrder - b.stopOrder);
+        const mappedInbound: ExtendedRouteStop[] = sortedInbound.map(s => ({
+          ...s,
+          lat: s.lat ?? 0,
+          lng: s.lng ?? 0,
+          name: s.name || `Paradero ${s.stopOrder}`,
+          polygonCoordinates: s.polygonCoordinates
+        }));
+        setInboundStops(mappedInbound);
+
         setLastSaved('Datos recién cargados');
       },
       (err) => {
         showError('Error al cargar la ruta', err.message);
         router.push('/admin/routes');
       }
-    );
-
-    geofencesResult.match(
-      (geofenceData) => {
-        setGeofences(geofenceData.filter(g => g.status === 'ACTIVE'));
-      },
-      (err) => showError('Error al cargar puntos de control', err.message)
     );
 
     setIsLoading(false);
@@ -156,11 +166,7 @@ export default function RouteStopsPage() {
     const list = [...currentStops];
     list[index] = {
       ...list[index],
-      name: name,
-      geofence: list[index].geofence ? {
-        ...list[index].geofence!,
-        name: name
-      } : undefined
+      name: name
     };
     setCurrentStops(list);
   };
@@ -171,28 +177,14 @@ export default function RouteStopsPage() {
       const existing = currentStops[idx];
       return {
         id: existing?.id,
-        geofenceId: ms.geofenceId || existing?.geofenceId,
-        name: ms.name || existing?.geofence?.name || existing?.name || `Paradero ${idx + 1}`,
+        traccarGeofenceId: ms.traccarGeofenceId || existing?.traccarGeofenceId,
+        type: (idx === 0 ? 'START' : idx === mapStops.length - 1 ? 'END' : 'CHECKPOINT') as 'START' | 'CHECKPOINT' | 'END',
+        name: ms.name || existing?.name || `Paradero ${idx + 1}`,
         lat: ms.lat,
         lng: ms.lng,
         stopOrder: idx + 1,
         minutesFromStart: ms.minutesFromStart ?? existing?.minutesFromStart ?? (idx > 0 ? (currentStops[idx-1]?.minutesFromStart + 10) : 0),
         polygonCoordinates: ms.polygonCoordinates || existing?.polygonCoordinates, // Mantener geometría del polígono/rectángulo
-        geofence: ms.geofenceId ? {
-          id: ms.geofenceId,
-          name: ms.name || existing?.geofence?.name || `Paradero ${idx + 1}`,
-          type: idx === 0 ? 'START' : idx === mapStops.length - 1 ? 'END' : 'CHECKPOINT',
-          status: 'ACTIVE',
-          lat: ms.lat,
-          lng: ms.lng
-        } : {
-          id: '',
-          name: ms.name || existing?.name || `Paradero ${idx + 1}`,
-          type: idx === 0 ? 'START' : idx === mapStops.length - 1 ? 'END' : 'CHECKPOINT',
-          status: 'ACTIVE',
-          lat: ms.lat,
-          lng: ms.lng
-        }
       };
     });
     setCurrentStops(updatedStops);
@@ -215,14 +207,7 @@ export default function RouteStopsPage() {
       lng,
       stopOrder: currentStops.length + 1,
       minutesFromStart: modalMinutes,
-      geofence: {
-        id: '',
-        name: modalStopName || `Paradero ${currentStops.length + 1}`,
-        type: currentStops.length === 0 ? 'START' : 'CHECKPOINT',
-        status: 'ACTIVE',
-        lat,
-        lng
-      }
+      type: currentStops.length === 0 ? 'START' : 'CHECKPOINT'
     };
 
     setCurrentStops([...currentStops, newStop]);
@@ -241,23 +226,23 @@ export default function RouteStopsPage() {
     
     // Preparar payload para el backend con el formato esperado por RouteStopItemDto
     const payload = currentStops.map(s => ({
-      geofenceId: s.geofenceId || undefined,
-      name: s.name || s.geofence?.name || `Paradero ${s.stopOrder}`,
-      lat: s.geofence?.lat ?? s.lat ?? 0,
-      lng: s.geofence?.lng ?? s.lng ?? 0,
+      traccarGeofenceId: s.traccarGeofenceId || undefined,
+      name: s.name || `Paradero ${s.stopOrder}`,
+      lat: s.lat ?? 0,
+      lng: s.lng ?? 0,
       stopOrder: s.stopOrder,
       minutesFromStart: s.minutesFromStart,
       polygonCoordinates: s.polygonCoordinates // Enviar geometría del paradero
     }));
 
-    const result = await updateRouteStopsUseCase.execute(id, payload, routeName, routeStatus, routePath);
+    const result = await updateRouteStopsUseCase.execute(id, payload, direction, routeName, routeStatus, routePath);
 
     result.match(
       () => {
-        showSuccess('Guardado exitoso', 'La ruta y secuencia de paraderos se ha actualizado correctamente.');
+        showSuccess('Guardado exitoso', `La ruta y paraderos de ${direction === 'IDA' ? 'IDA' : 'VUELTA'} se han guardado correctamente.`);
         const now = new Date();
         setLastSaved(`Hoy a las ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
-        loadData(); // Recargar datos frescos
+        loadData(false); // Recargar de fondo de forma fluida y sin overlay
       },
       (err) => {
         showError('Error al guardar', err.message);
@@ -301,10 +286,10 @@ export default function RouteStopsPage() {
 
   // Convertir currentStops al formato MapStop para GpsMap
   const mapStopsFormatted = currentStops.map(s => ({
-    geofenceId: s.geofenceId,
-    name: s.name || s.geofence?.name,
-    lat: s.geofence?.lat ?? s.lat ?? 0,
-    lng: s.geofence?.lng ?? s.lng ?? 0,
+    traccarGeofenceId: s.traccarGeofenceId,
+    name: s.name,
+    lat: s.lat ?? 0,
+    lng: s.lng ?? 0,
     stopOrder: s.stopOrder,
     minutesFromStart: s.minutesFromStart,
     polygonCoordinates: s.polygonCoordinates
@@ -358,6 +343,26 @@ export default function RouteStopsPage() {
               </div>
             </div>
 
+            {/* Pestañas de Dirección: Ida / Vuelta */}
+            <div className={styles.directionTabsContainer}>
+              <button 
+                type="button"
+                className={`${styles.directionTab} ${direction === 'IDA' ? styles.directionTabActive : ''}`}
+                onClick={() => setDirection('IDA')}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>arrow_forward</span>
+                Ruta de Ida
+              </button>
+              <button 
+                type="button"
+                className={`${styles.directionTab} ${direction === 'VUELTA' ? styles.directionTabActive : ''}`}
+                onClick={() => setDirection('VUELTA')}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>arrow_back</span>
+                Ruta de Vuelta
+              </button>
+            </div>
+
             {/* Secuencia de Paraderos */}
             <div className={styles.sectionHeader}>
               Puntos de Control / Paraderos
@@ -381,14 +386,14 @@ export default function RouteStopsPage() {
                       
                       <div className={styles.stopContent}>
                         <input
-                          type="text"
-                          className={styles.stopNameInput}
-                          value={stop.name || stop.geofence?.name || ''}
-                          onChange={(e) => handleNameChange(index, e.target.value)}
-                          placeholder="Nombre del paradero"
+                           type="text"
+                           className={styles.stopNameInput}
+                           value={stop.name || ''}
+                           onChange={(e) => handleNameChange(index, e.target.value)}
+                           placeholder="Nombre del paradero"
                         />
                         <div className={styles.stopMetaText}>
-                          Lat: {Number(stop.geofence?.lat ?? stop.lat ?? 0).toFixed(5)} • Lng: {Number(stop.geofence?.lng ?? stop.lng ?? 0).toFixed(5)}
+                           Lat: {Number(stop.lat ?? 0).toFixed(5)} • Lng: {Number(stop.lng ?? 0).toFixed(5)}
                         </div>
                       </div>
                     </div>
@@ -469,6 +474,7 @@ export default function RouteStopsPage() {
               mode="admin"
               stops={mapStopsFormatted}
               routesCoordinates={routePath}
+              alternativeRouteCoordinates={direction === 'IDA' ? inboundPath : outboundPath}
               onStopsChanged={handleStopsChangedFromMap}
               onRouteChanged={setRoutePath}
             />

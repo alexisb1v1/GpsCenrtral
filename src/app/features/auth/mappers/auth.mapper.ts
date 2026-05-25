@@ -8,6 +8,7 @@ export const loginDtoToSession = (dto: LoginResponseDto): AuthSession => {
       id: dto.user.id,
       email: dto.user.email,
       name: dto.user.name,
+      tenantId: dto.user.tenantId,
     },
     token: dto.token,
   };

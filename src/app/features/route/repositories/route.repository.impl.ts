@@ -4,7 +4,6 @@ import { Route } from '../models/route.model';
 import { RouteRepository } from './route.repository';
 import { RouteApiService } from '../services/route-api.service';
 import { RouteDto } from '../dto/route.dto';
-import { GeofenceType } from '@/app/features/geofence';
 
 export class RouteRepositoryImpl implements RouteRepository {
   constructor(private readonly api: RouteApiService) {}
@@ -42,7 +41,7 @@ export class RouteRepositoryImpl implements RouteRepository {
   updateStops(
     id: string,
     stops: {
-      geofenceId?: string;
+      traccarGeofenceId?: number;
       name: string;
       lat: number;
       lng: number;
@@ -50,12 +49,13 @@ export class RouteRepositoryImpl implements RouteRepository {
       minutesFromStart: number;
       polygonCoordinates?: { lat: number; lng: number }[];
     }[],
+    direction: 'IDA' | 'VUELTA',
     name?: string,
     isActive?: boolean,
     coordinates?: { lat: number; lng: number }[]
   ): ResultAsync<void, DomainError> {
     return ResultAsync.fromPromise(
-      this.api.updateStops(id, { stops, name, isActive, coordinates }),
+      this.api.updateStops(id, { stops, direction, name, isActive, coordinates }),
       (error) => this.handleError(error)
     ).andThen(response => {
       if (!response.success) return err(this.handleApiError(response));
@@ -69,24 +69,22 @@ export class RouteRepositoryImpl implements RouteRepository {
       tenantId: dto.tenantId,
       name: dto.name,
       isActive: dto.isActive,
-      coordinates: (dto as any).coordinates, // Mapear recorrido
+      outboundCoordinates: dto.outboundCoordinates,
+      inboundCoordinates: dto.inboundCoordinates,
       createdAt: new Date(dto.createdAt),
       updatedAt: new Date(dto.updatedAt),
       stops: dto.stops?.map(stop => ({
         id: stop.id,
         routeId: stop.routeId,
-        geofenceId: stop.geofenceId,
+        traccarGeofenceId: stop.traccarGeofenceId,
+        type: stop.type,
         stopOrder: stop.stopOrder,
         minutesFromStart: stop.minutesFromStart,
-        polygonCoordinates: (stop as any).coordinates, // Mapear geometría del paradero
-        geofence: stop.geofence ? {
-          id: stop.geofence.id,
-          name: stop.geofence.name,
-          type: stop.geofence.type as GeofenceType,
-          status: stop.geofence.status,
-          lat: (stop.geofence as any).lat,
-          lng: (stop.geofence as any).lng,
-        } : undefined,
+        direction: stop.direction,
+        name: stop.name,
+        lat: stop.lat ?? 0,
+        lng: stop.lng ?? 0,
+        polygonCoordinates: stop.coordinates, // Mapear geometría del paradero
       })),
     };
   }

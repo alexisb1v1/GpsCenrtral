@@ -511,3 +511,42 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Pestañas de dirección (Ida / Vuelta) */
+.directionTabsContainer {
+  display: flex;
+  margin: 0rem 2rem 1rem 2rem;
+  background-color: #f1f5f9;
+  padding: 0.25rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.directionTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  background: none;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+}
+
+.directionTab:hover:not(.directionTabActive) {
+  color: #334155;
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.directionTabActive {
+  background-color: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}

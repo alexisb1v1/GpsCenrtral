@@ -1,16 +1,15 @@
 export interface RouteStopDto {
   id?: string;
   routeId?: string;
-  geofenceId: string;
+  traccarGeofenceId?: number;
+  type?: 'START' | 'CHECKPOINT' | 'END';
+  name: string;
+  lat?: number;
+  lng?: number;
   stopOrder: number;
   minutesFromStart: number;
+  direction: 'IDA' | 'VUELTA';
   coordinates?: { lat: number; lng: number }[]; // Geometría del paradero
-  geofence?: {
-    id: string;
-    name: string;
-    type: 'START' | 'CHECKPOINT' | 'END';
-    status: string;
-  };
 }
 
 export interface RouteDto {
@@ -18,7 +17,8 @@ export interface RouteDto {
   tenantId: string;
   name: string;
   isActive: boolean;
-  coordinates?: { lat: number; lng: number }[]; // Trayecto de la ruta
+  outboundCoordinates?: { lat: number; lng: number }[]; // Trayecto de ida
+  inboundCoordinates?: { lat: number; lng: number }[];  // Trayecto de vuelta
   createdAt: string;
   updatedAt: string;
   stops?: RouteStopDto[];
@@ -31,8 +31,9 @@ export interface CreateRouteRequest {
 export interface UpdateRouteStopsRequest {
   name?: string;
   isActive?: boolean;
+  direction: 'IDA' | 'VUELTA';
   stops: {
-    geofenceId?: string;
+    traccarGeofenceId?: number;
     name: string;
     lat: number;
     lng: number;

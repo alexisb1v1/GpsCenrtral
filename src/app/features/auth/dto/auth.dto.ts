@@ -5,6 +5,7 @@ export interface LoginResponseDto {
     id: string;
     email: string;
     name: string;
+    tenantId?: string;
   };
   token: string;
 }
