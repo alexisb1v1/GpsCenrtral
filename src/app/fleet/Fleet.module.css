@@ -286,7 +286,7 @@
 /* SOPORTE RESPONSIVE (MOBILE PWA FIRST) */
 @media (max-width: 768px) {
   .container {
-    height: calc(100vh - 56px) !important; /* Altura de la ventana restando el bottom navbar */
+    height: calc(100vh - 56px) !important; /* Altura restando solo la cabecera (topbar) */
   }
 
   .mainLayout {
@@ -307,7 +307,7 @@
 
   .leftPanel {
     position: absolute !important;
-    bottom: 64px; /* Posicionado exactamente por encima del menú inferior flotante */
+    bottom: 16px; /* Posicionado elegantemente cerca del borde inferior físico al no tener barra inferior */
     left: 12px;
     right: 12px;
     width: calc(100% - 24px) !important;
@@ -322,9 +322,9 @@
     overflow: hidden;
   }
 
-  /* Cuando el listado móvil está expandido (Bottom Sheet flotante) */
+  /* Cuando el listado móvil está expandido (Bottom Sheet flotante de mayor tamaño) */
   .leftPanelMobileExpanded {
-    height: calc(55vh - 64px) !important; /* Crece elegantemente sobre la pantalla móvil */
+    height: 60vh !important; /* Crece ganando un 20% más de espacio libre de visualización */
   }
 
   /* Ocultar elementos si el panel lateral móvil está colapsado */

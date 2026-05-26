@@ -50,6 +50,7 @@ export interface GpsMapProps {
   // --- MONITOREO EN TIEMPO REAL ---
   vehicles?: MapVehicle[];            // Flota de vehículos (para choferes/controladores)
   activeVehicleId?: string;           // Identificador del vehículo a centrar/seguir
+  activeDirection?: 'IDA' | 'VUELTA' | null; // Dirección activa de la ruta asignada en el ticket
 
   // --- CONFIGURACIÓN INICIAL ---
   center?: [number, number];          // Centro inicial del mapa [lat, lng]
@@ -67,6 +68,7 @@ export default function GpsMap({
   stops = [],
   vehicles = [],
   activeVehicleId,
+  activeDirection = null,
   center = [-8.3845, -74.5532], // Coordenadas por defecto (ej. Base Principal Pucallpa)
   zoom = 15,
   onRouteChanged,
@@ -341,20 +343,24 @@ export default function GpsMap({
 
       if (alternativeRouteCoordinates.length > 0) {
         const altLatlngs = alternativeRouteCoordinates.map(c => [c.lat, c.lng]);
+        const isHighlighted = activeDirection === 'VUELTA' || activeDirection === null;
         alternativePolylineRef.current = L.polyline(altLatlngs as any, {
-          color: '#ef4444', // Rojo Carmín Brillante (Vuelta)
-          weight: 6,
-          opacity: 0.85,
+          color: isHighlighted ? '#ef4444' : '#94a3b8', // Rojo si está activo, Gris si está atenuado
+          weight: isHighlighted ? 6 : 4,
+          opacity: isHighlighted ? 0.85 : 0.25,
+          dashArray: isHighlighted ? undefined : '5, 10', // Punteado si está atenuado como guía visual
           lineJoin: 'round',
         }).addTo(currentMap);
       }
 
       if (routesCoordinates.length > 0) {
         const latlngs = routesCoordinates.map(c => [c.lat, c.lng]);
+        const isHighlighted = activeDirection === 'IDA' || activeDirection === null;
         routePolylineRef.current = L.polyline(latlngs as any, {
-          color: '#2563eb', // Azul Vectura (Ida)
-          weight: 6,
-          opacity: 0.85,
+          color: isHighlighted ? '#2563eb' : '#94a3b8', // Azul si está activo, Gris si está atenuado
+          weight: isHighlighted ? 6 : 4,
+          opacity: isHighlighted ? 0.85 : 0.25,
+          dashArray: isHighlighted ? undefined : '5, 10', // Punteado si está atenuado
           lineJoin: 'round',
         }).addTo(currentMap);
 
@@ -560,8 +566,10 @@ export default function GpsMap({
   }, [mapLoaded, routesCoordinates, alternativeRouteCoordinates, stops, vehicles, activeVehicleId]);
 
   return (
-    <div style={{
-      position: 'relative',
+    <div
+      className="vectura-map-container"
+      style={{
+        position: 'relative',
       width: '100%',
       height: '100%',
       borderRadius: 'var(--radius-2xl, 16px)',
@@ -834,6 +842,15 @@ export default function GpsMap({
         /* Margen de seguridad superior para armonía visual de controles flotantes en la izquierda */
         .leaflet-top {
           margin-top: 12px !important;
+        }
+
+        /* Anulación de bordes y radios en móviles para verdadera pantalla completa de borde a borde */
+        @media (max-width: 768px) {
+          .vectura-map-container {
+            border-radius: 0px !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
         }
       `}</style>
     </div>

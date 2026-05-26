@@ -9,9 +9,11 @@ import BottomNav from '@/app/features/dashboard/ui/components/BottomNav';
 export default function DashboardLayout({ 
   children,
   noPadding = false,
+  hideBottomNav = false,
 }: { 
   children: React.ReactNode;
   noPadding?: boolean;
+  hideBottomNav?: boolean;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -26,7 +28,7 @@ export default function DashboardLayout({
         <main className={`${styles.pageContent} ${noPadding ? styles.noPadding : ''}`}>
           {children}
         </main>
-        <BottomNav />
+        {!hideBottomNav && <BottomNav />}
       </div>
     </div>
   );

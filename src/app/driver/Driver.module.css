@@ -1,0 +1,259 @@
+/* src/app/driver/Driver.module.css */
+
+.container {
+  position: relative;
+  width: 100vw;
+  height: calc(100vh - 56px); /* Altura restando el topbar */
+  overflow: hidden;
+  background-color: var(--background, #f7f9fb);
+  font-family: 'Inter', sans-serif;
+}
+
+.mapContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Indicador de Estado de Conexión flotante superior */
+.connectionStatus {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  pointer-events: none;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dotConnected {
+  background-color: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.dotDisconnected {
+  background-color: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+/* Tarjeta Flotante del Chofer (Glassmorphism Premium) */
+.driverPanel {
+  position: absolute;
+  bottom: 16px;
+  left: 12px;
+  right: 12px;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 480px;
+  margin: 0 auto; /* Centrado en pantallas grandes */
+}
+
+/* Cabecera del Panel */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.driverHeaderInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.driverWelcome {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.driverNameText {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.statusBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.statusActive {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid rgba(21, 128, 61, 0.2);
+}
+
+.statusStopped {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid rgba(71, 85, 105, 0.2);
+}
+
+.panelDivider {
+  height: 1px;
+  background-color: rgba(226, 232, 240, 0.6);
+  margin: 0;
+}
+
+/* Cuadrícula de detalles */
+.panelDetails {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background-color: rgba(248, 250, 252, 0.5);
+  border: 1px solid rgba(226, 232, 240, 0.4);
+  border-radius: 12px;
+}
+
+.detailLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+.detailValue {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* Estado de Pago del Boleto */
+.ticketText {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.ticketPaid {
+  color: #10b981;
+}
+
+.ticketPending {
+  color: #ef4444;
+}
+
+/* Selector de Ruta para Guía */
+.selectInput {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #1e293b;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2px;
+}
+
+.selectInput:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* Estado Sin Unidad Asignada */
+.noVehicleContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.noVehicleText {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.noVehicleSubtext {
+  font-size: 0.7rem;
+  color: #64748b;
+  line-height: 1.4;
+  max-width: 280px;
+}
+
+/* Ajustes adicionales responsivos */
+@media (max-width: 480px) {
+  .driverPanel {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    border-radius: 16px;
+    padding: 12px;
+  }
+  
+  .panelDetails {
+    gap: 8px;
+  }
+  
+  .detailItem {
+    padding: 8px 10px;
+  }
+}
+
+.directionGo {
+  color: #2563eb;
+}
+
+.directionReturn {
+  color: #ef4444;
+}
+
+.routeActiveValue {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 2px;
+}
+
+

@@ -16,6 +16,7 @@ interface VehiclePosition {
   id: string;
   plate: string;
   driverName?: string;
+  driverId?: string | null; // ID único del conductor
   lat: number;
   lng: number;
   speed: number;
@@ -39,6 +40,9 @@ export default function FleetMonitoringPage() {
   const [panelPosition, setPanelPosition] = useState({ x: 16, y: 70 });
   const [isPanelVehiclesListOpen, setIsPanelVehiclesListOpen] = useState(false);
 
+  // Estados de control móvil (Bottom Sheet interactivo)
+  const [isListExpandedMobile, setIsListExpandedMobile] = useState<boolean>(false);
+
   // Referencias para la gestión de arrastre (Drag and Drop nativo ultra fluido a 60 FPS)
   const isDraggingRef = useRef(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -52,7 +56,7 @@ export default function FleetMonitoringPage() {
   // Gestor de arrastre con mouse (Escritorio)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Solo permitir arrastrar con botón izquierdo del mouse
-    
+
     // Cancelar arrastre si el evento proviene de un control interactivo (select, button, input)
     const target = e.target as HTMLElement;
     if (target.closest('select') || target.closest('button') || target.closest('input')) {
@@ -73,7 +77,7 @@ export default function FleetMonitoringPage() {
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDraggingRef.current) return;
-    
+
     let newX = e.clientX - dragOffsetRef.current.x;
     let newY = e.clientY - dragOffsetRef.current.y;
 
@@ -141,7 +145,7 @@ export default function FleetMonitoringPage() {
     let script: HTMLScriptElement | null = document.createElement('script');
     script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
     script.async = true;
-    
+
     script.onload = () => {
       initializeSocket();
     };
@@ -270,6 +274,7 @@ export default function FleetMonitoringPage() {
         id: pos.vehicleId || pos.deviceId,
         plate: pos.plate || `Vehículo ${pos.deviceId}`,
         driverName: pos.driverName || 'No asignado',
+        driverId: pos.driverId || null,
         lat: parseFloat(pos.latitude || pos.lat),
         lng: parseFloat(pos.longitude || pos.lng),
         speed: Math.round(pos.speed || 0),
@@ -330,7 +335,7 @@ export default function FleetMonitoringPage() {
   }) || [];
 
   return (
-    <DashboardLayout>
+    <DashboardLayout noPadding={true} hideBottomNav={true}>
       <div className={`${styles.container} ${isMapExpanded ? styles.containerExpanded : ''}`}>
         {/* Barra de estado de conexión flotante sobre el mapa */}
         <div className={styles.connectionStatus}>
@@ -340,7 +345,18 @@ export default function FleetMonitoringPage() {
 
         <div className={styles.mainLayout}>
           {/* Panel Lateral: Listado & Controles de Filtros */}
-          <div className={`${styles.leftPanel} ${isMapExpanded ? styles.leftPanelHidden : ''}`}>
+          <div className={`${styles.leftPanel} ${isMapExpanded ? styles.leftPanelHidden : ''} ${isListExpandedMobile ? styles.leftPanelMobileExpanded : ''}`}>
+            {/* Tirador Móvil para Expandir/Colapsar (PWA Bottom Sheet Style) */}
+            <div
+              className={styles.mobileDragHandleContainer}
+              onClick={() => setIsListExpandedMobile(!isListExpandedMobile)}
+            >
+              <div className={styles.mobileDragHandle} />
+              <span className={styles.mobileDragHandleText}>
+                {isListExpandedMobile ? 'Ocultar Unidades' : 'Mostrar Unidades'}
+              </span>
+            </div>
+
             <div className={styles.headerSection}>
               <h2 className={styles.titleText}>
                 <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '24px' }}>directions_bus</span>
@@ -412,7 +428,7 @@ export default function FleetMonitoringPage() {
                 filteredVehicles.map(vehicle => {
                   const cardActive = activeVehicleId === vehicle.id;
                   const bgVeh = vehicle.isActive ? '#10b981' : '#64748b';
-                  
+
                   return (
                     <div
                       key={vehicle.id}
@@ -631,7 +647,7 @@ export default function FleetMonitoringPage() {
                                   </span>
                                 </div>
                               </div>
-                              
+
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <span style={{
                                   fontSize: '8px',

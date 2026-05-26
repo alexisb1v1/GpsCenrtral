@@ -5,6 +5,7 @@ export interface AuthUser {
   email: string;
   name: string;
   tenantId?: string;
+  role?: string;
 }
 
 export interface AuthSession {

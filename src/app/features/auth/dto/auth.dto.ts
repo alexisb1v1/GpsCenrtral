@@ -6,6 +6,7 @@ export interface LoginResponseDto {
     email: string;
     name: string;
     tenantId?: string;
+    role?: string;
   };
   token: string;
 }
