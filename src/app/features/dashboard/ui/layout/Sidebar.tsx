@@ -31,7 +31,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { branding } = useBranding();
+  const { branding, slug } = useBranding();
   const [userName, setUserName] = useState('Usuario');
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className={styles.logoContainer}>
           <div className={styles.logo}>
             <span className={styles.brand} style={{ color: primaryColor }}>{tenantDisplayName}</span>
-            <span className={styles.subBrand}>Fleet Operations</span>
+            <span className={styles.subBrand}>Operaciones de Flota</span>
           </div>
         </div>
 
@@ -117,6 +117,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <span className="material-symbols-rounded">logout</span>
           <span>Cerrar Sesión</span>
         </button>
+        {slug !== 'vectura' && (
+          <div className={styles.poweredBy}>
+            Potenciado por VECTURA
+          </div>
+        )}
       </div>
       </aside>
     </>

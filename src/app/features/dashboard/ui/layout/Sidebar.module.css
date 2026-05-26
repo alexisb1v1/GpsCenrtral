@@ -130,6 +130,17 @@
   gap: 8px;
 }
 
+.poweredBy {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  margin-top: 8px;
+  opacity: 0.8;
+}
+
 .footerItem, .logoutBtn {
   display: flex;
   align-items: center;

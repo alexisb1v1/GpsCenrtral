@@ -477,13 +477,16 @@ export default function GpsMap({
       vehicleMarkersRef.current.clear();
 
       vehicles.forEach(vehicle => {
-        const bgVeh = vehicle.isActive ? '#10b981' : '#64748b';
+        const bgVeh = 'var(--success, #10b981)';
+        const opacityVeh = vehicle.isActive ? '1' : '0.65';
+        const borderVeh = vehicle.isActive ? '2px solid white' : '2px dashed rgba(255,255,255,0.85)';
         
         const vehicleIcon = L.divIcon({
           html: `
             <div style="
               background-color: ${bgVeh};
-              border: 2px solid white;
+              border: ${borderVeh};
+              opacity: ${opacityVeh};
               color: white;
               border-radius: 50%;
               width: 38px;

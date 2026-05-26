@@ -168,7 +168,7 @@
 
 .previewSidebar {
   width: 60px;
-  background: #004ac6;
+  background: var(--primary, #004ac6);
   border-radius: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -246,7 +246,7 @@
 .saveBtn {
   padding: 0.75rem 2rem;
   border-radius: 0.5rem;
-  background: #004ac6;
+  background: var(--primary, #004ac6);
   color: white;
   font-weight: 600;
   display: flex;
@@ -272,4 +272,80 @@
   align-items: center;
   height: 400px;
   color: #64748b;
+}
+
+/* --- Mobile Responsiveness (Vectura Premium) --- */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+  }
+
+  .header h1 {
+    font-size: 1.25rem;
+  }
+
+  .uploadGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .uploadBox {
+    padding: 1.5rem;
+    min-height: 160px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .colorGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .colorItem {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  /* Forzamos que cualquier elemento con span 2 o similar pase a span 1 en móvil */
+  .colorGrid > div {
+    grid-column: span 1 !important;
+  }
+
+  .colorPickerWrapper {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .previewCard {
+    min-height: 180px;
+    padding: 1rem;
+    justify-content: center;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .cancelBtn,
+  .saveBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.85rem 2rem;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+  }
 }

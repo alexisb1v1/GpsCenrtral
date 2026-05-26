@@ -91,7 +91,7 @@
 }
 
 .cardIcon {
-  color: #2563eb;
+  color: var(--primary, #2563eb);
   font-size: 20px;
 }
 
@@ -129,7 +129,7 @@
 }
 
 .select:focus, .input:focus {
-  border-color: #2563eb;
+  border-color: var(--primary, #2563eb);
   background: white;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
@@ -158,7 +158,7 @@
 
 .toggleActive {
   background: white;
-  color: #2563eb;
+  color: var(--primary, #2563eb);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -219,13 +219,13 @@
 .totalLabel {
   font-size: 15px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--primary, #2563eb);
 }
 
 .totalValue {
   font-size: 26px;
   font-weight: 800;
-  color: #2563eb;
+  color: var(--primary, #2563eb);
   letter-spacing: -0.5px;
 }
 

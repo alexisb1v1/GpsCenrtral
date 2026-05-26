@@ -246,57 +246,96 @@ export default function RoutesPage() {
               <p className={styles.emptyDesc}>Registra una nueva ruta de trayecto o cambia los criterios de búsqueda.</p>
             </div>
           ) : (
-            <div className={styles.tableContainer}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.th}>Nombre de Ruta</th>
-                    <th className={styles.th}>Estado</th>
-                    <th className={styles.th}>Fecha de Creación</th>
-                    <th className={styles.th}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRoutes.map((route) => (
-                    <tr key={route.id} className={styles.tr}>
-                      <td className={styles.td}>
-                        <div className={styles.routeNameCell}>
-                          <div className={styles.routeIconWrapper}>
-                            <span className="material-symbols-rounded">navigation</span>
-                          </div>
-                          <span className={styles.routeNameText}>{route.name}</span>
-                        </div>
-                      </td>
-                      <td className={styles.td}>
-                        <span className={`${styles.badge} ${route.isActive ? styles.badgeActive : styles.badgeInactive}`}>
-                          {route.isActive ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td className={styles.td}>
-                        {route.createdAt ? new Date(route.createdAt).toLocaleDateString('es-PE', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) : '-'}
-                      </td>
-                      <td className={styles.td}>
-                        <div className={styles.actionsCell}>
-                          <button
-                            className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
-                            title="Configurar paraderos y tiempos"
-                            onClick={() => router.push(`/admin/routes/${route.id}/stops`)}
-                          >
-                            <span className="material-symbols-rounded">edit_road</span>
-                          </button>
-                        </div>
-                      </td>
+            <>
+              <div className={styles.tableContainer}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.th}>Nombre de Ruta</th>
+                      <th className={styles.th}>Estado</th>
+                      <th className={styles.th}>Fecha de Creación</th>
+                      <th className={styles.th}>Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredRoutes.map((route) => (
+                      <tr key={route.id} className={styles.tr}>
+                        <td className={styles.td}>
+                          <div className={styles.routeNameCell}>
+                            <div className={styles.routeIconWrapper}>
+                              <span className="material-symbols-rounded">navigation</span>
+                            </div>
+                            <span className={styles.routeNameText}>{route.name}</span>
+                          </div>
+                        </td>
+                        <td className={styles.td}>
+                          <span className={`${styles.badge} ${route.isActive ? styles.badgeActive : styles.badgeInactive}`}>
+                            {route.isActive ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                        <td className={styles.td}>
+                          {route.createdAt ? new Date(route.createdAt).toLocaleDateString('es-PE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : '-'}
+                        </td>
+                        <td className={styles.td}>
+                          <div className={styles.actionsCell}>
+                            <button
+                              className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                              title="Configurar paraderos y tiempos"
+                              onClick={() => router.push(`/admin/routes/${route.id}/stops`)}
+                            >
+                              <span className="material-symbols-rounded">edit_road</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Listado móvil responsivo Vectura */}
+              <div className={styles.mobileList}>
+                {filteredRoutes.map((route) => (
+                  <div key={route.id} className={styles.mobileCard}>
+                    <div className={styles.cardLeft}>
+                      <div className={styles.avatarBox}>
+                        <span className="material-symbols-rounded">alt_route</span>
+                      </div>
+                      <div className={styles.cardMeta}>
+                        <h4 className={styles.mobileName}>{route.name}</h4>
+                        <div className={styles.mobileBadgeRow}>
+                          <span className={`${styles.badge} ${route.isActive ? styles.badgeActive : styles.badgeInactive}`} style={{ padding: '2px 8px', fontSize: '10px' }}>
+                            {route.isActive ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </div>
+                        <span className={styles.mobileDate}>
+                          Creado: {route.createdAt ? new Date(route.createdAt).toLocaleDateString('es-PE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          }) : '-'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.cardRight}>
+                      <button
+                        className={styles.mobileActionBtn}
+                        title="Configurar paraderos"
+                        onClick={() => router.push(`/admin/routes/${route.id}/stops`)}
+                      >
+                        <span className="material-symbols-rounded">edit_road</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 

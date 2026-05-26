@@ -92,9 +92,9 @@
 }
 
 .chipActive {
-  background-color: var(--primary-container, #2563eb);
+  background-color: var(--primary, #2563eb);
   color: var(--on-primary, #ffffff);
-  border-color: var(--primary-container, #2563eb);
+  border-color: var(--primary, #2563eb);
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
 }
 
@@ -127,7 +127,7 @@
 }
 
 .vehicleCardActive {
-  border-color: var(--primary-container, #2563eb);
+  border-color: var(--primary, #2563eb);
   background-color: #f0f6ff;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
 }
