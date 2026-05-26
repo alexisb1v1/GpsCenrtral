@@ -256,6 +256,126 @@
   width: 100%;
 }
 
+@media (max-width: 768px) {
+  .table {
+    display: none;
+  }
+}
+
+.mobileList {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background-color: #f8fafc;
+  }
+}
+
+.mobileCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobileCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.busIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.busIconBox span {
+  font-size: 22px;
+}
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mobileVehicleNum {
+  font-size: 10px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mobileRouteName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.mobileDriverName {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.mobileDriverName span {
+  font-size: 14px;
+}
+
+.cardHeaderRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mobileAmount {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.mobileStatusBadge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: capitalize;
+  display: inline-block;
+  line-height: 1;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

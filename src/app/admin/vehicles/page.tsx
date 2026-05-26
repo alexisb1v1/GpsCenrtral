@@ -200,83 +200,140 @@ export default function VehiclesPage() {
             </div>
           ) : (
             <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Placa</th>
-                    <th>Traccar ID</th>
-                    <th>Año</th>
-                    <th>Capacidad</th>
-                    <th>Empresa (Tenant)</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Placa</th>
+                      <th>Traccar ID</th>
+                      <th>Año</th>
+                      <th>Capacidad</th>
+                      <th>Empresa (Tenant)</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredVehicles.map((vehicle) => (
+                      <tr key={vehicle.id}>
+                        <td>
+                          <div className={styles.plateCell}>
+                            <div className={styles.plateBadge}>{vehicle.plate}</div>
+                            <div className={styles.plateInfo}>
+                              <span className={styles.plateText}>{vehicle.plate}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div className={styles.traccarCell}>
+                            <span className={styles.traccarValue}>{vehicle.traccarDeviceId || '---'}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className={styles.yearCell}>
+                            <span className={styles.yearValue}>{vehicle.year}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className={styles.capacityCell}>
+                            <span className={styles.capacityValue}>{vehicle.passengerCapacity || '---'}</span>
+                            <span className={styles.capacityLabel}>Pasajeros</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className={styles.tenantCell}>
+                            <div className={styles.tenantIndicator}></div>
+                            <span className={styles.tenantText}>{vehicle.tenantName || 'Sin empresa'}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`${styles.statusBadge} ${
+                            vehicle.status === VehicleStatus.OPERATIVO ? styles.statusActive : 
+                            vehicle.status === VehicleStatus.TALLER ? styles.statusMaintenance : 
+                            styles.statusBaja
+                          }`}>
+                            {vehicle.status === VehicleStatus.OPERATIVO ? 'Activo' : 
+                             vehicle.status === VehicleStatus.TALLER ? 'Mantenimiento' : 
+                             'De Baja'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className={styles.actions}>
+                            <button className={styles.actionBtn} onClick={() => router.push(`/admin/vehicles/${vehicle.id}/edit`)}>
+                              <span className="material-symbols-rounded">edit</span>
+                            </button>
+                            <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => handleDelete(vehicle.id, vehicle.plate)}>
+                              <span className="material-symbols-rounded">delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredVehicles.length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
+                          No se encontraron vehículos.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                {/* Mobile Cards View (Rediseño Vectura Premium) */}
+                <div className={styles.mobileList}>
                   {filteredVehicles.map((vehicle) => (
-                    <tr key={vehicle.id}>
-                      <td>
-                        <div className={styles.plateCell}>
-                          <div className={styles.plateBadge}>{vehicle.plate}</div>
-                          <div className={styles.plateInfo}>
-                            <span className={styles.plateText}>{vehicle.plate}</span>
+                    <div key={vehicle.id} className={styles.mobileCard}>
+                      <div className={styles.cardMainInfo}>
+                        <div className={styles.cardLeft}>
+                          <div className={styles.avatarBox}>
+                            {vehicle.plate}
+                          </div>
+                          <div className={styles.cardMeta}>
+                            <h4 className={styles.mobilePlate}>{vehicle.plate}</h4>
+                            <span className={styles.mobileTraccarId}>
+                              Traccar ID: {vehicle.traccarDeviceId || '---'}
+                            </span>
                           </div>
                         </div>
-                      </td>
-                      <td>
-                        <div className={styles.traccarCell}>
-                          <span className={styles.traccarValue}>{vehicle.traccarDeviceId || '---'}</span>
+                        <div className={styles.cardRight}>
+                          <span className={`${styles.statusBadge} ${
+                            vehicle.status === VehicleStatus.OPERATIVO ? styles.statusActive : 
+                            vehicle.status === VehicleStatus.TALLER ? styles.statusMaintenance : 
+                            styles.statusBaja
+                          }`} style={{ fontSize: '10px', padding: '4px 10px' }}>
+                            {vehicle.status === VehicleStatus.OPERATIVO ? 'Activo' : 
+                             vehicle.status === VehicleStatus.TALLER ? 'Mantenimiento' : 
+                             'De Baja'}
+                          </span>
                         </div>
-                      </td>
-                      <td>
-                        <div className={styles.yearCell}>
-                          <span className={styles.yearValue}>{vehicle.year}</span>
+                      </div>
+                      <div className={styles.cardBottomRow}>
+                        <div className={styles.cardTags}>
+                          <span className={styles.mobileTag}>
+                            Año: {vehicle.year}
+                          </span>
+                          <span className={styles.mobileTag} style={{ backgroundColor: '#eff6ff', color: '#2563eb' }}>
+                            {vehicle.tenantName || 'Sin empresa'}
+                          </span>
                         </div>
-                      </td>
-                      <td>
-                        <div className={styles.capacityCell}>
-                          <span className={styles.capacityValue}>{vehicle.passengerCapacity || '---'}</span>
-                          <span className={styles.capacityLabel}>Pasajeros</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className={styles.tenantCell}>
-                          <div className={styles.tenantIndicator}></div>
-                          <span className={styles.tenantText}>{vehicle.tenantName || 'Sin empresa'}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`${styles.statusBadge} ${
-                          vehicle.status === VehicleStatus.OPERATIVO ? styles.statusActive : 
-                          vehicle.status === VehicleStatus.TALLER ? styles.statusMaintenance : 
-                          styles.statusBaja
-                        }`}>
-                          {vehicle.status === VehicleStatus.OPERATIVO ? 'Activo' : 
-                           vehicle.status === VehicleStatus.TALLER ? 'Mantenimiento' : 
-                           'De Baja'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={styles.actions}>
-                          <button className={styles.actionBtn} onClick={() => router.push(`/admin/vehicles/${vehicle.id}/edit`)}>
-                            <span className="material-symbols-rounded">edit</span>
+                        <div className={styles.mobileActions}>
+                          <button className={styles.actionBtn} onClick={() => router.push(`/admin/vehicles/${vehicle.id}/edit`)} style={{ width: '32px', height: '32px' }}>
+                            <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
                           </button>
-                          <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => handleDelete(vehicle.id, vehicle.plate)}>
-                            <span className="material-symbols-rounded">delete</span>
+                          <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => handleDelete(vehicle.id, vehicle.plate)} style={{ width: '32px', height: '32px' }}>
+                            <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>delete</span>
                           </button>
                         </div>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   ))}
                   {filteredVehicles.length === 0 && (
-                    <tr>
-                      <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
-                        No se encontraron vehículos.
-                      </td>
-                    </tr>
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8', fontSize: '13px' }}>
+                      No se encontraron vehículos.
+                    </div>
                   )}
-                </tbody>
-              </table>
+                </div>
+              </>
             </div>
           )}
 

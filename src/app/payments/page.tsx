@@ -245,26 +245,101 @@ export default function PaymentsPage() {
                 <p className={styles.emptyStateDesc}>Registra salidas para comenzar a ver el recaudo e iniciar el monitoreo de unidades.</p>
               </div>
             ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.th}>ID Ticket</th>
-                    <th className={styles.th}>Vehículo</th>
-                    <th className={styles.th}>Conductor</th>
-                    <th className={styles.th}>Ruta</th>
-                    <th className={styles.th}>Sentido</th>
-                    <th className={styles.th}>Monto Total</th>
-                    <th className={styles.th}>Pago</th>
-                    <th className={styles.th}>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.th}>ID Ticket</th>
+                      <th className={styles.th}>Vehículo</th>
+                      <th className={styles.th}>Conductor</th>
+                      <th className={styles.th}>Ruta</th>
+                      <th className={styles.th}>Sentido</th>
+                      <th className={styles.th}>Monto Total</th>
+                      <th className={styles.th}>Pago</th>
+                      <th className={styles.th}>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentTickets.map((ticket) => {
+                      // Resolver información enriquecida local si el join no viniera completo
+                      const vehicleObj = ticket.vehicle || vehicles.find(v => v.id === ticket.vehicleId);
+                      const driverName = ticket.driver?.name || "No asignado";
+                      
+                      // Obtener ruta asignada
+                      let routeName = "Sin Ruta";
+                      if (ticket.routeId) {
+                        const r = routes.find(item => item.id === ticket.routeId);
+                        if (r) {
+                          routeName = r.name;
+                        }
+                      }
+
+                      // Obtener sentido inicial desde daily_rounds
+                      const firstRound = ticket.rounds?.find(r => r.roundNumber === 1);
+                      const senseLabel = firstRound?.direction || 'IDA';
+
+                      const payMethod = getPaymentMethodDetails(ticket.paymentMethod);
+                      const statusStyle = getStatusBadgeStyle(ticket.status);
+
+                      return (
+                        <tr key={ticket.id} className={styles.tr}>
+                          <td className={styles.td}>
+                            <span className={styles.ticketId}>#TK-{ticket.id.substring(0, 5).toUpperCase()}</span>
+                          </td>
+                          <td className={styles.td}>
+                            <div className={styles.vehicleCell}>
+                              <div className={styles.vehicleIconWrapper}>
+                                <span className="material-symbols-rounded">directions_bus</span>
+                              </div>
+                              <div>
+                                <div className={styles.vehicleName}>Placa: {vehicleObj?.plate || "---"}</div>
+                                <small style={{ color: 'var(--outline)', fontSize: '11px' }}>Interno: {(vehicleObj as any)?.number || "---"}</small>
+                              </div>
+                            </div>
+                          </td>
+                          <td className={styles.td}>
+                            <span className={styles.conductorName}>{driverName}</span>
+                          </td>
+                          <td className={styles.td}>
+                            <span className={styles.routeBadge}>{routeName}</span>
+                          </td>
+                          <td className={styles.td}>
+                            <span 
+                              className={styles.senseBadge}
+                              style={{
+                                background: senseLabel === 'IDA' ? '#eff6ff' : '#faf5ff',
+                                color: senseLabel === 'IDA' ? '#2563eb' : '#7c3aed'
+                              }}
+                            >
+                              {senseLabel}
+                            </span>
+                          </td>
+                          <td className={styles.td}>
+                            <span className={styles.amount}>{formatCurrency(Number(ticket.totalAmount))}</span>
+                          </td>
+                          <td className={styles.td}>
+                            <div className={styles.payMethodCell} style={{ color: payMethod.color }}>
+                              <span className={`material-symbols-rounded ${styles.payMethodIcon}`} style={{ color: payMethod.color }}>{payMethod.icon}</span>
+                              <span>{payMethod.label}</span>
+                            </div>
+                          </td>
+                          <td className={styles.td}>
+                            <span className={styles.statusBadge} style={{ background: statusStyle.background, color: statusStyle.color }}>
+                              {statusStyle.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Mobile Cards View (Rediseño Vectura Premium) */}
+                <div className={styles.mobileList}>
                   {currentTickets.map((ticket) => {
-                    // Resolver información enriquecida local si el join no viniera completo
                     const vehicleObj = ticket.vehicle || vehicles.find(v => v.id === ticket.vehicleId);
                     const driverName = ticket.driver?.name || "No asignado";
                     
-                    // Obtener ruta asignada
                     let routeName = "Sin Ruta";
                     if (ticket.routeId) {
                       const r = routes.find(item => item.id === ticket.routeId);
@@ -273,65 +348,39 @@ export default function PaymentsPage() {
                       }
                     }
 
-                    // Obtener sentido inicial desde daily_rounds
-                    const firstRound = ticket.rounds?.find(r => r.roundNumber === 1);
-                    const senseLabel = firstRound?.direction || 'IDA';
-
-                    const payMethod = getPaymentMethodDetails(ticket.paymentMethod);
                     const statusStyle = getStatusBadgeStyle(ticket.status);
 
                     return (
-                      <tr key={ticket.id} className={styles.tr}>
-                        <td className={styles.td}>
-                          <span className={styles.ticketId}>#TK-{ticket.id.substring(0, 5).toUpperCase()}</span>
-                        </td>
-                        <td className={styles.td}>
-                          <div className={styles.vehicleCell}>
-                            <div className={styles.vehicleIconWrapper}>
-                              <span className="material-symbols-rounded">directions_bus</span>
-                            </div>
-                            <div>
-                              <div className={styles.vehicleName}>Placa: {vehicleObj?.plate || "---"}</div>
-                              <small style={{ color: 'var(--outline)', fontSize: '11px' }}>Interno: {(vehicleObj as any)?.number || "---"}</small>
+                      <div key={ticket.id} className={styles.mobileCard}>
+                        <div className={styles.cardHeaderLeft}>
+                          <div className={styles.busIconBox}>
+                            <span className="material-symbols-rounded">directions_bus</span>
+                          </div>
+                          <div className={styles.cardMeta}>
+                            <span className={styles.mobileVehicleNum}>
+                              VEHÍCULO #{(vehicleObj as any)?.number || (vehicleObj?.plate ? vehicleObj.plate.replace('ABC-', '') : '') || "---"}
+                            </span>
+                            <h4 className={styles.mobileRouteName}>{routeName}</h4>
+                            <div className={styles.mobileDriverName}>
+                              <span className="material-symbols-rounded">person</span>
+                              <span>{driverName}</span>
                             </div>
                           </div>
-                        </td>
-                        <td className={styles.td}>
-                          <span className={styles.conductorName}>{driverName}</span>
-                        </td>
-                        <td className={styles.td}>
-                          <span className={styles.routeBadge}>{routeName}</span>
-                        </td>
-                        <td className={styles.td}>
+                        </div>
+                        <div className={styles.cardHeaderRight}>
+                          <div className={styles.mobileAmount}>{formatCurrency(Number(ticket.totalAmount))}</div>
                           <span 
-                            className={styles.senseBadge}
-                            style={{
-                              background: senseLabel === 'IDA' ? '#eff6ff' : '#faf5ff',
-                              color: senseLabel === 'IDA' ? '#2563eb' : '#7c3aed'
-                            }}
+                            className={styles.mobileStatusBadge} 
+                            style={{ background: statusStyle.background, color: statusStyle.color }}
                           >
-                            {senseLabel}
-                          </span>
-                        </td>
-                        <td className={styles.td}>
-                          <span className={styles.amount}>{formatCurrency(Number(ticket.totalAmount))}</span>
-                        </td>
-                        <td className={styles.td}>
-                          <div className={styles.payMethodCell} style={{ color: payMethod.color }}>
-                            <span className={`material-symbols-rounded ${styles.payMethodIcon}`} style={{ color: payMethod.color }}>{payMethod.icon}</span>
-                            <span>{payMethod.label}</span>
-                          </div>
-                        </td>
-                        <td className={styles.td}>
-                          <span className={styles.statusBadge} style={{ background: statusStyle.background, color: statusStyle.color }}>
                             {statusStyle.label}
                           </span>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     );
                   })}
-                </tbody>
-              </table>
+                </div>
+              </>
             )}
           </div>
 

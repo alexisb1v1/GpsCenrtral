@@ -159,72 +159,130 @@ export default function TenantsPage() {
           </div>
 
           <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>NOMBRE</th>
-                  <th>SUBDOMINIO</th>
-                  <th>ESTADO</th>
-                  <th>FECHA DE REGISTRO</th>
-                  <th>ACCIONES</th>
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>NOMBRE</th>
+                    <th>SUBDOMINIO</th>
+                    <th>ESTADO</th>
+                    <th>FECHA DE REGISTRO</th>
+                    <th>ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenants.map((tenant) => (
+                    <tr key={tenant.id}>
+                      <td>
+                        <div className={styles.tenantCell}>
+                          <div className={styles.tenantAvatar}>
+                            {getInitials(tenant.name)}
+                          </div>
+                          <div className={styles.tenantMeta}>
+                            <span className={styles.tenantName}>{tenant.name}</span>
+                            <span className={styles.tenantId}>ID: {tenant.id.slice(0, 10).toUpperCase()}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={styles.subdomainBadge}>
+                          {tenant.slug}.centralafbv.com
+                        </span>
+                      </td>
+                      <td>
+                        <div className={`${styles.statusPill} ${styles[tenant.status]}`}>
+                          <div className={styles.statusDot} />
+                          {tenant.status === 'active' ? 'Activo' : 'Inactivo'}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={styles.dateCell}>
+                          {new Date(tenant.createdAt).toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </td>
+                      <td>
+                        <div className={styles.tableActions}>
+                          <button 
+                            className={styles.actionBtn} 
+                            onClick={() => router.push(`/admin/tenants/${tenant.id}/edit`)}
+                            title="Editar Empresa"
+                          >
+                            <span className="material-symbols-rounded">edit</span>
+                          </button>
+                          <button 
+                            className={`${styles.actionBtn} ${styles.deleteBtn}`} 
+                            onClick={() => handleDelete(tenant.id, tenant.name)}
+                            title="Eliminar Empresa"
+                          >
+                            <span className="material-symbols-rounded">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile Cards View (Rediseño Vectura Premium) */}
+              <div className={styles.mobileList}>
                 {tenants.map((tenant) => (
-                  <tr key={tenant.id}>
-                    <td>
-                      <div className={styles.tenantCell}>
-                        <div className={styles.tenantAvatar}>
+                  <div key={tenant.id} className={styles.mobileCard}>
+                    <div className={styles.cardMainInfo}>
+                      <div className={styles.cardLeft}>
+                        <div className={styles.avatarIconBox}>
                           {getInitials(tenant.name)}
                         </div>
-                        <div className={styles.tenantMeta}>
-                          <span className={styles.tenantName}>{tenant.name}</span>
-                          <span className={styles.tenantId}>ID: {tenant.id.slice(0, 10).toUpperCase()}</span>
+                        <div className={styles.cardMeta}>
+                          <h4 className={styles.mobileTenantName}>{tenant.name}</h4>
+                          <span className={styles.mobileSubdomain}>
+                            {tenant.slug}.centralafbv.com
+                          </span>
                         </div>
                       </div>
-                    </td>
-                    <td>
-                      <span className={styles.subdomainBadge}>
-                        {tenant.slug}.centralafbv.com
-                      </span>
-                    </td>
-                    <td>
-                      <div className={`${styles.statusPill} ${styles[tenant.status]}`}>
-                        <div className={styles.statusDot} />
-                        {tenant.status === 'active' ? 'Activo' : 'Inactivo'}
+                      <div className={styles.cardRight}>
+                        <div className={`${styles.statusPill} ${styles[tenant.status]}`} style={{ padding: '4px 10px', fontSize: '11px' }}>
+                          <div className={styles.statusDot} />
+                          {tenant.status === 'active' ? 'Activo' : 'Inactivo'}
+                        </div>
                       </div>
-                    </td>
-                    <td>
-                      <span className={styles.dateCell}>
-                        {new Date(tenant.createdAt).toLocaleDateString('es-ES', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
-                      </span>
-                    </td>
-                    <td>
-                      <div className={styles.tableActions}>
+                    </div>
+                    <div className={styles.cardBottomRow}>
+                      <div className={styles.cardTags}>
+                        <span className={styles.mobileTag}>
+                          {new Date(tenant.createdAt).toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: 'short'
+                          })}
+                        </span>
+                        <span className={styles.mobileTag} style={{ backgroundColor: '#eff6ff', color: '#2563eb' }}>
+                          Slug: {tenant.slug}
+                        </span>
+                      </div>
+                      <div className={styles.mobileActions}>
                         <button 
                           className={styles.actionBtn} 
                           onClick={() => router.push(`/admin/tenants/${tenant.id}/edit`)}
-                          title="Editar Empresa"
+                          style={{ width: '32px', height: '32px' }}
                         >
-                          <span className="material-symbols-rounded">edit</span>
+                          <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
                         </button>
                         <button 
                           className={`${styles.actionBtn} ${styles.deleteBtn}`} 
                           onClick={() => handleDelete(tenant.id, tenant.name)}
-                          title="Eliminar Empresa"
+                          style={{ width: '32px', height: '32px' }}
                         >
-                          <span className="material-symbols-rounded">delete</span>
+                          <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>delete</span>
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </>
           </div>
 
           <div className={styles.tableFooter}>

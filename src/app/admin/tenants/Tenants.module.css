@@ -183,6 +183,122 @@
   border-collapse: collapse;
 }
 
+@media (max-width: 768px) {
+  .table {
+    display: none;
+  }
+}
+
+.mobileList {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background-color: #f8fafc;
+  }
+}
+
+.mobileCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease;
+}
+
+.mobileCard:hover {
+  transform: translateY(-1px);
+}
+
+.cardMainInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatarIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobileTenantName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.mobileSubdomain {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  color: #3b82f6;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cardRight {
+  flex-shrink: 0;
+}
+
+.cardBottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.cardTags {
+  display: flex;
+  gap: 6px;
+}
+
+.mobileTag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 20px;
+  text-transform: capitalize;
+}
+
+.mobileActions {
+  display: flex;
+  gap: 6px;
+}
+
 .table th {
   padding: 20px 24px;
   background-color: #fcfdfe;
