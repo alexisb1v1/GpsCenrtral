@@ -28,6 +28,15 @@ interface VehiclePosition {
   direction?: 'IDA' | 'VUELTA' | null;
 }
 
+interface ActiveNotification {
+  id: string;
+  type: 'INFRACTION' | 'CHECKPOINT_MARKED' | 'NEXT_CHECKPOINT' | 'SYSTEM';
+  title: string;
+  message: string;
+  timestamp: string;
+  data?: any;
+}
+
 export default function DriverPage() {
   const [vehicles, setVehicles] = useState<VehiclePosition[]>([]);
   const [routes, setRoutes] = useState<any[]>([]);
@@ -35,6 +44,7 @@ export default function DriverPage() {
   const [driverName, setDriverName] = useState<string>('Conductor');
   const [driverId, setDriverId] = useState<string>(''); // ID inmutable del chofer logueado
   const [isConnected, setIsConnected] = useState(false);
+  const [activeNotification, setActiveNotification] = useState<ActiveNotification | null>(null);
   const socketRef = useRef<any>(null);
 
   // 1. Cargar datos de la sesión del chofer desde las cookies
@@ -115,6 +125,50 @@ export default function DriverPage() {
     };
   }, [driverName]); // Reinicializar si el nombre cambia para asegurar el filtrado de conductor
 
+  const playAlertSound = (type: string) => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      if (type === 'INFRACTION') {
+        const playTone = (delay: number) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+          
+          gain.gain.setValueAtTime(0, audioCtx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+          
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + delay);
+          osc.stop(audioCtx.currentTime + delay + 0.45);
+        };
+        
+        playTone(0);
+        playTone(0.45);
+      } else if (type === 'CHECKPOINT_MARKED') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.3);
+      }
+    } catch (err) {
+      console.error('[Chofer Audio] Error en oscilador:', err);
+    }
+  };
+
   const initializeSocket = () => {
     const sessionStr = Cookies.get('gps_central_session');
     if (!sessionStr) return;
@@ -174,8 +228,18 @@ export default function DriverPage() {
         direction: pos.direction || null,
       }));
 
-      // Guardar en el estado para filtrado
       setVehicles(formattedPositions);
+    });
+
+    socket.on('notification', (notif: ActiveNotification) => {
+      setActiveNotification(notif);
+      playAlertSound(notif.type);
+
+      // Auto-ocultar: 10 segundos para multas, 5 segundos para otros avisos
+      const duration = notif.type === 'INFRACTION' ? 10000 : 5000;
+      setTimeout(() => {
+        setActiveNotification(prev => prev?.id === notif.id ? null : prev);
+      }, duration);
     });
   };
 
@@ -228,6 +292,35 @@ export default function DriverPage() {
   return (
     <DashboardLayout noPadding={true} hideBottomNav={true}>
       <div className={styles.container}>
+        {/* Toast de Notificación Premium con Glassmorphism */}
+        {activeNotification && (
+          <div 
+            className={`${styles.notificationToast} ${
+              activeNotification.type === 'INFRACTION' ? styles.toastInfraction : styles.toastSuccess
+            }`}
+            onClick={() => setActiveNotification(null)}
+          >
+            <div className={styles.toastIcon}>
+              <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
+                {activeNotification.type === 'INFRACTION' ? 'warning' : 'check_circle'}
+              </span>
+            </div>
+            <div className={styles.toastContent}>
+              <div className={styles.toastTitle}>{activeNotification.title}</div>
+              <div className={styles.toastMessage}>{activeNotification.message}</div>
+            </div>
+            <button 
+              className={styles.toastClose} 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setActiveNotification(null); 
+              }}
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>close</span>
+            </button>
+          </div>
+        )}
+
         {/* Indicador de Estado de Conexión flotante */}
         <div className={styles.connectionStatus}>
           <span className={`${styles.statusDot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`} />
