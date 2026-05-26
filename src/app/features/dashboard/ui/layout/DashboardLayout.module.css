@@ -32,3 +32,9 @@
     padding-bottom: 90px;
   }
 }
+
+.noPadding {
+  padding: 0 !important;
+  padding-bottom: 0 !important;
+}
+

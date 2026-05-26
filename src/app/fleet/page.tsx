@@ -35,6 +35,107 @@ export default function FleetMonitoringPage() {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<any>(null);
 
+  // Estados del Panel de Monitoreo Flotante en Pantalla Completa
+  const [panelPosition, setPanelPosition] = useState({ x: 16, y: 70 });
+  const [isPanelVehiclesListOpen, setIsPanelVehiclesListOpen] = useState(false);
+
+  // Referencias para la gestión de arrastre (Drag and Drop nativo ultra fluido a 60 FPS)
+  const isDraggingRef = useRef(false);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const panelPositionRef = useRef(panelPosition);
+
+  // Mantener la referencia de posición actualizada de forma síncrona para los callbacks globales
+  useEffect(() => {
+    panelPositionRef.current = panelPosition;
+  }, [panelPosition]);
+
+  // Gestor de arrastre con mouse (Escritorio)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Solo permitir arrastrar con botón izquierdo del mouse
+    
+    // Cancelar arrastre si el evento proviene de un control interactivo (select, button, input)
+    const target = e.target as HTMLElement;
+    if (target.closest('select') || target.closest('button') || target.closest('input')) {
+      return;
+    }
+
+    isDraggingRef.current = true;
+    dragOffsetRef.current = {
+      x: e.clientX - panelPositionRef.current.x,
+      y: e.clientY - panelPositionRef.current.y
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none'; // Evitar seleccionar texto por accidente al arrastrar
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDraggingRef.current) return;
+    
+    let newX = e.clientX - dragOffsetRef.current.x;
+    let newY = e.clientY - dragOffsetRef.current.y;
+
+    const mapWidth = window.innerWidth;
+    const mapHeight = window.innerHeight;
+
+    // Mantener el panel dentro de los límites visuales de la pantalla (con márgenes de seguridad)
+    newX = Math.max(8, Math.min(newX, mapWidth - 300));
+    newY = Math.max(8, Math.min(newY, mapHeight - 200));
+
+    setPanelPosition({ x: newX, y: newY });
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  // Gestor de arrastre táctil (Dispositivos Móviles y Tablets)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('select') || target.closest('button') || target.closest('input')) {
+      return;
+    }
+
+    const touch = e.touches[0];
+    isDraggingRef.current = true;
+    dragOffsetRef.current = {
+      x: touch.clientX - panelPositionRef.current.x,
+      y: touch.clientY - panelPositionRef.current.y
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isDraggingRef.current) return;
+    e.preventDefault(); // Prevenir el desplazamiento vertical elástico de la página web en móviles
+
+    const touch = e.touches[0];
+    let newX = touch.clientX - dragOffsetRef.current.x;
+    let newY = touch.clientY - dragOffsetRef.current.y;
+
+    const mapWidth = window.innerWidth;
+    const mapHeight = window.innerHeight;
+
+    newX = Math.max(8, Math.min(newX, mapWidth - 300));
+    newY = Math.max(8, Math.min(newY, mapHeight - 200));
+
+    setPanelPosition({ x: newX, y: newY });
+  };
+
+  const handleTouchEnd = () => {
+    isDraggingRef.current = false;
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+  };
+
   // Carga e inicialización dinámica de Socket.io-client desde CDN
   useEffect(() => {
     let script: HTMLScriptElement | null = document.createElement('script');
@@ -230,7 +331,7 @@ export default function FleetMonitoringPage() {
 
   return (
     <DashboardLayout>
-      <div className={styles.container}>
+      <div className={`${styles.container} ${isMapExpanded ? styles.containerExpanded : ''}`}>
         {/* Barra de estado de conexión flotante sobre el mapa */}
         <div className={styles.connectionStatus}>
           <span className={`${styles.statusDot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`} />
@@ -366,10 +467,33 @@ export default function FleetMonitoringPage() {
 
             {/* Tarjeta de Control Flotante Premium en Modo Pantalla Completa */}
             {isMapExpanded && (
-              <div className={styles.floatingControlPanel}>
-                <h3 className={styles.floatingPanelTitle}>
-                  <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '20px' }}>directions_bus</span>
-                  Panel de Monitoreo
+              <div
+                className={styles.floatingControlPanel}
+                style={{
+                  left: `${panelPosition.x}px`,
+                  top: `${panelPosition.y}px`
+                }}
+              >
+                <h3
+                  className={styles.floatingPanelTitle}
+                  onMouseDown={handleMouseDown}
+                  onTouchStart={handleTouchStart}
+                  style={{
+                    cursor: 'grab',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    userSelect: 'none'
+                  }}
+                  title="Mantén presionado y arrastra para mover el panel"
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '20px' }}>directions_bus</span>
+                    Panel de Monitoreo
+                  </span>
+                  <span className="material-symbols-rounded" style={{ color: '#94a3b8', fontSize: '18px', cursor: 'grab' }}>
+                    drag_indicator
+                  </span>
                 </h3>
                 <div className={styles.floatingPanelDivider} />
 
@@ -419,6 +543,114 @@ export default function FleetMonitoringPage() {
                       Pend. ({vehicles.filter(v => v.hasActiveTicket === false).length})
                     </button>
                   </div>
+                </div>
+
+                {/* Botón Plegable para Listar Unidades */}
+                <div className={styles.floatingPanelSection} style={{ borderTop: '1px solid rgba(226, 232, 240, 0.6)', paddingTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsPanelVehiclesListOpen(!isPanelVehiclesListOpen)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '6px 8px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--outline-variant, #e2e8f0)',
+                      backgroundColor: 'var(--surface-container-low, #f8fafc)',
+                      color: 'var(--on-surface, #1e293b)',
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      outline: 'none'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="material-symbols-rounded" style={{ fontSize: '16px', color: '#2563eb' }}>format_list_bulleted</span>
+                      Listado de Unidades
+                    </span>
+                    <span className="material-symbols-rounded" style={{ fontSize: '16px', transition: 'transform 0.2s ease', transform: isPanelVehiclesListOpen ? 'rotate(180deg)' : 'none' }}>
+                      expand_more
+                    </span>
+                  </button>
+
+                  {/* Lista de Unidades Desplegable */}
+                  {isPanelVehiclesListOpen && (
+                    <div style={{
+                      marginTop: '8px',
+                      maxHeight: '160px',
+                      overflowY: 'auto',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      paddingRight: '4px',
+                      scrollBehavior: 'smooth'
+                    }}>
+                      {filteredVehicles.length === 0 ? (
+                        <div style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', padding: '12px 0' }}>
+                          No hay unidades para este filtro
+                        </div>
+                      ) : (
+                        filteredVehicles.map((vehicle) => {
+                          const isActiveVeh = vehicle.id === activeVehicleId;
+                          return (
+                            <div
+                              key={vehicle.id}
+                              onClick={() => setActiveVehicleId(vehicle.id)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '6px 10px',
+                                borderRadius: '8px',
+                                backgroundColor: isActiveVeh ? 'rgba(37, 99, 235, 0.08)' : 'rgba(248, 250, 252, 0.5)',
+                                border: `1px solid ${isActiveVeh ? 'rgba(37, 99, 235, 0.3)' : 'rgba(226, 232, 240, 0.4)'}`,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span
+                                  className={styles.activeStatusIndicator}
+                                  style={{
+                                    backgroundColor: vehicle.isActive ? '#10b981' : '#64748b',
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    flexShrink: 0
+                                  }}
+                                />
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 700, color: isActiveVeh ? '#2563eb' : '#1e293b' }}>
+                                    {vehicle.plate}
+                                  </span>
+                                  <span style={{ fontSize: '9px', color: '#64748b' }}>
+                                    {vehicle.speed} km/h
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{
+                                  fontSize: '8px',
+                                  fontWeight: 700,
+                                  backgroundColor: vehicle.hasActiveTicket ? '#dcfce7' : '#fee2e2',
+                                  color: vehicle.hasActiveTicket ? '#15803d' : '#b91c1c',
+                                  padding: '1px 4px',
+                                  borderRadius: '3px',
+                                  textTransform: 'uppercase'
+                                }}>
+                                  {vehicle.hasActiveTicket ? 'Pagado' : 'Pend.'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

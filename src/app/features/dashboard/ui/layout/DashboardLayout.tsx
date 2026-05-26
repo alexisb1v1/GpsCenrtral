@@ -6,7 +6,13 @@ import TopBar from './TopBar';
 import styles from './DashboardLayout.module.css';
 import BottomNav from '@/app/features/dashboard/ui/components/BottomNav';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ 
+  children,
+  noPadding = false,
+}: { 
+  children: React.ReactNode;
+  noPadding?: boolean;
+}) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -17,7 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       />
       <div className={styles.mainContent}>
         <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className={styles.pageContent}>
+        <main className={`${styles.pageContent} ${noPadding ? styles.noPadding : ''}`}>
           {children}
         </main>
         <BottomNav />

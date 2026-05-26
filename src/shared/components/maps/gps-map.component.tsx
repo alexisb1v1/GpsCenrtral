@@ -100,6 +100,16 @@ export default function GpsMap({
   const stopMarkersRef = useRef<any[]>([]);
   const vehicleMarkersRef = useRef<Map<string, any>>(new Map());
 
+  // Referencias para las diferentes capas base premium
+  const voyagerLayerRef = useRef<any>(null);
+  const lightLayerRef = useRef<any>(null);
+  const darkLayerRef = useRef<any>(null);
+  const osmLayerRef = useRef<any>(null);
+
+  // Estados del selector de capas premium de React
+  const [activeLayerId, setActiveLayerId] = useState<'voyager' | 'light' | 'dark' | 'osm'>('voyager');
+  const [isLayersOpen, setIsLayersOpen] = useState(false);
+
   // 1. Inicialización básica del mapa y Leaflet Geoman
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current) return;
@@ -124,14 +134,45 @@ export default function GpsMap({
       }
 
       // Crear mapa
-      mapInstance = L.map(mapContainerRef.current).setView(center, zoom);
+      mapInstance = L.map(mapContainerRef.current, {
+        maxZoom: 22,
+      }).setView(center, zoom);
       mapRef.current = mapInstance;
 
-      // Capa de mapas OpenStreetMap (Mapa premium de calles)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      // Definición de las diferentes capas base premium nativas de alta resolución (CartoDB & OSM)
+      voyagerLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 22,
+        maxNativeZoom: 20,
+      });
+
+      lightLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 22,
+        maxNativeZoom: 20,
+      });
+
+      darkLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 22,
+        maxNativeZoom: 20,
+      });
+
+      osmLayerRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
-      }).addTo(mapInstance);
+      });
+
+      // Agregar inicialmente al mapa la capa base activa seleccionada en React
+      if (activeLayerId === 'voyager') {
+        voyagerLayerRef.current.addTo(mapInstance);
+      } else if (activeLayerId === 'light') {
+        lightLayerRef.current.addTo(mapInstance);
+      } else if (activeLayerId === 'dark') {
+        darkLayerRef.current.addTo(mapInstance);
+      } else if (activeLayerId === 'osm') {
+        osmLayerRef.current.addTo(mapInstance);
+      }
 
       // Idioma en Español
       mapInstance.pm.setLang('es');
@@ -238,6 +279,29 @@ export default function GpsMap({
       }
     };
   }, [mode]);
+
+  // 1.3. Sincronización de la capa base activa en tiempo real
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    // Remover capas base existentes si están instanciadas
+    voyagerLayerRef.current?.remove();
+    lightLayerRef.current?.remove();
+    darkLayerRef.current?.remove();
+    osmLayerRef.current?.remove();
+
+    // Añadir la capa base seleccionada
+    if (activeLayerId === 'voyager' && voyagerLayerRef.current) {
+      voyagerLayerRef.current.addTo(map);
+    } else if (activeLayerId === 'light' && lightLayerRef.current) {
+      lightLayerRef.current.addTo(map);
+    } else if (activeLayerId === 'dark' && darkLayerRef.current) {
+      darkLayerRef.current.addTo(map);
+    } else if (activeLayerId === 'osm' && osmLayerRef.current) {
+      osmLayerRef.current.addTo(map);
+    }
+  }, [mapLoaded, activeLayerId]);
 
   // 1.5. Habilitar/Deshabilitar dinámicamente controles de paraderos según la existencia del recorrido de la ruta
   useEffect(() => {
@@ -510,6 +574,179 @@ export default function GpsMap({
       {/* Contenedor DOM donde se inyecta Leaflet */}
       <div ref={mapContainerRef} style={{ width: '100%', height: '100%', minHeight: '480px', zIndex: 1 }} />
 
+      {/* Selector de Capas Base Premium Personalizado en React */}
+      {mapLoaded && (
+        <div style={{
+          position: 'absolute',
+          top: '112px',
+          right: '16px',
+          zIndex: 100,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '8px',
+          fontFamily: "'Inter', sans-serif"
+        }}>
+          {/* Botón activador circular */}
+          <button
+            type="button"
+            onClick={() => setIsLayersOpen(!isLayersOpen)}
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              backgroundColor: isLayersOpen ? '#2563eb' : 'rgba(255, 255, 255, 0.95)',
+              color: isLayersOpen ? '#ffffff' : '#1e293b',
+              border: '2px solid #ffffff',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              backdropFilter: 'blur(8px)',
+              outline: 'none'
+            }}
+            title="Cambiar mapa base"
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '20px', fontWeight: 'bold' }}>layers</span>
+          </button>
+
+          {/* Panel de Opciones Desplegable con Glassmorphism */}
+          {isLayersOpen && (
+            <div style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.92)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(226, 232, 240, 0.8)',
+              borderRadius: '16px',
+              padding: '12px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              width: '200px',
+              animation: 'fadeInUp 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              transformOrigin: 'top right'
+            }}>
+              <span style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: '#64748b',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: '6px',
+                display: 'block',
+                paddingLeft: '4px'
+              }}>Estilo de Mapa</span>
+              
+              {/* Opción 1: Voyager */}
+              <button
+                type="button"
+                onClick={() => { setActiveLayerId('voyager'); setIsLayersOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: activeLayerId === 'voyager' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                  color: activeLayerId === 'voyager' ? '#2563eb' : '#334155',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  fontWeight: activeLayerId === 'voyager' ? 600 : 500,
+                  fontSize: '12px',
+                  transition: 'all 0.2s ease',
+                  outline: 'none'
+                }}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>map</span>
+                Vectura Premium
+              </button>
+
+              {/* Opción 2: Light */}
+              <button
+                type="button"
+                onClick={() => { setActiveLayerId('light'); setIsLayersOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: activeLayerId === 'light' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                  color: activeLayerId === 'light' ? '#2563eb' : '#334155',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  fontWeight: activeLayerId === 'light' ? 600 : 500,
+                  fontSize: '12px',
+                  transition: 'all 0.2s ease',
+                  outline: 'none'
+                }}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>wb_sunny</span>
+                Vectura Light (Claro)
+              </button>
+
+              {/* Opción 3: Dark */}
+              <button
+                type="button"
+                onClick={() => { setActiveLayerId('dark'); setIsLayersOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: activeLayerId === 'dark' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                  color: activeLayerId === 'dark' ? '#2563eb' : '#334155',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  fontWeight: activeLayerId === 'dark' ? 600 : 500,
+                  fontSize: '12px',
+                  transition: 'all 0.2s ease',
+                  outline: 'none'
+                }}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>dark_mode</span>
+                Vectura Dark (Noche)
+              </button>
+
+              {/* Opción 4: OSM */}
+              <button
+                type="button"
+                onClick={() => { setActiveLayerId('osm'); setIsLayersOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: activeLayerId === 'osm' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                  color: activeLayerId === 'osm' ? '#2563eb' : '#334155',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  fontWeight: activeLayerId === 'osm' ? 600 : 500,
+                  fontSize: '12px',
+                  transition: 'all 0.2s ease',
+                  outline: 'none'
+                }}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>public</span>
+                OpenStreetMap Estándar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Loader de carga premium mientras Leaflet carga dinámicamente */}
       {!mapLoaded && (
         <div style={{
@@ -543,11 +780,60 @@ export default function GpsMap({
         </div>
       )}
       
-      {/* Añadir animación spin si no está definida globalmente */}
+      {/* Añadir estilos CSS premium para controles del mapa y animaciones */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        /* Unificación estética ultra premium de botones de Leaflet Zoom y Geoman */
+        .leaflet-bar {
+          border: none !important;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+          border-radius: 12px !important;
+          overflow: hidden !important;
+          background-color: rgba(255, 255, 255, 0.9) !important;
+          backdrop-filter: blur(12px) !important;
+          margin-bottom: 12px !important;
+          margin-left: 12px !important; /* Despegado elegante del borde izquierdo */
+        }
+
+        .leaflet-bar a {
+          width: 36px !important;
+          height: 36px !important;
+          line-height: 36px !important;
+          background-color: transparent !important;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.6) !important;
+          color: #334155 !important;
+          font-size: 15px !important;
+          font-weight: 600 !important;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .leaflet-bar a:hover {
+          background-color: rgba(37, 99, 235, 0.08) !important;
+          color: #2563eb !important;
+        }
+
+        .leaflet-bar a:last-child {
+          border-bottom: none !important;
+        }
+
+        /* Margen de seguridad superior para armonía visual de controles flotantes en la izquierda */
+        .leaflet-top {
+          margin-top: 12px !important;
         }
       `}</style>
     </div>

@@ -82,12 +82,6 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           <span className="material-symbols-rounded">notifications</span>
           <span className={styles.badge} />
         </button>
-        <button className={styles.iconBtn}>
-          <span className="material-symbols-rounded">help</span>
-        </button>
-        <button className={styles.iconBtn}>
-          <span className="material-symbols-rounded">grid_view</span>
-        </button>
 
         <div className={styles.profile}>
           <div className={styles.profileInfo}>
