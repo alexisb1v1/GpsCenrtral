@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import styles from './DashboardLayout.module.css';
-import BottomNav from '@/app/features/dashboard/ui/components/BottomNav';
 
 export default function DashboardLayout({ 
   children,
@@ -28,7 +27,6 @@ export default function DashboardLayout({
         <main className={`${styles.pageContent} ${noPadding ? styles.noPadding : ''}`}>
           {children}
         </main>
-        {!hideBottomNav && <BottomNav />}
       </div>
     </div>
   );
