@@ -274,109 +274,183 @@ export default function DriversPage() {
             </div>
           ) : (
             <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>DNI</th>
-                    <th>Nº Licencia</th>
-                    <th>Vencimiento</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>DNI</th>
+                      <th>Nº Licencia</th>
+                      <th>Vencimiento</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDrivers.map((driver) => {
+                      const expiryInfo = getLicenseExpiryInfo(driver.driverInfo?.licenseExpiry);
+                      return (
+                        <tr key={driver.id}>
+                          {/* Nombre + Avatar Bubble */}
+                          <td>
+                            <div className={styles.avatarCell}>
+                              <div className={styles.avatarCircle}>
+                                {getInitials(driver.name)}
+                              </div>
+                              <div className={styles.avatarInfo}>
+                                <span className={styles.driverName}>{driver.name}</span>
+                                <span className={styles.driverEmail}>{driver.email}</span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* DNI */}
+                          <td>
+                            <span style={{ fontWeight: 600, color: '#475569' }}>
+                              {driver.driverInfo?.dni || '---'}
+                            </span>
+                          </td>
+
+                          {/* Licencia */}
+                          <td>
+                            <span style={{ fontWeight: 600, color: '#475569' }}>
+                              {driver.driverInfo?.licenseNumber || '---'}
+                            </span>
+                          </td>
+
+                          {/* Vencimiento con Alerta de Licencia */}
+                          <td>
+                            {expiryInfo.isWarning ? (
+                              <span className={styles.expiryWarning}>
+                                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>calendar_today</span>
+                                {expiryInfo.text}
+                              </span>
+                            ) : (
+                              <span className={styles.expiryNormal}>
+                                {expiryInfo.text}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Estado Badge */}
+                          <td>
+                            <span className={`${styles.statusBadge} ${
+                              driver.status === DriverStatus.ACTIVE 
+                                ? styles.statusActive 
+                                : styles.statusInactive
+                            }`}>
+                              {driver.status === DriverStatus.ACTIVE ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </td>
+
+                          {/* Acciones */}
+                          <td>
+                            <div className={styles.actions}>
+                              {/* Editar */}
+                              <button 
+                                className={styles.actionBtn} 
+                                onClick={() => router.push(`/admin/drivers/${driver.id}/edit`)}
+                                title="Editar chofer"
+                              >
+                                <span className="material-symbols-rounded">edit</span>
+                              </button>
+                              {/* Activar/Desactivar */}
+                              <button 
+                                className={`${styles.actionBtn} ${driver.status === DriverStatus.ACTIVE ? styles.deleteBtn : ''}`} 
+                                onClick={() => handleToggleStatus(driver)}
+                                title={driver.status === DriverStatus.ACTIVE ? "Desactivar chofer" : "Activar chofer"}
+                              >
+                                <span className="material-symbols-rounded">
+                                  {driver.status === DriverStatus.ACTIVE ? 'block' : 'check_circle'}
+                                </span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {filteredDrivers.length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
+                          No se encontraron choferes registrados.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                {/* Mobile Cards View (Rediseño Vectura Premium) */}
+                <div className={styles.mobileList}>
                   {filteredDrivers.map((driver) => {
                     const expiryInfo = getLicenseExpiryInfo(driver.driverInfo?.licenseExpiry);
                     return (
-                      <tr key={driver.id}>
-                        {/* Nombre + Avatar Bubble */}
-                        <td>
-                          <div className={styles.avatarCell}>
-                            <div className={styles.avatarCircle}>
+                      <div key={driver.id} className={styles.mobileCard}>
+                        <div className={styles.cardMainInfo}>
+                          <div className={styles.cardLeft}>
+                            <div className={styles.avatarBox}>
                               {getInitials(driver.name)}
                             </div>
-                            <div className={styles.avatarInfo}>
-                              <span className={styles.driverName}>{driver.name}</span>
-                              <span className={styles.driverEmail}>{driver.email}</span>
+                            <div className={styles.cardMeta}>
+                              <h4 className={styles.mobileDriverName}>{driver.name}</h4>
+                              <span className={styles.mobileDriverInfo}>
+                                Licencia: {driver.driverInfo?.licenseNumber || '---'}
+                              </span>
                             </div>
                           </div>
-                        </td>
-
-                        {/* DNI */}
-                        <td>
-                          <span style={{ fontWeight: 600, color: '#475569' }}>
-                            {driver.driverInfo?.dni || '---'}
-                          </span>
-                        </td>
-
-                        {/* Licencia */}
-                        <td>
-                          <span style={{ fontWeight: 600, color: '#475569' }}>
-                            {driver.driverInfo?.licenseNumber || '---'}
-                          </span>
-                        </td>
-
-                        {/* Vencimiento con Alerta de Licencia */}
-                        <td>
-                          {expiryInfo.isWarning ? (
-                            <span className={styles.expiryWarning}>
-                              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>calendar_today</span>
-                              {expiryInfo.text}
+                          <div className={styles.cardRight}>
+                            <span className={`${styles.statusBadge} ${
+                              driver.status === DriverStatus.ACTIVE 
+                                ? styles.statusActive 
+                                : styles.statusInactive
+                            }`} style={{ fontSize: '10px', padding: '4px 10px' }}>
+                              {driver.status === DriverStatus.ACTIVE ? 'Activo' : 'Inactivo'}
                             </span>
-                          ) : (
-                            <span className={styles.expiryNormal}>
-                              {expiryInfo.text}
+                          </div>
+                        </div>
+                        <div className={styles.cardBottomRow}>
+                          <div className={styles.cardTags}>
+                            <span className={styles.mobileTag}>
+                              DNI: {driver.driverInfo?.dni || '---'}
                             </span>
-                          )}
-                        </td>
-
-                        {/* Estado Badge */}
-                        <td>
-                          <span className={`${styles.statusBadge} ${
-                            driver.status === DriverStatus.ACTIVE 
-                              ? styles.statusActive 
-                              : styles.statusInactive
-                          }`}>
-                            {driver.status === DriverStatus.ACTIVE ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </td>
-
-                        {/* Acciones */}
-                        <td>
-                          <div className={styles.actions}>
-                            {/* Editar */}
+                            {expiryInfo.isWarning ? (
+                              <span className={styles.mobileTag} style={{ backgroundColor: '#fef2f2', color: '#dc2626', fontWeight: 700 }}>
+                                Vence: {expiryInfo.text}
+                              </span>
+                            ) : (
+                              <span className={styles.mobileTag}>
+                                Vence: {expiryInfo.text}
+                              </span>
+                            )}
+                          </div>
+                          <div className={styles.mobileActions}>
                             <button 
                               className={styles.actionBtn} 
                               onClick={() => router.push(`/admin/drivers/${driver.id}/edit`)}
-                              title="Editar chofer"
+                              style={{ width: '32px', height: '32px' }}
                             >
-                              <span className="material-symbols-rounded">edit</span>
+                              <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
                             </button>
-                            {/* Activar/Desactivar */}
                             <button 
                               className={`${styles.actionBtn} ${driver.status === DriverStatus.ACTIVE ? styles.deleteBtn : ''}`} 
                               onClick={() => handleToggleStatus(driver)}
-                              title={driver.status === DriverStatus.ACTIVE ? "Desactivar chofer" : "Activar chofer"}
+                              style={{ width: '32px', height: '32px' }}
                             >
-                              <span className="material-symbols-rounded">
+                              <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
                                 {driver.status === DriverStatus.ACTIVE ? 'block' : 'check_circle'}
                               </span>
                             </button>
                           </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     );
                   })}
                   {filteredDrivers.length === 0 && (
-                    <tr>
-                      <td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
-                        No se encontraron choferes registrados.
-                      </td>
-                    </tr>
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8', fontSize: '13px' }}>
+                      No se encontraron choferes registrados.
+                    </div>
                   )}
-                </tbody>
-              </table>
+                </div>
+              </>
             </div>
           )}
 
