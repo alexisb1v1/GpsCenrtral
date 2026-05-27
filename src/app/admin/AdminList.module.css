@@ -511,6 +511,65 @@
   margin: 0;
 }
 
+/* ==========================================
+   MOBILE CARDS COMPARTIDAS (DEFINICIÓN GLOBAL)
+   ========================================== */
+
+/* Contenedor de tarjetas mobile (por defecto oculto en desktop) */
+.mobileList {
+  display: none;
+}
+
+.mobileCard {
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.cardMainInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.cardLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardRight {
+  display: flex;
+  align-items: center;
+}
+
+.cardBottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mobileTag {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 /* --- MOBILE RESPONSIVE (VECTURA PREMIUM CENTRALIZADO) --- */
 @media (max-width: 768px) {
   .container {
@@ -756,64 +815,7 @@
   border: none;
 }
 
-/* ==========================================
-   MOBILE CARDS COMPARTIDAS
-   ========================================== */
 
-/* Contenedor de tarjetas mobile (por defecto oculto) */
-.mobileList {
-  display: none;
-}
-
-.mobileCard {
-  background: white;
-  border: 1px solid #f1f5f9;
-  border-radius: 16px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-
-.cardMainInfo {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.cardLeft {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.cardRight {
-  display: flex;
-  align-items: center;
-}
-
-.cardBottomRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.cardTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.mobileTag {
-  background: #f1f5f9;
-  color: #475569;
-  padding: 3px 10px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 600;
-}
 
 .mobileActions {
   display: flex;

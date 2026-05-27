@@ -267,8 +267,8 @@ export default function DriversPage() {
               <p>{error}</p>
             </div>
           ) : (
-            <div className={styles.tableWrapper}>
-              <>
+            <>
+              <div className={styles.tableWrapper}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -371,8 +371,9 @@ export default function DriversPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
 
-                {/* Mobile Cards View (Rediseño Vectura Premium) */}
+              {/* Mobile Cards View (Rediseño Vectura Premium) */}
                 <div className={styles.mobileList}>
                   {filteredDrivers.map((driver) => {
                     const expiryInfo = getLicenseExpiryInfo(driver.driverInfo?.licenseExpiry);
@@ -443,7 +444,6 @@ export default function DriversPage() {
                   )}
                 </div>
               </>
-            </div>
           )}
 
           {/* Footer paginación */}

@@ -193,8 +193,8 @@ export default function VehiclesPage() {
               <p>Cargando inventario...</p>
             </div>
           ) : (
-            <div className={styles.tableWrapper}>
-              <>
+            <>
+              <div className={styles.tableWrapper}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -271,8 +271,9 @@ export default function VehiclesPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
 
-                {/* Mobile Cards View (Rediseño Vectura Premium) */}
+              {/* Mobile Cards View (Rediseño Vectura Premium) */}
                 <div className={styles.mobileList}>
                   {filteredVehicles.map((vehicle) => (
                     <div key={vehicle.id} className={styles.mobileCard}>
@@ -326,8 +327,7 @@ export default function VehiclesPage() {
                   )}
                 </div>
               </>
-            </div>
-          )}
+            )}
 
           <div className={styles.footer}>
             <span className={styles.resultsCount}>Mostrando 1 a {filteredVehicles.length} de {stats.total} vehículos</span>
