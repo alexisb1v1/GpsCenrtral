@@ -195,6 +195,7 @@
     background-color: #f1f5f9;
   }
   .header {
+    height: 56px;
     padding: 0 16px;
   }
   .center {
@@ -208,7 +209,7 @@
   }
   .mobileLogo {
     display: block;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 800;
     color: var(--primary, #2563eb);
     letter-spacing: -0.5px;

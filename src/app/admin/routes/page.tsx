@@ -147,6 +147,14 @@ export default function RoutesPage() {
           </button>
         </div>
 
+        {/* Mobile Warning Premium */}
+        <div className={styles.mobileWarning}>
+          <span className="material-symbols-rounded">desktop_windows</span>
+          <div className={styles.mobileWarningText}>
+            <strong>¿Trazando rutas o paraderos?</strong> Para una mejor experiencia de edición y trazado preciso en el mapa, te sugerimos ingresar desde una computadora.
+          </div>
+        </div>
+
         {/* Stats Summary */}
         <div className={styles.statsGrid}>
           <div className={styles.statsCard}>

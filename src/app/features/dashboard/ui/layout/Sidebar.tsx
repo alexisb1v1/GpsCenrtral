@@ -6,6 +6,7 @@ import styles from './Sidebar.module.css';
 import Cookies from 'js-cookie';
 import { logoutUseCase } from '@/app/features/auth';
 import { useBranding } from '@/app/shared/providers/BrandingContext';
+import { AccessControl } from '@/app/shared/utils/access-control';
 
 const mainMenuItems = [
   { id: 'dashboard', label: 'Panel de Control', icon: 'dashboard', href: '/dashboard' },
@@ -33,15 +34,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { branding, slug } = useBranding();
   const [userName, setUserName] = useState('Usuario');
+  const [userRole, setUserRole] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    // Cargar nombre del usuario desde la sesión
+    // Cargar nombre y rol del usuario desde la sesión
     const sessionStr = Cookies.get('gps_central_session');
     if (sessionStr) {
       try {
         const session = JSON.parse(sessionStr);
         if (session.user?.name) {
           setUserName(session.user.name);
+        }
+        if (session.user?.role) {
+          setUserRole(session.user.role);
         }
       } catch (e) {
         console.error('Error parsing session for sidebar', e);
@@ -80,6 +85,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     })
   );
 
+  const visibleMainMenuItems = AccessControl.getVisibleMenuItems(userRole, mainMenuItems);
+  const visibleAdminMenuItems = AccessControl.getVisibleMenuItems(userRole, adminMenuItems);
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -99,20 +107,18 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <nav className={styles.nav}>
         <div className={styles.section}>
-          {renderMenuItems(mainMenuItems)}
+          {renderMenuItems(visibleMainMenuItems)}
         </div>
 
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Administración</h3>
-          {renderMenuItems(adminMenuItems)}
-        </div>
+        {visibleAdminMenuItems.length > 0 && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Administración</h3>
+            {renderMenuItems(visibleAdminMenuItems)}
+          </div>
+        )}
       </nav>
 
       <div className={styles.footer}>
-        <Link href="/settings" className={styles.footerItem}>
-          <span className="material-symbols-rounded">settings</span>
-          <span>Configuración</span>
-        </Link>
         <button className={styles.logoutBtn} onClick={handleLogout}>
           <span className="material-symbols-rounded">logout</span>
           <span>Cerrar Sesión</span>

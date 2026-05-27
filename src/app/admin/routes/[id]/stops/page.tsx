@@ -79,7 +79,7 @@ export default function RouteStopsPage() {
         setRoute(routeData);
         setRouteName(routeData.name);
         setRouteStatus(routeData.isActive);
-        
+
         // Cargar trayectos por separado
         setOutboundPath(routeData.outboundCoordinates || []);
         setInboundPath(routeData.inboundCoordinates || []);
@@ -128,7 +128,7 @@ export default function RouteStopsPage() {
 
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     const list = [...currentStops];
-    
+
     // Intercambiar
     const temp = list[index];
     list[index] = list[newIndex];
@@ -183,7 +183,7 @@ export default function RouteStopsPage() {
         lat: ms.lat,
         lng: ms.lng,
         stopOrder: idx + 1,
-        minutesFromStart: ms.minutesFromStart ?? existing?.minutesFromStart ?? (idx > 0 ? (currentStops[idx-1]?.minutesFromStart + 10) : 0),
+        minutesFromStart: ms.minutesFromStart ?? existing?.minutesFromStart ?? (idx > 0 ? (currentStops[idx - 1]?.minutesFromStart + 10) : 0),
         polygonCoordinates: ms.polygonCoordinates || existing?.polygonCoordinates, // Mantener geometría del polígono/rectángulo
       };
     });
@@ -212,7 +212,7 @@ export default function RouteStopsPage() {
 
     setCurrentStops([...currentStops, newStop]);
     setIsAddModalOpen(false);
-    
+
     // Limpiar formulario
     setModalStopName('');
     setModalLat('');
@@ -223,7 +223,7 @@ export default function RouteStopsPage() {
 
   const handleSaveStops = async () => {
     setIsSaving(true);
-    
+
     // Preparar payload para el backend con el formato esperado por RouteStopItemDto
     const payload = currentStops.map(s => ({
       traccarGeofenceId: s.traccarGeofenceId || undefined,
@@ -313,6 +313,14 @@ export default function RouteStopsPage() {
               <p className={styles.titleDescription}>Configura el trayecto y la secuencia de paraderos.</p>
             </div>
 
+            {/* Mobile Warning Premium */}
+            <div className={styles.mobileWarning}>
+              <span className="material-symbols-rounded">desktop_windows</span>
+              <div className={styles.mobileWarningText}>
+                <strong>¿Trazando rutas o paraderos?</strong> Para una mejor experiencia de edición y trazado preciso en el mapa, te sugerimos ingresar desde una computadora.
+              </div>
+            </div>
+
             {/* Tarjeta de Detalles de Ruta */}
             <div className={styles.sectionHeader}>
               Detalles de la Ruta
@@ -321,8 +329,8 @@ export default function RouteStopsPage() {
               <div className={styles.formRow} style={{ marginBottom: 0 }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0, flex: 2 }}>
                   <label className={styles.inputLabel}>NOMBRE DE LA RUTA</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className={styles.textInput}
                     value={routeName}
                     onChange={(e) => setRouteName(e.target.value)}
@@ -331,7 +339,7 @@ export default function RouteStopsPage() {
                 </div>
                 <div className={styles.formGroup} style={{ marginBottom: 0, flex: 1 }}>
                   <label className={styles.inputLabel}>ESTADO</label>
-                  <select 
+                  <select
                     className={styles.selectInput}
                     value={routeStatus ? 'ACTIVE' : 'INACTIVE'}
                     onChange={(e) => setRouteStatus(e.target.value === 'ACTIVE')}
@@ -345,7 +353,7 @@ export default function RouteStopsPage() {
 
             {/* Pestañas de Dirección: Ida / Vuelta */}
             <div className={styles.directionTabsContainer}>
-              <button 
+              <button
                 type="button"
                 className={`${styles.directionTab} ${direction === 'IDA' ? styles.directionTabActive : ''}`}
                 onClick={() => setDirection('IDA')}
@@ -353,7 +361,7 @@ export default function RouteStopsPage() {
                 <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>arrow_forward</span>
                 Ruta de Ida
               </button>
-              <button 
+              <button
                 type="button"
                 className={`${styles.directionTab} ${direction === 'VUELTA' ? styles.directionTabActive : ''}`}
                 onClick={() => setDirection('VUELTA')}
@@ -365,7 +373,7 @@ export default function RouteStopsPage() {
 
             {/* Secuencia de Paraderos */}
             <div className={styles.sectionHeader}>
-              Puntos de Control / Paraderos
+              Paraderos
               <span>{currentStops.length} agregados</span>
             </div>
 
@@ -383,17 +391,17 @@ export default function RouteStopsPage() {
                       <div className={styles.dragHandle} title="Arrastrar para ordenar (próximamente)">
                         <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>drag_indicator</span>
                       </div>
-                      
+
                       <div className={styles.stopContent}>
                         <input
-                           type="text"
-                           className={styles.stopNameInput}
-                           value={stop.name || ''}
-                           onChange={(e) => handleNameChange(index, e.target.value)}
-                           placeholder="Nombre del paradero"
+                          type="text"
+                          className={styles.stopNameInput}
+                          value={stop.name || ''}
+                          onChange={(e) => handleNameChange(index, e.target.value)}
+                          placeholder="Nombre del paradero"
                         />
                         <div className={styles.stopMetaText}>
-                           Lat: {Number(stop.lat ?? 0).toFixed(5)} • Lng: {Number(stop.lng ?? 0).toFixed(5)}
+                          Lat: {Number(stop.lat ?? 0).toFixed(5)} • Lng: {Number(stop.lng ?? 0).toFixed(5)}
                         </div>
                       </div>
                     </div>
@@ -419,8 +427,8 @@ export default function RouteStopsPage() {
               </div>
             )}
 
-            <button 
-              onClick={() => setIsAddModalOpen(true)} 
+            <button
+              onClick={() => setIsAddModalOpen(true)}
               disabled={routePath.length === 0}
               className={styles.addCoordBtn}
               style={{
@@ -467,10 +475,10 @@ export default function RouteStopsPage() {
                 fontSize: '13px'
               }}>
                 <span className="material-symbols-rounded" style={{ fontSize: '18px', color: '#059669' }}>check_circle</span>
-                <span>¡Recorrido definido! Ahora puedes colocar paraderos usando los botones de Marcador, Rectángulo o Polígono.</span>
+                <span>¡Recorrido definido! Ahora puedes definir las geocercas de los paraderos usando el botón de Polígono en el mapa.</span>
               </div>
             )}
-            <GpsMap 
+            <GpsMap
               mode="admin"
               stops={mapStopsFormatted}
               routesCoordinates={routePath}
@@ -492,9 +500,9 @@ export default function RouteStopsPage() {
             <button onClick={() => router.push('/admin/routes')} className={styles.btnCancel}>
               Cancelar
             </button>
-            <button 
-              onClick={handleSaveStops} 
-              disabled={isSaving || !routeName.trim()} 
+            <button
+              onClick={handleSaveStops}
+              disabled={isSaving || !routeName.trim()}
               className={styles.btnSubmit}
             >
               {isSaving ? (

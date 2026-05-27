@@ -184,15 +184,19 @@ export default function GpsMap({
         const hasRoute = routesCoordinates && routesCoordinates.length > 0;
         mapInstance.pm.addControls({
           position: 'topleft',
-          drawMarker: hasRoute,
           drawPolyline: true,
+          drawMarker: false,
           drawPolygon: hasRoute,
+          drawRectangle: false,
           drawCircle: false,
-          drawRectangle: hasRoute,
-          editMode: true,
-          dragMode: true,
+          drawCircleMarker: false,
+          drawText: false,
+          editMode: false,
+          dragMode: false,
           cutPolygon: false,
           removalMode: true,
+          rotateMode: false,
+          scaleMode: false,
         });
 
         mapInstance.pm.setPathOptions({
@@ -254,19 +258,10 @@ export default function GpsMap({
           }
         });
       } else {
-        // En modos chofer y controlador, deshabilitamos la edición
-        mapInstance.pm.addControls({
-          position: 'topleft',
-          drawMarker: false,
-          drawPolyline: false,
-          drawPolygon: false,
-          drawCircle: false,
-          drawRectangle: false,
-          editMode: false,
-          dragMode: false,
-          cutPolygon: false,
-          removalMode: false,
-        });
+        // En modos chofer y controlador, removemos por completo todos los controles de Geoman de la interfaz
+        if (mapInstance.pm && typeof mapInstance.pm.removeControls === 'function') {
+          mapInstance.pm.removeControls();
+        }
       }
 
       setMapLoaded(true);
@@ -312,9 +307,9 @@ export default function GpsMap({
     const hasRoute = routesCoordinates && routesCoordinates.length > 0;
 
     map.pm.addControls({
-      drawMarker: hasRoute,
+      drawMarker: false,
       drawPolygon: hasRoute,
-      drawRectangle: hasRoute,
+      drawRectangle: false,
     });
   }, [mapLoaded, routesCoordinates, mode]);
 
@@ -570,7 +565,7 @@ export default function GpsMap({
 
   return (
     <div
-      className="vectura-map-container"
+      className={`vectura-map-container ${mode}-mode`}
       style={{
         position: 'relative',
       width: '100%',
@@ -793,6 +788,11 @@ export default function GpsMap({
       
       {/* Añadir estilos CSS premium para controles del mapa y animaciones */}
       <style>{`
+        /* Ocultar por completo la barra de herramientas de Geoman en modos no administrativos (chofer/controlador) */
+        .vectura-map-container:not(.admin-mode) .leaflet-pm-toolbar {
+          display: none !important;
+        }
+
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
