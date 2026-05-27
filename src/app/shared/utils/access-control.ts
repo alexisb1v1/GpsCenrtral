@@ -15,8 +15,8 @@ export class AccessControl {
       cleanPath = cleanPath.slice(0, -1);
     }
 
-    // El rol SUPERADMIN tiene acceso absoluto a todas las rutas
-    if (role === 'SUPERADMIN') {
+    // El rol SUPERADMIN / SUPER_ADMIN tiene acceso absoluto a todas las rutas
+    if (role === 'SUPERADMIN' || role === 'SUPER_ADMIN') {
       return true;
     }
 
