@@ -201,7 +201,7 @@ export default function UsersPage() {
     // Para las pestañas de perfiles específicos, solo mostramos los activos
     if (!u.isActive) return false;
     
-    if (activeTab === 'Administradores') return u.role === 'ADMIN' || u.role === 'SUPERADMIN';
+    if (activeTab === 'Administradores') return u.role === 'ADMIN' || u.role === 'SUPER_ADMIN';
     if (activeTab === 'Controladores') return u.role === 'OPERATOR';
     if (activeTab === 'Choferes') return u.role === 'DRIVER';
     return true;

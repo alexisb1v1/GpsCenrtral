@@ -1,9 +1,9 @@
 // src/app/features/user/models/user.model.ts
 
-export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'OPERATOR' | 'DRIVER';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'OPERATOR' | 'DRIVER';
 
 export const USER_ROLES: Record<UserRole, string> = {
-  SUPERADMIN: 'SUPERADMIN',
+  SUPER_ADMIN: 'SUPER ADMINISTRADOR',
   ADMIN: 'ADMINISTRADOR',
   OPERATOR: 'CONTROLADOR',
   DRIVER: 'CHOFER',

@@ -161,7 +161,7 @@ export default function UserForm({ initialData, isEdit = false }: UserFormProps)
               >
                 {Object.entries(USER_ROLES)
                   .filter(([key]) => {
-                    if (key === 'SUPERADMIN') return slug === 'vectura';
+                    if (key === 'SUPER_ADMIN') return slug === 'vectura';
                     return true;
                   })
                   .map(([key, label]) => (
