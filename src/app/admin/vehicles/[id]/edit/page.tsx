@@ -24,12 +24,12 @@ export default function EditVehiclePage() {
     const result = await getVehiclesUseCase.execute(); // Idealmente tener un findById case
     // Por ahora usamos el getById que ya está en el repositorio pero no tiene su propio usecase explícito
     // Usaremos el getById del repositorio directamente o crearemos el usecase
-    
+
     // Mejor creamos el GetVehicleByIdUseCase para seguir el patrón
     const { VehicleRepositoryImpl } = require('@/app/features/vehicle/repositories/vehicle.repository.impl');
     const repo = new VehicleRepositoryImpl();
     const resultById = await repo.getById(id);
-    
+
     resultById.match(
       (data: Vehicle) => {
         setVehicle(data);
@@ -53,8 +53,8 @@ export default function EditVehiclePage() {
 
   return (
     <DashboardLayout>
-      <div style={{ padding: '1rem' }}>
-        <button 
+      <div>
+        <button
           onClick={() => router.back()}
           style={{
             display: 'flex',

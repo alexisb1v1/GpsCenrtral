@@ -10,7 +10,7 @@ import { getAllTenantsUseCase } from '@/app/features/tenant';
 import { useConfirm } from '@/app/shared/providers/ConfirmProvider';
 import { useToast } from '@/app/shared/providers/ToastProvider';
 import { useBranding } from '@/app/shared/providers/BrandingContext';
-import styles from './Users.module.css';
+import styles from '../AdminList.module.css';
 
 export default function UsersPage() {
   const router = useRouter();

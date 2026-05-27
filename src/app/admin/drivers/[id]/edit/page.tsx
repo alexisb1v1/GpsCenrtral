@@ -45,8 +45,8 @@ export default function EditDriverPage() {
 
   return (
     <DashboardLayout>
-      <div style={{ padding: '1rem' }}>
-        <button 
+      <div >
+        <button
           onClick={() => router.back()}
           style={{
             display: 'flex',

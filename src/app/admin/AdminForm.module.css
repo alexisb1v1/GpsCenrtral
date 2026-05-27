@@ -1,0 +1,1019 @@
+/* d:\Personal\Repositorios\GpsCentral\src\app\admin\AdminForm.module.css */
+.container {
+  width: 100%;
+  animation: fadeIn 0.4s ease-out;
+  padding: 40px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Breadcrumbs */
+.breadcrumbs, .breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.breadcrumb a, .breadcrumbLink {
+  color: #64748b;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb a:hover, .breadcrumbLink:hover {
+  color: #2563eb;
+}
+
+.breadcrumbSeparator {
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.breadcrumbActive {
+  color: #1e293b;
+}
+
+/* Header */
+.header, .headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.titleSection h2, .headerTitleSection h2 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.titleSection p, .headerTitleSection p {
+  font-size: 15px;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+/* Status Active / Toggle */
+.statusToggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #eff6ff;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid #dbeafe;
+}
+
+.statusLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Form Layout Panels (Conductores) */
+.contentLayout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.leftPanel {
+  flex: 1;
+  max-width: 300px;
+}
+
+.rightPanel {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Info Box / Requisitos Legales */
+.infoBox {
+  background: #f0f7ff;
+  border: 1px solid #e0f0fe;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.infoBoxHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.infoBoxHeader span {
+  font-size: 20px;
+}
+
+.infoBoxText {
+  color: #475569;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Main Cards */
+.formCard, .card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 10px 20px -5px rgba(0, 0, 0, 0.03);
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formSection {
+  margin-bottom: 40px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  margin-top: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.sectionTitle span {
+  color: #2563eb;
+  font-size: 24px;
+}
+
+.sectionTitle h3, .card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Inputs & Form Fields */
+.formGrid, .grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+/* inputGrid: 1 columna - cada campo ocupa su propia fila (formularios de tenant) */
+.inputGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.fullWidth {
+  grid-column: span 2;
+}
+
+.field, .inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label, .label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* inputGroup usa estilo de label original del tenant form (sin uppercase) */
+.inputGroup label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+}
+
+/* Estilo de inputs dentro de inputGroup (tenant form no pone className='input') */
+.inputGroup input,
+.inputGroup select,
+.inputGroup textarea {
+  padding: 12px 16px;
+  background: #fcfdfe;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus,
+.inputGroup textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+  color: #94a3b8;
+  font-size: 20px;
+  pointer-events: none;
+}
+
+.input, .select {
+  padding: 0.875rem 1rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  color: #1e293b;
+  background: white;
+  transition: all 0.2s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inputWithIcon {
+  padding-left: 2.75rem;
+}
+
+.input:focus, .select:focus {
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.input::placeholder {
+  color: #94a3b8;
+}
+
+.inputError {
+  border-color: #ef4444 !important;
+}
+
+/* Eye button for password toggles */
+.eyeBtn {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* Subdomain unique styling */
+.subdomainInput {
+  display: flex;
+  align-items: center;
+}
+
+.subdomainInput input {
+  flex: 1;
+  border-radius: 8px 0 0 8px;
+  text-align: right;
+}
+
+.domainSuffix {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-left: none;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Personalizacion Visual y Branding (especifico de Tenants) */
+.logoRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.logoPreviewBox {
+  width: 64px;
+  height: 64px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.logoPreviewBox img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brandingGrid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.uploaderWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.visualGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+}
+
+.colorCard {
+  background: #fcfdfe;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.colorInfo h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.colorInfo p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+}
+
+.colorAction {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.colorValue {
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.colorBox {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Vista Previa Premium Detallada (especifico de Tenants) */
+.previewContainer {
+  grid-row: span 1;
+  width: 100%;
+  height: 148px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.previewSidebar {
+  width: 40px;
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.previewLogoCircle {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.previewLogoCircle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewNavItems {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.previewNavItem {
+  height: 4px;
+  width: 80%;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  margin: 0 auto;
+}
+
+.previewContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.previewTopbar {
+  height: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  width: 100%;
+}
+
+.previewStats {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+}
+
+.previewStatCard {
+  flex: 1;
+  height: 24px;
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.previewStatHeader {
+  height: 2px;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.previewMap {
+  flex: 1;
+  margin: 0 8px 8px;
+  background: #eef2f6;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.previewMarker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Radio Group (para Conductores y otros) */
+.radioGroup {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0.875rem 0;
+}
+
+.radioOption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  user-select: none;
+}
+
+.radioInput {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cbd5e1;
+  border-radius: 50%;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.radioInput:checked {
+  border-color: #2563eb;
+  background: #2563eb;
+  box-shadow: inset 0 0 0 3px white;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Switch (para Tenants y otros) */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2563eb;
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* Action Buttons unificados al final */
+.actions, .formActions, .footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding-bottom: 3rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cancelBtn {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.cancelBtn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.submitBtn, .saveBtn {
+  background: var(--primary, #2563eb);
+  color: white;
+  border: none;
+  padding: 0.875rem 2.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+.submitBtn:hover, .saveBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+  filter: brightness(1.1);
+}
+
+.submitBtn:disabled, .saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Toast general */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 1.125rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* --- MOBILE RESPONSIVE (VECTURA PREMIUM CENTRALIZADO) --- */
+@media (max-width: 1024px) {
+  .contentLayout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .leftPanel {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0;
+  }
+
+  .header, .headerRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .statusToggle {
+    align-self: flex-start;
+  }
+
+  .formCard, .card {
+    padding: 24px 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+  }
+
+  .formGrid, .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .fullWidth {
+    grid-column: span 1;
+  }
+
+  .brandingGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .visualGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .previewContainer {
+    grid-row: auto;
+    height: 160px;
+  }
+
+  .actions, .formActions, .footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 2rem;
+    margin-top: 2rem;
+  }
+
+  .cancelBtn, .submitBtn, .saveBtn {
+    flex: 1;
+    width: auto;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 14px;
+    font-size: 0.9375rem;
+    box-sizing: border-box;
+  }
+}
+
+/* ==========================================
+   ALIASES FALTANTES (VehicleForm, UserForm)
+   ========================================== */
+
+/* Alias de sectionTitle para VehicleForm */
+.section {
+  margin-bottom: 32px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Form container alias */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Note / helper text */
+.note {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ==========================================
+   PAGOS (FORMULARIOS): Estilos específicos
+   ========================================== */
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 700;
+  transition: transform 0.2s ease, color 0.15s ease;
+  align-self: flex-start;
+}
+
+.backLink:hover {
+  transform: translateX(-3px);
+  color: var(--primary-container);
+}
+
+.toggleContainer {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.toggleBtn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggleActive {
+  background: white;
+  color: var(--primary, #2563eb);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.priceLabel {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.priceInputWrapper {
+  position: relative;
+  width: 130px;
+}
+
+.currencyPrefix {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.priceInput {
+  padding-left: 28px !important;
+  padding-right: 12px !important;
+  text-align: right;
+  font-weight: 500;
+  background: #f8fafc !important;
+}
+
+.priceInput:focus {
+  background: white !important;
+}
+
+.totalDivider {
+  border-top: 1px dashed #cbd5e1;
+  margin: 10px 0;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.totalLabel {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary, #2563eb);
+}
+
+.totalValue {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--primary, #2563eb);
+  letter-spacing: -0.5px;
+}
+
+.lockContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  width: 100%;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.lockCard {
+  background: white;
+  border: 1px solid var(--outline-variant, #e2e8f0);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 560px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.lockIconWrapper {
+  background: #fef2f2;
+  color: #ef4444;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
+}
+
+.lockIcon {
+  font-size: 42px !important;
+}
+
+.lockTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--on-surface, #1e293b);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.lockDesc {
+  font-size: 14.5px;
+  color: var(--on-surface-variant, #64748b);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.lockDivider {
+  width: 100%;
+  height: 1px;
+  background: var(--outline-variant, #e2e8f0);
+}
+
+.lockBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: var(--on-primary);
+  padding: 12px 28px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  border: none;
+  cursor: pointer;
+}
+
+.lockBtn:hover {
+  background: var(--primary-container);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+  color: var(--on-primary);
+}
+
+.lockBtn:active {
+  transform: translateY(0);
+}
+

@@ -15,7 +15,7 @@ import {
 import { getAllTenantsUseCase } from '@/app/features/tenant';
 import { useBranding } from '@/app/shared/providers/BrandingContext';
 import { useToast } from '@/app/shared/providers/ToastProvider';
-import styles from './VehicleForm.module.css';
+import styles from '../../AdminForm.module.css';
 
 interface VehicleFormProps {
   vehicle?: Vehicle;

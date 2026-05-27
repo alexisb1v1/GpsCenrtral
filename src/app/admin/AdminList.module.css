@@ -1,0 +1,1646 @@
+/* d:\Personal\Repositorios\GpsCentral\src\app\admin\AdminList.module.css */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 8px 0;
+  width: 100%;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titleSection h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.titleSection p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary, #0052cc);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.15);
+}
+
+.addBtn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* Stats Grid & Cards */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.statsCard {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.statsIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statsIcon span {
+  font-size: 28px;
+}
+
+.statsInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statsLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 0.05em;
+}
+
+.statsValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.statsValue {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.statsTrend {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Table Design */
+.card {
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.tableHeader {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.tableFilters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.searchWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f1f5f9;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.searchWrapper span {
+  color: #94a3b8;
+  font-size: 20px;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 0.875rem;
+  color: #1e293b;
+}
+
+.tenantFilterWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  margin-right: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.tenantFilterWrapper:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.tenantFilterWrapper span {
+  font-size: 20px;
+  color: #94a3b8;
+}
+
+.tenantSelect {
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  outline: none;
+  min-width: 160px;
+  padding-right: 0.5rem;
+}
+
+.tableResults {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.tableNav {
+  display: flex;
+  gap: 12px;
+  margin-left: 16px;
+}
+
+.navArrow {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.navArrow:hover {
+  color: #1e293b;
+}
+
+.tableWrapper, .tableContainer {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .th {
+  padding: 20px 24px;
+  background-color: #fcfdfe;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.table td, .td {
+  padding: 24px;
+  border-bottom: 1px solid #f8fafc;
+  vertical-align: middle;
+}
+
+/* Tablas especificas - Celdas y Componentes */
+.tenantCell, .routeNameCell {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tenantAvatar, .avatarBox, .routeIconWrapper {
+  width: 44px;
+  height: 44px;
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.avatarBox {
+  border: 1.5px solid #cbd5e1;
+  color: #1e293b;
+}
+
+.tenantMeta, .cardMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.tenantName, .routeNameText {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.tenantId, .mobileId {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.subdomainBadge {
+  background-color: #f0f4fa;
+  color: #3b82f6;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.statusPill, .badge, .statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.statusPill.active, .badgeActive, .statusActive {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.statusPill.inactive, .badgeInactive, .statusBaja {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.statusMaintenance {
+  background-color: #fffbeb;
+  color: #d97706;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.active .statusDot, .statusActive .statusDot {
+  background-color: #22c55e;
+}
+
+.inactive .statusDot, .statusBaja .statusDot {
+  background-color: #94a3b8;
+}
+
+.dateCell {
+  font-size: 14px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.actionButtons, .tableActions, .actionsCell {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn, .editBtn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionBtn:hover, .editBtn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.deleteBtn:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.actionBtn span, .editBtn span {
+  font-size: 18px;
+}
+
+/* Tabs para pantallas especificas (Users / Routes) */
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  font-weight: 600;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.tabActive {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+/* Pie de Página Paginado */
+.tableFooter, .footer {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fcfdfe;
+}
+
+.pageInfo, .resultsCount {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pageButtons, .pagination {
+  display: flex;
+  gap: 12px;
+}
+
+.pageBtn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primaryPageBtn, .pageActive {
+  background-color: var(--primary, #0052cc);
+  color: white;
+  border: none;
+}
+
+/* Loading & Empty States */
+.loadingSection, .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem;
+  color: #64748b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+}
+
+.emptyDesc {
+  font-size: 14px;
+  color: #64748b;
+  max-width: 320px;
+  margin: 0;
+}
+
+/* --- MOBILE RESPONSIVE (VECTURA PREMIUM CENTRALIZADO) --- */
+@media (max-width: 768px) {
+  .container {
+    padding: 0;
+    gap: 1.5rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .titleSection h2 {
+    font-size: 1.5rem;
+  }
+
+  .titleSection p {
+    font-size: 0.875rem;
+  }
+
+  .addBtn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .statsGrid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding: 4px 4px 12px 4px;
+    margin: 0 0 1.5rem 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .statsGrid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .statsCard {
+    flex: 0 0 230px;
+    scroll-snap-align: start;
+    padding: 12px 16px;
+    gap: 12px;
+    border-radius: 12px;
+  }
+
+  .statsIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .statsIcon span {
+    font-size: 20px;
+  }
+
+  .statsLabel {
+    font-size: 10px;
+  }
+
+  .statsValue {
+    font-size: 24px;
+  }
+
+  .statsTrend {
+    font-size: 11px;
+  }
+
+  .card {
+    border-radius: 16px;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+  }
+
+  .tableHeader {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    border: 1px solid #f1f5f9;
+  }
+
+  .tableFilters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .searchWrapper {
+    width: 100%;
+    box-sizing: border-box;
+    max-width: none;
+  }
+
+  .tenantFilterWrapper {
+    width: 100%;
+    margin-right: 0;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+
+  .tenantSelect {
+    width: 100%;
+  }
+
+  .tableResults {
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .tableNav {
+    display: none;
+  }
+
+  .filterBtn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .tableWrapper, .tableContainer {
+    display: none;
+  }
+
+  .mobileList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0;
+    background-color: transparent;
+  }
+
+  .tableFooter, .footer {
+    padding: 1.25rem 0;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    background: transparent;
+    border-radius: 0;
+    margin-top: 1rem;
+    border: none;
+  }
+
+  .tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 0.35rem;
+    width: 100%;
+    display: flex;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ==========================================
+   CLASES ADICIONALES / ALIASES FALTANTES
+   ========================================== */
+
+/* Alias de loading (los pages usan .loading en lugar de .loadingSection) */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem;
+  color: #64748b;
+}
+
+/* Alias de actions para botones en tabla */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* tableActions - contenedor de filtros de tabla */
+.tableActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Estados de badge/status */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.statusActive {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.statusInactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.statusBaja {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* Trend negativo */
+.trendDown {
+  color: #ef4444;
+}
+
+/* Footer / Paginacion */
+.footer {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fcfdfe;
+}
+
+.resultsCount {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pagination {
+  display: flex;
+  gap: 12px;
+}
+
+.pageActive {
+  background-color: var(--primary, #0052cc);
+  color: white;
+  border: none;
+}
+
+/* ==========================================
+   MOBILE CARDS COMPARTIDAS
+   ========================================== */
+
+/* Contenedor de tarjetas mobile (por defecto oculto) */
+.mobileList {
+  display: none;
+}
+
+.mobileCard {
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.cardMainInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.cardLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardRight {
+  display: flex;
+  align-items: center;
+}
+
+.cardBottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mobileTag {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mobileActions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Avatar */
+.avatarCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarCircle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatarInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Driver specific */
+.driverName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.driverEmail {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.mobileDriverName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.mobileDriverInfo {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Expiry warning badge */
+.expiryWarning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.expiryNormal {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+/* Vehicle specific */
+.plateCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plateBadge {
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.plateInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.plateText {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.traccarCell {
+  display: flex;
+  align-items: center;
+}
+
+.traccarValue {
+  font-family: monospace;
+  font-size: 13px;
+  color: #475569;
+}
+
+.yearCell, .capacityCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.yearValue, .capacityValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.capacityLabel {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Tenant indicator dot */
+.tenantIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+  flex-shrink: 0;
+}
+
+.tenantText {
+  font-size: 14px;
+  color: #334155;
+  font-weight: 500;
+}
+
+/* Route specific */
+.routeNameCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.routeIconWrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.routeNameText {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Mobile overrides for new classes */
+@media (max-width: 768px) {
+  .mobileList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0;
+    background-color: transparent;
+  }
+}
+
+/* ==========================================
+   TABLA: ALIAS th, tr, td
+   ========================================== */
+.th {
+  padding: 20px 24px;
+  background-color: #fcfdfe;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.td {
+  padding: 24px;
+  border-bottom: 1px solid #f8fafc;
+  vertical-align: middle;
+}
+
+.tr:hover td {
+  background-color: #fafbfc;
+}
+
+/* ==========================================
+   BADGE GENÉRICO
+   ========================================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badgeActive {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.badgeInactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* ==========================================
+   BOTONES ADICIONALES DE ACCIÓN
+   ========================================== */
+.actionBtnPrimary {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionBtnPrimary:hover {
+  background: #dbeafe;
+  transform: translateY(-2px);
+}
+
+.cancelBtn {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.submitBtn {
+  background: var(--primary, #2563eb);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitBtn:hover {
+  filter: brightness(1.1);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   MOBILE WARNING BANNER
+   ========================================== */
+.mobileWarning {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #92400e;
+}
+
+.mobileWarningText {
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* ==========================================
+   ERROR BOX
+   ========================================== */
+.errorBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ==========================================
+   MOBILE ROUTE CARD CLASES ADICIONALES
+   ========================================== */
+.mobileName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.mobileBadgeRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.mobileDate {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.mobileActionBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobileActionBtn:hover {
+  background: #dbeafe;
+  transform: translateY(-1px);
+}
+
+/* ==========================================
+   MODAL (Routes) 
+   ========================================== */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modalHeader h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.formLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.textInput {
+  padding: 0.875rem 1rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  color: #1e293b;
+  background: white;
+  transition: all 0.2s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.textInput:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* ==========================================
+   MOBILE OVERRIDES ADICIONALES
+   ========================================== */
+@media (max-width: 768px) {
+  .mobileWarning {
+    display: flex;
+  }
+
+  .modalContent {
+    margin: 16px;
+    max-width: calc(100% - 32px);
+    padding: 24px 16px;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .cancelBtn,
+  .submitBtn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* ==========================================
+   USERS: Estilos de celdas y componentes
+   ========================================== */
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.userAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.userMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.mobileEmail {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Role Badge */
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #f5f3ff;
+  color: #7c3aed;
+  letter-spacing: 0.03em;
+}
+
+/* Botones de acción específicos */
+.resetBtn {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetBtn:hover {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  transform: translateY(-2px);
+}
+
+.activateBtn {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #16a34a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.activateBtn:hover {
+  background: #dcfce7;
+  transform: translateY(-2px);
+}
+
+/* Alias de paginación */
+.pageBtnActive {
+  background-color: var(--primary, #0052cc);
+  color: white;
+  border: none;
+}
+
+/* ==========================================
+   TENANTS: Estilos de celdas específicas
+   ========================================== */
+.avatarIconBox {
+  width: 44px;
+  height: 44px;
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.mobileTenantName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.mobileSubdomain {
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: #3b82f6;
+  font-weight: 600;
+  background: #f0f4fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ==========================================
+   PAGOS (TICKETS): Estilos de celdas específicas
+   ========================================== */
+.ticketId {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary, #0052cc);
+}
+
+.vehicleCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vehicleIconWrapper {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 74, 198, 0.06);
+  color: var(--primary, #0052cc);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.vehicleName {
+  font-weight: 600;
+  color: var(--on-background);
+}
+
+.conductorName {
+  font-weight: 500;
+  color: var(--on-background);
+}
+
+.routeBadge {
+  background: #f1f3f9;
+  color: #3b4256;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.senseBadge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.amount {
+  font-weight: 700;
+  color: var(--on-background);
+}
+
+.payMethodCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.payMethodIcon {
+  font-size: 16px;
+  color: var(--outline);
+}
+
+.segmentedControl {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.segmentBtn {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segmentActive {
+  background: white;
+  color: #2563eb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Diseño Móvil Específico de Tickets de Pago */
+.busIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.busIconBox span {
+  font-size: 22px;
+}
+
+.mobileVehicleNum {
+  font-size: 10px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mobileRouteName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.mobileDriverName {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.mobileDriverName span {
+  font-size: 14px;
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cardHeaderRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mobileAmount {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.mobileStatusBadge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: capitalize;
+  display: inline-block;
+  line-height: 1;
+}
+
+.toolbarTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--on-background, #1e293b);
+  margin: 0;
+}
+
+.btnAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: white;
+  border: 1.5px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnAction:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}

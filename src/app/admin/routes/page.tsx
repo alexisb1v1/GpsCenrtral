@@ -9,7 +9,7 @@ import { getRoutesByTenantUseCase, createRouteUseCase, Route } from '@/app/featu
 import { useConfirm } from '@/app/shared/providers/ConfirmProvider';
 import { useToast } from '@/app/shared/providers/ToastProvider';
 import { useBranding } from '@/app/shared/providers/BrandingContext';
-import styles from './Routes.module.css';
+import styles from '../AdminList.module.css';
 
 export default function RoutesPage() {
   const router = useRouter();
@@ -230,7 +230,7 @@ export default function RoutesPage() {
                   >
                     <option value="">Todos los Tenants</option>
                     {tenants.map(t => (
-                      <option key={t.id} value={t.id}>{t.companyName}</option>
+                      <option key={t.id} value={t.id}>{t.name}</option>
                     ))}
                   </select>
                 </div>

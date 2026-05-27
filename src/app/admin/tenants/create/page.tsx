@@ -8,7 +8,7 @@ import { TenantApiService } from '@/app/features/tenant/services/tenant-api.serv
 import { StorageApiService } from '@/app/shared/services/storage-api.service';
 import { useToast } from '@/app/shared/providers/ToastProvider';
 import { ImageUploader } from '@/app/shared/components/ImageUploader';
-import styles from '../TenantsForm.module.css';
+import styles from '../../AdminForm.module.css';
 
 const tenantApiService = new TenantApiService();
 const storageApiService = new StorageApiService();
@@ -54,7 +54,7 @@ export default function CreateTenantPage() {
       showError('Datos incompletos', 'Por favor verifica los campos obligatorios.');
       return;
     }
-    
+
     setIsSaving(true);
     try {
       let finalLogoUrl = typeof formData.logoUrl === 'string' ? formData.logoUrl : '';
@@ -72,11 +72,11 @@ export default function CreateTenantPage() {
 
       const { statusColor, logoUrl, loginUrl, ...payload } = formData;
 
-      const result = await tenantApiService.create({ 
-        ...payload, 
+      const result = await tenantApiService.create({
+        ...payload,
         logoUrl: finalLogoUrl,
         loginUrl: finalLoginUrl,
-        statusDotColor: statusColor 
+        statusDotColor: statusColor
       });
 
       if (result.success) {
@@ -85,10 +85,10 @@ export default function CreateTenantPage() {
       } else {
         showError('Validación fallida', result.errorMessage || 'No se pudo completar la operación.');
       }
-    } catch (e: any) { 
+    } catch (e: any) {
       showError('Error de red', 'No se pudo conectar con el servidor central.');
-    } finally { 
-      setIsSaving(false); 
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -120,7 +120,7 @@ export default function CreateTenantPage() {
               <div className={styles.inputGroup}><label>Subdominio</label><div className={styles.subdomainInput}><input ref={subdomainRef} type="text" placeholder="empresa" value={formData.subdomain} onChange={(e) => setFormData({ ...formData, subdomain: e.target.value.toLowerCase() })} /><span className={styles.domainSuffix}>.centralafbv.com</span></div></div>
               <div className={styles.fullWidth}><div className={styles.inputGroup}><label>Dirección Fiscal</label><input type="text" placeholder="Calle Industrial 402, Parque Logístico" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div></div>
               <div className={styles.inputGroup}><label>Teléfono de contacto</label><input ref={phoneRef} type="text" placeholder="+54 11 4567 8900" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className={showErrors && !formData.phone ? styles.inputError : ''} /></div>
-              <div className={styles.inputGroup}><label>RUC / Tax ID</label><input ref={taxIdRef} type="text" placeholder="20-12345678-9" value={formData.taxId} onChange={(e) => setFormData({ ...formData, taxId: e.target.value.replace(/\D/g, '').substring(0, 11) })} className={showErrors && !validateRUC(formData.taxId) ? styles.inputError : ''} /></div>
+              <div className={styles.inputGroup}><label>RUC</label><input ref={taxIdRef} type="text" placeholder="20-12345678-9" value={formData.taxId} onChange={(e) => setFormData({ ...formData, taxId: e.target.value.replace(/\D/g, '').substring(0, 11) })} className={showErrors && !validateRUC(formData.taxId) ? styles.inputError : ''} /></div>
             </div>
           </div>
 
@@ -129,7 +129,7 @@ export default function CreateTenantPage() {
 
             <div className={styles.brandingGrid}>
               <div className={styles.uploaderWrapper}>
-                <ImageUploader 
+                <ImageUploader
                   label="Logo Corporativo"
                   value={formData.logoUrl}
                   onChange={(file) => setFormData({ ...formData, logoUrl: file })}
@@ -138,7 +138,7 @@ export default function CreateTenantPage() {
                 />
               </div>
               <div className={styles.uploaderWrapper}>
-                <ImageUploader 
+                <ImageUploader
                   label="Fondo de Login"
                   value={formData.loginUrl}
                   onChange={(file) => setFormData({ ...formData, loginUrl: file })}
@@ -177,9 +177,9 @@ export default function CreateTenantPage() {
                 <div className={styles.previewSidebar} style={{ backgroundColor: formData.primaryColor }}>
                   <div className={styles.previewLogoCircle}>
                     {formData.logoUrl ? (
-                      <img 
-                        src={typeof formData.logoUrl === 'string' ? formData.logoUrl : URL.createObjectURL(formData.logoUrl)} 
-                        alt="Logo" 
+                      <img
+                        src={typeof formData.logoUrl === 'string' ? formData.logoUrl : URL.createObjectURL(formData.logoUrl)}
+                        alt="Logo"
                       />
                     ) : null}
                   </div>
@@ -206,15 +206,9 @@ export default function CreateTenantPage() {
           <div className={styles.formActions}>
             <button className={styles.cancelBtn} onClick={() => router.push('/admin/tenants')}>Cancelar</button>
             <button className={styles.saveBtn} onClick={handleSubmit} disabled={isSaving}>
-              <span className="material-symbols-rounded">save</span>{isSaving ? 'Guardando...' : 'Guardar Cambios'}
+              <span className="material-symbols-rounded">save</span>{isSaving ? 'Guardando...' : 'Grabar'}
             </button>
           </div>
-        </div>
-
-        <div className={styles.infoFooter}>
-          <div className={styles.infoCard}><span className={`material-symbols-rounded ${styles.infoIcon}`}>verified_user</span><h4>Aislamiento de Datos</h4><p>Cada tenant opera en una base de datos aislada para máxima seguridad.</p></div>
-          <div className={styles.infoCard}><span className={`material-symbols-rounded ${styles.infoIcon}`}>bolt</span><h4>Despliegue Instantáneo</h4><p>Los cambios de personalización se reflejan en tiempo real para los usuarios.</p></div>
-          <div className={styles.infoCard}><span className={`material-symbols-rounded ${styles.infoIcon}`}>history</span><h4>Auditoría de Cambios</h4><p>Se guarda un registro histórico de todas las modificaciones de configuración.</p></div>
         </div>
       </div>
     </DashboardLayout>

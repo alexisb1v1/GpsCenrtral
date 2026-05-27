@@ -6,13 +6,14 @@ import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout'
 import { getAllTenantsUseCase, Tenant } from '@/app/features/tenant';
 import { useConfirm } from '@/app/shared/providers/ConfirmProvider';
 import { useToast } from '@/app/shared/providers/ToastProvider';
-import styles from './Tenants.module.css';
+import styles from '../AdminList.module.css';
 
 export default function TenantsPage() {
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadTenants();
@@ -25,7 +26,7 @@ export default function TenantsPage() {
   const loadTenants = async () => {
     setIsLoading(true);
     const result = await getAllTenantsUseCase.execute();
-    
+
     result.match(
       (data) => {
         setTenants(data);
@@ -59,7 +60,7 @@ export default function TenantsPage() {
         const { TenantApiService } = require('@/app/features/tenant/services/tenant-api.service');
         const api = new TenantApiService();
         const result = await api.delete(id);
-        
+
         if (result.success) {
           showSuccess('Empresa eliminada', `La empresa ${name} ha sido borrada del sistema.`);
           loadTenants();
@@ -72,13 +73,18 @@ export default function TenantsPage() {
     }
   };
 
+  const filteredTenants = tenants.filter(t =>
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <DashboardLayout>
       <div className={styles.container}>
         {/* Header Section */}
         <div className={styles.header}>
           <div className={styles.titleSection}>
-            <h2>Gestión de Empresas (Tenants)</h2>
+            <h2>Gestión de Empresas </h2>
             <p>Administra el acceso, subdominios y estado operativo de tus clientes corporativos.</p>
           </div>
           <button className={styles.addBtn} onClick={handleCreateNew}>
@@ -128,29 +134,25 @@ export default function TenantsPage() {
             </div>
           </div>
 
-          <div className={styles.statsCard}>
-            <div className={styles.statsIcon} style={{ color: '#4b5563', backgroundColor: '#f3f4f6' }}>
-              <span className="material-symbols-rounded">trending_up</span>
-            </div>
-            <div className={styles.statsInfo}>
-              <span className={styles.statsLabel}>CRECIMIENTO</span>
-              <div className={styles.statsValueRow}>
-                <span className={styles.statsValue}>12%</span>
-                <span className={styles.statsTrend}>Q3 vs Q2</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Table Content */}
         <div className={styles.card}>
           <div className={styles.tableHeader}>
             <div className={styles.tableFilters}>
-              <button className={styles.filterBtn}>
-                <span className="material-symbols-rounded">filter_list</span>
-                Filtrar
-              </button>
-              <span className={styles.tableResults}>Mostrando 1-{tenants.length} de {tenants.length} tenants</span>
+              <div className={styles.searchWrapper}>
+                <span className="material-symbols-rounded">search</span>
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="Buscar empresa..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <span className={styles.tableResults}>
+                Mostrando {filteredTenants.length} de {tenants.length} empresas
+              </span>
             </div>
             <div className={styles.tableNav}>
               <button className={styles.navArrow}><span className="material-symbols-rounded">chevron_left</span></button>
@@ -159,130 +161,128 @@ export default function TenantsPage() {
           </div>
 
           <div className={styles.tableWrapper}>
-            <>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>NOMBRE</th>
-                    <th>SUBDOMINIO</th>
-                    <th>ESTADO</th>
-                    <th>FECHA DE REGISTRO</th>
-                    <th>ACCIONES</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenants.map((tenant) => (
-                    <tr key={tenant.id}>
-                      <td>
-                        <div className={styles.tenantCell}>
-                          <div className={styles.tenantAvatar}>
-                            {getInitials(tenant.name)}
-                          </div>
-                          <div className={styles.tenantMeta}>
-                            <span className={styles.tenantName}>{tenant.name}</span>
-                            <span className={styles.tenantId}>ID: {tenant.id.slice(0, 10).toUpperCase()}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={styles.subdomainBadge}>
-                          {tenant.slug}.centralafbv.com
-                        </span>
-                      </td>
-                      <td>
-                        <div className={`${styles.statusPill} ${styles[tenant.status]}`}>
-                          <div className={styles.statusDot} />
-                          {tenant.status === 'active' ? 'Activo' : 'Inactivo'}
-                        </div>
-                      </td>
-                      <td>
-                        <span className={styles.dateCell}>
-                          {new Date(tenant.createdAt).toLocaleDateString('es-ES', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={styles.tableActions}>
-                          <button 
-                            className={styles.actionBtn} 
-                            onClick={() => router.push(`/admin/tenants/${tenant.id}/edit`)}
-                            title="Editar Empresa"
-                          >
-                            <span className="material-symbols-rounded">edit</span>
-                          </button>
-                          <button 
-                            className={`${styles.actionBtn} ${styles.deleteBtn}`} 
-                            onClick={() => handleDelete(tenant.id, tenant.name)}
-                            title="Eliminar Empresa"
-                          >
-                            <span className="material-symbols-rounded">delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Mobile Cards View (Rediseño Vectura Premium) */}
-              <div className={styles.mobileList}>
-                {tenants.map((tenant) => (
-                  <div key={tenant.id} className={styles.mobileCard}>
-                    <div className={styles.cardMainInfo}>
-                      <div className={styles.cardLeft}>
-                        <div className={styles.avatarIconBox}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>NOMBRE</th>
+                  <th>SUBDOMINIO</th>
+                  <th>ESTADO</th>
+                  <th>FECHA DE REGISTRO</th>
+                  <th>ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTenants.map((tenant) => (
+                  <tr key={tenant.id}>
+                    <td>
+                      <div className={styles.tenantCell}>
+                        <div className={styles.tenantAvatar}>
                           {getInitials(tenant.name)}
                         </div>
-                        <div className={styles.cardMeta}>
-                          <h4 className={styles.mobileTenantName}>{tenant.name}</h4>
-                          <span className={styles.mobileSubdomain}>
-                            {tenant.slug}.centralafbv.com
-                          </span>
+                        <div className={styles.tenantMeta}>
+                          <span className={styles.tenantName}>{tenant.name}</span>
+                          <span className={styles.tenantId}>ID: {tenant.id.slice(0, 10).toUpperCase()}</span>
                         </div>
                       </div>
-                      <div className={styles.cardRight}>
-                        <div className={`${styles.statusPill} ${styles[tenant.status]}`} style={{ padding: '4px 10px', fontSize: '11px' }}>
-                          <div className={styles.statusDot} />
-                          {tenant.status === 'active' ? 'Activo' : 'Inactivo'}
-                        </div>
+                    </td>
+                    <td>
+                      <span className={styles.subdomainBadge}>
+                        {tenant.slug}.centralafbv.com
+                      </span>
+                    </td>
+                    <td>
+                      <div className={`${styles.statusPill} ${styles[tenant.status]}`}>
+                        <div className={styles.statusDot} />
+                        {tenant.status === 'active' ? 'Activo' : 'Inactivo'}
                       </div>
-                    </div>
-                    <div className={styles.cardBottomRow}>
-                      <div className={styles.cardTags}>
-                        <span className={styles.mobileTag}>
-                          {new Date(tenant.createdAt).toLocaleDateString('es-ES', {
-                            day: '2-digit',
-                            month: 'short'
-                          })}
-                        </span>
-                        <span className={styles.mobileTag} style={{ backgroundColor: '#eff6ff', color: '#2563eb' }}>
-                          Slug: {tenant.slug}
-                        </span>
-                      </div>
-                      <div className={styles.mobileActions}>
-                        <button 
-                          className={styles.actionBtn} 
+                    </td>
+                    <td>
+                      <span className={styles.dateCell}>
+                        {new Date(tenant.createdAt).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={styles.tableActions}>
+                        <button
+                          className={styles.actionBtn}
                           onClick={() => router.push(`/admin/tenants/${tenant.id}/edit`)}
-                          style={{ width: '32px', height: '32px' }}
+                          title="Editar Empresa"
                         >
-                          <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
+                          <span className="material-symbols-rounded">edit</span>
                         </button>
-                        <button 
-                          className={`${styles.actionBtn} ${styles.deleteBtn}`} 
+                        <button
+                          className={`${styles.actionBtn} ${styles.deleteBtn}`}
                           onClick={() => handleDelete(tenant.id, tenant.name)}
-                          style={{ width: '32px', height: '32px' }}
+                          title="Eliminar Empresa"
                         >
-                          <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>delete</span>
+                          <span className="material-symbols-rounded">delete</span>
                         </button>
                       </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards View (Rediseño Vectura Premium) */}
+          <div className={styles.mobileList}>
+            {filteredTenants.map((tenant) => (
+              <div key={tenant.id} className={styles.mobileCard}>
+                <div className={styles.cardMainInfo}>
+                  <div className={styles.cardLeft}>
+                    <div className={styles.avatarIconBox}>
+                      {getInitials(tenant.name)}
+                    </div>
+                    <div className={styles.cardMeta}>
+                      <h4 className={styles.mobileTenantName}>{tenant.name}</h4>
+                      <span className={styles.mobileSubdomain}>
+                        {tenant.slug}.centralafbv.com
+                      </span>
                     </div>
                   </div>
-                ))}
+                  <div className={styles.cardRight}>
+                    <div className={`${styles.statusPill} ${styles[tenant.status]}`} style={{ padding: '4px 10px', fontSize: '11px' }}>
+                      <div className={styles.statusDot} />
+                      {tenant.status === 'active' ? 'Activo' : 'Inactivo'}
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.cardBottomRow}>
+                  <div className={styles.cardTags}>
+                    <span className={styles.mobileTag}>
+                      {new Date(tenant.createdAt).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'short'
+                      })}
+                    </span>
+                    <span className={styles.mobileTag} style={{ backgroundColor: '#eff6ff', color: '#2563eb' }}>
+                      Slug: {tenant.slug}
+                    </span>
+                  </div>
+                  <div className={styles.mobileActions}>
+                    <button
+                      className={styles.actionBtn}
+                      onClick={() => router.push(`/admin/tenants/${tenant.id}/edit`)}
+                      style={{ width: '32px', height: '32px' }}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
+                    </button>
+                    <button
+                      className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                      onClick={() => handleDelete(tenant.id, tenant.name)}
+                      style={{ width: '32px', height: '32px' }}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>delete</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-            </>
+            ))}
           </div>
 
           <div className={styles.tableFooter}>

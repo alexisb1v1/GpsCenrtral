@@ -9,7 +9,7 @@ import { createUserUseCase, updateUserUseCase, User, USER_ROLES } from '@/app/fe
 import { useToast } from '@/app/shared/providers/ToastProvider';
 import { useBranding } from '@/app/shared/providers/BrandingContext';
 import { getAllTenantsUseCase, Tenant } from '@/app/features/tenant';
-import styles from '../UserForm.module.css';
+import styles from '../../AdminForm.module.css';
 
 interface UserFormProps {
   initialData?: User;

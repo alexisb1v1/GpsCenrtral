@@ -4,17 +4,17 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
-import { 
-  getDriversUseCase, 
-  updateDriverUseCase, 
-  Driver, 
-  DriverStatus 
+import {
+  getDriversUseCase,
+  updateDriverUseCase,
+  Driver,
+  DriverStatus
 } from '@/app/features/driver';
 import { getAllTenantsUseCase } from '@/app/features/tenant';
 import { useConfirm } from '@/app/shared/providers/ConfirmProvider';
 import { useToast } from '@/app/shared/providers/ToastProvider';
 import { useBranding } from '@/app/shared/providers/BrandingContext';
-import styles from './Drivers.module.css';
+import styles from '../AdminList.module.css';
 
 export default function DriversPage() {
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function DriversPage() {
     const result = await getAllTenantsUseCase.execute();
     result.match(
       (data) => setTenants(data),
-      () => {}
+      () => { }
     );
   };
 
@@ -77,7 +77,7 @@ export default function DriversPage() {
 
     if (isConfirmed) {
       const newStatus = isActivating ? DriverStatus.ACTIVE : DriverStatus.INACTIVE;
-      
+
       // Armamos los datos requeridos por el UpdateDriverDto
       const result = await updateDriverUseCase.execute(driver.id, {
         name: driver.name,
@@ -91,7 +91,7 @@ export default function DriversPage() {
       result.match(
         () => {
           showSuccess(
-            isActivating ? 'Chofer activado' : 'Chofer desactivado', 
+            isActivating ? 'Chofer activado' : 'Chofer desactivado',
             `El chofer ${driver.name} ha cambiado su estado.`
           );
           loadDrivers(isVectura ? selectedTenantFilter : (branding?.id || ''));
@@ -139,7 +139,7 @@ export default function DriversPage() {
   };
 
   // Filtros de búsqueda
-  const filteredDrivers = drivers.filter(d => 
+  const filteredDrivers = drivers.filter(d =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     d.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (d.driverInfo?.dni && d.driverInfo.dni.includes(searchQuery)) ||
@@ -225,10 +225,10 @@ export default function DriversPage() {
           <div className={styles.tableHeader}>
             <div className={styles.searchWrapper}>
               <span className="material-symbols-rounded">search</span>
-              <input 
-                type="text" 
-                className={styles.searchInput} 
-                placeholder="Buscar chofer, licencia o DNI..." 
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Buscar chofer, licencia o DNI..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -237,9 +237,9 @@ export default function DriversPage() {
               {isVectura && (
                 <div className={styles.tenantFilterWrapper}>
                   <span className="material-symbols-rounded">filter_alt</span>
-                  <select 
+                  <select
                     className={styles.tenantSelect}
-                    value={selectedTenantFilter} 
+                    value={selectedTenantFilter}
                     onChange={(e) => {
                       const id = e.target.value;
                       setSelectedTenantFilter(id);
@@ -253,12 +253,6 @@ export default function DriversPage() {
                   </select>
                 </div>
               )}
-              <button className={styles.iconBtn} title="Filtrar">
-                <span className="material-symbols-rounded">filter_list</span>
-              </button>
-              <button className={styles.iconBtn} title="Exportar">
-                <span className="material-symbols-rounded">download</span>
-              </button>
             </div>
           </div>
 
@@ -334,11 +328,10 @@ export default function DriversPage() {
 
                           {/* Estado Badge */}
                           <td>
-                            <span className={`${styles.statusBadge} ${
-                              driver.status === DriverStatus.ACTIVE 
-                                ? styles.statusActive 
+                            <span className={`${styles.statusBadge} ${driver.status === DriverStatus.ACTIVE
+                                ? styles.statusActive
                                 : styles.statusInactive
-                            }`}>
+                              }`}>
                               {driver.status === DriverStatus.ACTIVE ? 'Activo' : 'Inactivo'}
                             </span>
                           </td>
@@ -347,16 +340,16 @@ export default function DriversPage() {
                           <td>
                             <div className={styles.actions}>
                               {/* Editar */}
-                              <button 
-                                className={styles.actionBtn} 
+                              <button
+                                className={styles.actionBtn}
                                 onClick={() => router.push(`/admin/drivers/${driver.id}/edit`)}
                                 title="Editar chofer"
                               >
                                 <span className="material-symbols-rounded">edit</span>
                               </button>
                               {/* Activar/Desactivar */}
-                              <button 
-                                className={`${styles.actionBtn} ${driver.status === DriverStatus.ACTIVE ? styles.deleteBtn : ''}`} 
+                              <button
+                                className={`${styles.actionBtn} ${driver.status === DriverStatus.ACTIVE ? styles.deleteBtn : ''}`}
                                 onClick={() => handleToggleStatus(driver)}
                                 title={driver.status === DriverStatus.ACTIVE ? "Desactivar chofer" : "Activar chofer"}
                               >
@@ -398,11 +391,10 @@ export default function DriversPage() {
                             </div>
                           </div>
                           <div className={styles.cardRight}>
-                            <span className={`${styles.statusBadge} ${
-                              driver.status === DriverStatus.ACTIVE 
-                                ? styles.statusActive 
+                            <span className={`${styles.statusBadge} ${driver.status === DriverStatus.ACTIVE
+                                ? styles.statusActive
                                 : styles.statusInactive
-                            }`} style={{ fontSize: '10px', padding: '4px 10px' }}>
+                              }`} style={{ fontSize: '10px', padding: '4px 10px' }}>
                               {driver.status === DriverStatus.ACTIVE ? 'Activo' : 'Inactivo'}
                             </span>
                           </div>
@@ -423,15 +415,15 @@ export default function DriversPage() {
                             )}
                           </div>
                           <div className={styles.mobileActions}>
-                            <button 
-                              className={styles.actionBtn} 
+                            <button
+                              className={styles.actionBtn}
                               onClick={() => router.push(`/admin/drivers/${driver.id}/edit`)}
                               style={{ width: '32px', height: '32px' }}
                             >
                               <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>edit</span>
                             </button>
-                            <button 
-                              className={`${styles.actionBtn} ${driver.status === DriverStatus.ACTIVE ? styles.deleteBtn : ''}`} 
+                            <button
+                              className={`${styles.actionBtn} ${driver.status === DriverStatus.ACTIVE ? styles.deleteBtn : ''}`}
                               onClick={() => handleToggleStatus(driver)}
                               style={{ width: '32px', height: '32px' }}
                             >
@@ -470,29 +462,6 @@ export default function DriversPage() {
             </div>
           </div>
         </div>
-
-        {/* Recordatorio de Seguridad Alert Banner */}
-        {showAlertBanner && (
-          <div className={styles.alertBanner}>
-            <span className={`material-symbols-rounded ${styles.alertIcon}`}>info</span>
-            <div className={styles.alertContent}>
-              <h4 className={styles.alertTitle}>Recordatorio de Seguridad</h4>
-              <p className={styles.alertText}>
-                Asegúrese de que todos los choferes hayan completado el curso de capacitación semestral de seguridad vial. 
-                Los perfiles con licencias vencidas serán bloqueados automáticamente para la asignación de nuevas rutas.
-              </p>
-              <div className={styles.alertActions}>
-                <span className={styles.alertLink}>Ver capacitación</span>
-                <span 
-                  className={`${styles.alertLink} ${styles.alertLinkSecondary}`} 
-                  onClick={() => setShowAlertBanner(false)}
-                >
-                  Descartar
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );

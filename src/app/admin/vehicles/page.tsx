@@ -8,7 +8,7 @@ import { getVehiclesUseCase, deleteVehicleUseCase, Vehicle, VehicleStatus } from
 import { useConfirm } from '@/app/shared/providers/ConfirmProvider';
 import { useToast } from '@/app/shared/providers/ToastProvider';
 import { useBranding } from '@/app/shared/providers/BrandingContext';
-import styles from './Vehicles.module.css';
+import styles from '../AdminList.module.css';
 
 export default function VehiclesPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function VehiclesPage() {
     const result = await getAllTenantsUseCase.execute();
     result.match(
       (data: any) => setTenants(data),
-      () => {}
+      () => { }
     );
   };
 
@@ -80,7 +80,7 @@ export default function VehiclesPage() {
     }
   };
 
-  const filteredVehicles = vehicles.filter(v => 
+  const filteredVehicles = vehicles.filter(v =>
     v.plate.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -156,10 +156,10 @@ export default function VehiclesPage() {
           <div className={styles.tableHeader}>
             <div className={styles.searchWrapper}>
               <span className="material-symbols-rounded">search</span>
-              <input 
-                type="text" 
-                className={styles.searchInput} 
-                placeholder="Buscar vehículo..." 
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Buscar vehículo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -168,9 +168,9 @@ export default function VehiclesPage() {
               {isVectura && (
                 <div className={styles.tenantFilterWrapper}>
                   <span className="material-symbols-rounded">filter_alt</span>
-                  <select 
+                  <select
                     className={styles.tenantSelect}
-                    value={selectedTenantFilter} 
+                    value={selectedTenantFilter}
                     onChange={(e) => {
                       const id = e.target.value;
                       setSelectedTenantFilter(id);
@@ -184,12 +184,6 @@ export default function VehiclesPage() {
                   </select>
                 </div>
               )}
-              <button className={styles.iconBtn} title="Filtrar">
-                <span className="material-symbols-rounded">filter_list</span>
-              </button>
-              <button className={styles.iconBtn} title="Exportar">
-                <span className="material-symbols-rounded">download</span>
-              </button>
             </div>
           </div>
 
@@ -247,14 +241,13 @@ export default function VehiclesPage() {
                           </div>
                         </td>
                         <td>
-                          <span className={`${styles.statusBadge} ${
-                            vehicle.status === VehicleStatus.OPERATIVO ? styles.statusActive : 
-                            vehicle.status === VehicleStatus.TALLER ? styles.statusMaintenance : 
-                            styles.statusBaja
-                          }`}>
-                            {vehicle.status === VehicleStatus.OPERATIVO ? 'Activo' : 
-                             vehicle.status === VehicleStatus.TALLER ? 'Mantenimiento' : 
-                             'De Baja'}
+                          <span className={`${styles.statusBadge} ${vehicle.status === VehicleStatus.OPERATIVO ? styles.statusActive :
+                              vehicle.status === VehicleStatus.TALLER ? styles.statusMaintenance :
+                                styles.statusBaja
+                            }`}>
+                            {vehicle.status === VehicleStatus.OPERATIVO ? 'Activo' :
+                              vehicle.status === VehicleStatus.TALLER ? 'Mantenimiento' :
+                                'De Baja'}
                           </span>
                         </td>
                         <td>
@@ -296,14 +289,13 @@ export default function VehiclesPage() {
                           </div>
                         </div>
                         <div className={styles.cardRight}>
-                          <span className={`${styles.statusBadge} ${
-                            vehicle.status === VehicleStatus.OPERATIVO ? styles.statusActive : 
-                            vehicle.status === VehicleStatus.TALLER ? styles.statusMaintenance : 
-                            styles.statusBaja
-                          }`} style={{ fontSize: '10px', padding: '4px 10px' }}>
-                            {vehicle.status === VehicleStatus.OPERATIVO ? 'Activo' : 
-                             vehicle.status === VehicleStatus.TALLER ? 'Mantenimiento' : 
-                             'De Baja'}
+                          <span className={`${styles.statusBadge} ${vehicle.status === VehicleStatus.OPERATIVO ? styles.statusActive :
+                              vehicle.status === VehicleStatus.TALLER ? styles.statusMaintenance :
+                                styles.statusBaja
+                            }`} style={{ fontSize: '10px', padding: '4px 10px' }}>
+                            {vehicle.status === VehicleStatus.OPERATIVO ? 'Activo' :
+                              vehicle.status === VehicleStatus.TALLER ? 'Mantenimiento' :
+                                'De Baja'}
                           </span>
                         </div>
                       </div>

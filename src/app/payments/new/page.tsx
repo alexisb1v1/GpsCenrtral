@@ -12,7 +12,7 @@ import { VehicleDto } from '@/app/features/vehicle/dto/vehicle.dto';
 import { DriverDto } from '@/app/features/driver/dto/driver.dto';
 import { RouteDto } from '@/app/features/route/dto/route.dto';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
-import styles from './page.module.css';
+import styles from '../../admin/AdminForm.module.css';
 
 const paymentApi = new PaymentApiService();
 const vehicleApi = new VehicleApiService();
@@ -231,14 +231,14 @@ export default function NewPaymentPage() {
     <DashboardLayout>
       <div className={styles.container}>
         {/* Header & Backlink */}
-        <div className={styles.headerSection}>
+        <div className={styles.header}>
           <Link href="/payments" className={styles.backLink}>
             <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>arrow_back</span>
             Volver a Gestión de Tickets
           </Link>
-          <div className={styles.titleGroup}>
-            <h1 className={styles.title}>Registro de Ticket Diario</h1>
-            <p className={styles.subtitle}>
+          <div className={styles.titleSection}>
+            <h2>Registro de Ticket Diario</h2>
+            <p>
               Complete los detalles de la unidad y el pago para generar el ticket administrativo.
             </p>
           </div>
@@ -267,14 +267,14 @@ export default function NewPaymentPage() {
         <form onSubmit={handleSubmit} className={styles.formGrid}>
           
           {/* Card 1: Información de la Unidad */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <span className={`material-symbols-rounded ${styles.cardIcon}`}>directions_bus</span>
-              <h2 className={styles.cardTitle}>Información de la Unidad</h2>
+          <div className={styles.formCard}>
+            <div className={styles.sectionTitle}>
+              <span className="material-symbols-rounded">directions_bus</span>
+              <h3>Información de la Unidad</h3>
             </div>
 
             {/* Vehículo */}
-            <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
               <label className={styles.label} htmlFor="vehicleSelect">SELECCIÓN DE VEHÍCULO</label>
               <select
                 id="vehicleSelect"
@@ -293,7 +293,7 @@ export default function NewPaymentPage() {
             </div>
 
             {/* Conductor */}
-            <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
               <label className={styles.label} htmlFor="driverSelect">SELECCIÓN DE CONDUCTOR</label>
               <select
                 id="driverSelect"
@@ -313,14 +313,14 @@ export default function NewPaymentPage() {
           </div>
 
           {/* Card 2: Detalles de la Ruta */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <span className={`material-symbols-rounded ${styles.cardIcon}`}>map</span>
-              <h2 className={styles.cardTitle}>Detalles de la Ruta</h2>
+          <div className={styles.formCard}>
+            <div className={styles.sectionTitle}>
+              <span className="material-symbols-rounded">map</span>
+              <h3>Detalles de la Ruta</h3>
             </div>
 
             {/* Ruta */}
-            <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
               <label className={styles.label} htmlFor="routeSelect">RUTA ASIGNADA</label>
               <select
                 id="routeSelect"
@@ -339,7 +339,7 @@ export default function NewPaymentPage() {
             </div>
 
             {/* Dirección Inicial (IDA / VUELTA) */}
-            <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
               <label className={styles.label}>DIRECCIÓN DEL VIAJE</label>
               <div className={styles.toggleContainer}>
                 <button
@@ -361,10 +361,10 @@ export default function NewPaymentPage() {
           </div>
 
           {/* Card 3: Montos de Pago */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <span className={`material-symbols-rounded ${styles.cardIcon}`}>payments</span>
-              <h2 className={styles.cardTitle}>Montos de Pago</h2>
+          <div className={styles.formCard}>
+            <div className={styles.sectionTitle}>
+              <span className="material-symbols-rounded">payments</span>
+              <h3>Montos de Pago</h3>
             </div>
 
             {/* Cuota Administrativa */}
@@ -414,14 +414,14 @@ export default function NewPaymentPage() {
           </div>
 
           {/* Card 4: Información de Pago */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <span className={`material-symbols-rounded ${styles.cardIcon}`}>receipt_long</span>
-              <h2 className={styles.cardTitle}>Información de Pago</h2>
+          <div className={styles.formCard}>
+            <div className={styles.sectionTitle}>
+              <span className="material-symbols-rounded">receipt_long</span>
+              <h3>Información de Pago</h3>
             </div>
 
             {/* Método de Pago */}
-            <div className={styles.formGroup}>
+            <div className={styles.inputGroup}>
               <label className={styles.label} htmlFor="paymentMethodSelect">MÉTODO DE PAGO</label>
               <select
                 id="paymentMethodSelect"
@@ -439,7 +439,7 @@ export default function NewPaymentPage() {
 
             {/* Referencia o Comprobante */}
             {paymentMethod !== 'EFECTIVO' && (
-              <div className={styles.formGroup} style={{ animation: 'fadeIn 0.25s ease-out' }}>
+              <div className={styles.inputGroup} style={{ animation: 'fadeIn 0.25s ease-out' }}>
                 <label className={styles.label} htmlFor="referenceInput">
                   REFERENCIA / COMPROBANTE
                 </label>
@@ -459,13 +459,13 @@ export default function NewPaymentPage() {
         </form>
 
         {/* Acciones del formulario */}
-        <div className={styles.actionsBar}>
-          <Link href="/payments" className={styles.btnCancel}>
+        <div className={styles.formActions}>
+          <Link href="/payments" className={styles.cancelBtn}>
             Cancelar
           </Link>
           <button
             type="button"
-            className={styles.btnSubmit}
+            className={styles.saveBtn}
             disabled={submitting || !selectedVehicleId || !selectedDriverId || !selectedRouteId}
             onClick={handleSubmit}
           >

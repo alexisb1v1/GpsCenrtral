@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import UserForm from '../../components/UserForm';
 import { getUserByIdUseCase, User } from '@/app/features/user';
-import styles from '../../Users.module.css';
+import styles from '../../../AdminList.module.css';
 
 export default function EditUserPage() {
   const { id } = useParams();

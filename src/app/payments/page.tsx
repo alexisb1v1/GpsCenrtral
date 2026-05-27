@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { PaymentApiService, DailyTicketDto } from '@/app/features/payments/services/payment-api.service';
 import { VehicleApiService } from '@/app/features/vehicle/services/vehicle-api.service';
 import { DriverApiService } from '@/app/features/driver/services/driver-api.service';
 import { RouteApiService } from '@/app/features/route/services/route-api.service';
 import { VehicleDto } from '@/app/features/vehicle/dto/vehicle.dto';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
-import styles from './page.module.css';
+import styles from '../admin/AdminList.module.css';
 
 const paymentApi = new PaymentApiService();
 const vehicleApi = new VehicleApiService();
@@ -16,6 +17,7 @@ const driverApi = new DriverApiService();
 const routeApi = new RouteApiService();
 
 export default function PaymentsPage() {
+  const router = useRouter();
   const [tickets, setTickets] = useState<DailyTicketDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,13 +36,13 @@ export default function PaymentsPage() {
     try {
       // 1. Cargar tickets del backend real
       const ticketsRes = await paymentApi.getTickets();
-      
+
       // 2. Cargar vehículos
       const vehiclesRes = await vehicleApi.getAll();
 
       // 3. Cargar rutas
       const routesRes = await routeApi.getList();
-      
+
       if (ticketsRes.success && ticketsRes.data) {
         setTickets(ticketsRes.data);
       }
@@ -63,7 +65,7 @@ export default function PaymentsPage() {
     const ticketIdMatch = ticket.id.toLowerCase().includes(searchLower) || `#TK-${ticket.id.substring(0, 4)}`.toLowerCase().includes(searchLower);
     const vehicleMatch = ticket.vehicle?.plate.toLowerCase().includes(searchLower) || ticket.vehicle?.number.toLowerCase().includes(searchLower);
     const driverMatch = ticket.driver?.name.toLowerCase().includes(searchLower);
-    
+
     // Si la relación en el ticket está incompleta, buscamos en local
     let localVehicleMatch = false;
     if (!ticket.vehicle && vehicles.length > 0) {
@@ -84,7 +86,7 @@ export default function PaymentsPage() {
 
   // Cálculos dinámicos de KPIs
   const totalRecaudadoHoy = tickets.reduce((sum, ticket) => sum + Number(ticket.totalAmount), 0);
-  
+
   const totalUnidades = vehicles.length || 1;
   const unidadesPagadas = new Set(tickets.map(t => t.vehicleId)).size;
   const porcentajePagadas = Math.round((unidadesPagadas / totalUnidades) * 100);
@@ -127,21 +129,21 @@ export default function PaymentsPage() {
     <DashboardLayout>
       <div className={styles.container}>
         {/* Header Section */}
-        <div className={styles.headerSection}>
-          <div className={styles.titleGroup}>
-            <h1 className={styles.title}>Gestión de Tickets Diarios</h1>
-            <p className={styles.subtitle}>
+        <div className={styles.header}>
+          <div className={styles.titleSection}>
+            <h2>Gestión de Tickets Diarios</h2>
+            <p>
               Control administrativo de la flota urbana al {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
-          <Link href="/payments/new" className={styles.btnRegister}>
+          <button className={styles.addBtn} onClick={() => router.push('/payments/new')}>
             <span className="material-symbols-rounded">add_circle</span>
             Registrar Nuevo Pago
-          </Link>
+          </button>
         </div>
 
         {/* KPIs Grid */}
-        <div className={styles.kpisGrid}>
+        <div className={styles.statsGrid}>
           {/* KPI 1: Recaudado */}
           <div className={styles.statsCard}>
             <div className={styles.statsIcon} style={{ color: '#2563eb', backgroundColor: '#eff6ff' }}>
@@ -190,11 +192,11 @@ export default function PaymentsPage() {
         </div>
 
         {/* Main Table Card */}
-        <div className={styles.mainCard}>
+        <div className={styles.card}>
           {/* Toolbar */}
-          <div className={styles.toolbar}>
+          <div className={styles.tableHeader}>
             <h3 className={styles.toolbarTitle}>Detalle de Tickets</h3>
-            <div className={styles.toolbarActions}>
+            <div className={styles.tableFilters}>
               <div className={styles.searchWrapper}>
                 <span className="material-symbols-rounded">search</span>
                 <input
@@ -208,21 +210,6 @@ export default function PaymentsPage() {
                   }}
                 />
               </div>
-              
-              <div className={styles.segmentedControl}>
-                <button
-                  className={`${styles.segmentBtn} ${timeFilter === 'hoy' ? styles.segmentActive : ''}`}
-                  onClick={() => setTimeFilter('hoy')}
-                >
-                  Hoy
-                </button>
-                <button
-                  className={`${styles.segmentBtn} ${timeFilter === 'semana' ? styles.segmentActive : ''}`}
-                  onClick={() => setTimeFilter('semana')}
-                >
-                  Semana
-                </button>
-              </div>
 
               <button className={styles.btnAction} onClick={loadData}>
                 <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>refresh</span>
@@ -232,20 +219,20 @@ export default function PaymentsPage() {
           </div>
 
           {/* Table View */}
-          <div className={styles.tableContainer}>
-            {loading ? (
-              <div className={styles.emptyState}>
-                <span className="material-symbols-rounded" style={{ fontSize: '48px', color: 'var(--primary)', animation: 'spin 1.5s linear infinite' }}>sync</span>
-                <p className={styles.emptyStateTitle}>Cargando información real...</p>
-              </div>
-            ) : currentTickets.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className="material-symbols-rounded" style={{ fontSize: '48px' }}>payments</span>
-                <h4 className={styles.emptyStateTitle}>No se encontraron tickets</h4>
-                <p className={styles.emptyStateDesc}>Registra salidas para comenzar a ver el recaudo e iniciar el monitoreo de unidades.</p>
-              </div>
-            ) : (
-              <>
+          {loading ? (
+            <div className={styles.emptyState}>
+              <span className={`material-symbols-rounded ${styles.emptyIcon}`} style={{ color: 'var(--primary)', animation: 'spin 1.5s linear infinite' }}>sync</span>
+              <p className={styles.emptyTitle}>Cargando información real...</p>
+            </div>
+          ) : currentTickets.length === 0 ? (
+            <div className={styles.emptyState}>
+              <span className={`material-symbols-rounded ${styles.emptyIcon}`}>payments</span>
+              <h4 className={styles.emptyTitle}>No se encontraron tickets</h4>
+              <p className={styles.emptyDesc}>Registra salidas para comenzar a ver el recaudo e iniciar el monitoreo de unidades.</p>
+            </div>
+          ) : (
+            <>
+              <div className={styles.tableContainer}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -264,7 +251,7 @@ export default function PaymentsPage() {
                       // Resolver información enriquecida local si el join no viniera completo
                       const vehicleObj = ticket.vehicle || vehicles.find(v => v.id === ticket.vehicleId);
                       const driverName = ticket.driver?.name || "No asignado";
-                      
+
                       // Obtener ruta asignada
                       let routeName = "Sin Ruta";
                       if (ticket.routeId) {
@@ -304,7 +291,7 @@ export default function PaymentsPage() {
                             <span className={styles.routeBadge}>{routeName}</span>
                           </td>
                           <td className={styles.td}>
-                            <span 
+                            <span
                               className={styles.senseBadge}
                               style={{
                                 background: senseLabel === 'IDA' ? '#eff6ff' : '#faf5ff',
@@ -333,13 +320,14 @@ export default function PaymentsPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
 
-                {/* Mobile Cards View (Rediseño Vectura Premium) */}
+              {/* Mobile Cards View (Rediseño Vectura Premium) */}
                 <div className={styles.mobileList}>
                   {currentTickets.map((ticket) => {
                     const vehicleObj = ticket.vehicle || vehicles.find(v => v.id === ticket.vehicleId);
                     const driverName = ticket.driver?.name || "No asignado";
-                    
+
                     let routeName = "Sin Ruta";
                     if (ticket.routeId) {
                       const r = routes.find(item => item.id === ticket.routeId);
@@ -369,8 +357,8 @@ export default function PaymentsPage() {
                         </div>
                         <div className={styles.cardHeaderRight}>
                           <div className={styles.mobileAmount}>{formatCurrency(Number(ticket.totalAmount))}</div>
-                          <span 
-                            className={styles.mobileStatusBadge} 
+                          <span
+                            className={styles.mobileStatusBadge}
                             style={{ background: statusStyle.background, color: statusStyle.color }}
                           >
                             {statusStyle.label}
@@ -382,17 +370,16 @@ export default function PaymentsPage() {
                 </div>
               </>
             )}
-          </div>
 
           {/* Pagination Section */}
           {!loading && filteredTickets.length > itemsPerPage && (
-            <div className={styles.pagination}>
-              <span className={styles.paginationText}>
+            <div className={styles.footer}>
+              <span className={styles.resultsCount}>
                 Mostrando {indexOfFirstItem + 1} a {Math.min(indexOfLastItem, filteredTickets.length)} de {filteredTickets.length} tickets
               </span>
-              <div className={styles.paginationButtons}>
+              <div className={styles.pagination}>
                 <button
-                  className={styles.btnPageNav}
+                  className={styles.pageBtn}
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 >
@@ -401,14 +388,14 @@ export default function PaymentsPage() {
                 {Array.from({ length: totalPages }).map((_, index) => (
                   <button
                     key={index}
-                    className={`${styles.btnPage} ${currentPage === index + 1 ? styles.pageActive : ''}`}
+                    className={`${styles.pageBtn} ${currentPage === index + 1 ? styles.pageActive : ''}`}
                     onClick={() => setCurrentPage(index + 1)}
                   >
                     {index + 1}
                   </button>
                 ))}
                 <button
-                  className={styles.btnPageNav}
+                  className={styles.pageBtn}
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 >

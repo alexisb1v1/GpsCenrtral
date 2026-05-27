@@ -8,7 +8,7 @@ import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout'
 import { TenantApiService } from '@/app/features/tenant/services/tenant-api.service';
 import { StorageApiService } from '@/app/shared/services/storage-api.service';
 import { ImageUploader } from '@/app/shared/components/ImageUploader';
-import styles from '../../TenantsForm.module.css';
+import styles from '../../../AdminForm.module.css';
 
 const tenantApiService = new TenantApiService();
 const storageApiService = new StorageApiService();
@@ -78,7 +78,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
       showError('Datos incompletos', 'Por favor verifica los campos obligatorios.');
       return;
     }
-    
+
     setIsSaving(true);
     try {
       let finalLogoUrl = typeof formData.logoUrl === 'string' ? formData.logoUrl : '';
@@ -99,11 +99,11 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
       // Extraemos statusColor para no enviarlo (el backend espera statusDotColor)
       const { statusColor, logoUrl, loginUrl, ...payload } = formData;
 
-      const result = await tenantApiService.update(id, { 
-        ...payload, 
+      const result = await tenantApiService.update(id, {
+        ...payload,
         logoUrl: finalLogoUrl,
         loginUrl: finalLoginUrl,
-        statusDotColor: statusColor 
+        statusDotColor: statusColor
       });
 
       if (result.success) {
@@ -112,10 +112,10 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
       } else {
         showError('Error al guardar', result.errorMessage || 'No se pudo completar la operación.');
       }
-    } catch (e: any) { 
+    } catch (e: any) {
       showError('Error inesperado', 'Ocurrió un problema al procesar la solicitud.');
-    } finally { 
-      setIsSaving(false); 
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -160,7 +160,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
             </h3>
             <div className={styles.brandingGrid}>
               <div className={styles.uploaderWrapper}>
-                <ImageUploader 
+                <ImageUploader
                   label="Logo Corporativo"
                   value={formData.logoUrl}
                   onChange={(file) => setFormData({ ...formData, logoUrl: file })}
@@ -169,7 +169,7 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
                 />
               </div>
               <div className={styles.uploaderWrapper}>
-                <ImageUploader 
+                <ImageUploader
                   label="Fondo de Login"
                   value={formData.loginUrl}
                   onChange={(file) => setFormData({ ...formData, loginUrl: file })}
@@ -208,9 +208,9 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
                 <div className={styles.previewSidebar} style={{ backgroundColor: formData.primaryColor }}>
                   <div className={styles.previewLogoCircle}>
                     {formData.logoUrl ? (
-                      <img 
-                        src={typeof formData.logoUrl === 'string' ? formData.logoUrl : URL.createObjectURL(formData.logoUrl)} 
-                        alt="Logo" 
+                      <img
+                        src={typeof formData.logoUrl === 'string' ? formData.logoUrl : URL.createObjectURL(formData.logoUrl)}
+                        alt="Logo"
                       />
                     ) : null}
                   </div>
@@ -240,12 +240,6 @@ export default function EditTenantPage({ params }: EditTenantPageProps) {
               <span className="material-symbols-rounded">save</span>{isSaving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
-        </div>
-
-        <div className={styles.infoFooter}>
-          <div className={styles.infoCard}><span className={`material-symbols-rounded ${styles.infoIcon}`}>verified_user</span><h4>Aislamiento de Datos</h4><p>Cada tenant opera en una base de datos aislada para máxima seguridad.</p></div>
-          <div className={styles.infoCard}><span className={`material-symbols-rounded ${styles.infoIcon}`}>bolt</span><h4>Despliegue Instantáneo</h4><p>Los cambios de personalización se reflejan en tiempo real para los usuarios.</p></div>
-          <div className={styles.infoCard}><span className={`material-symbols-rounded ${styles.infoIcon}`}>history</span><h4>Auditoría de Cambios</h4><p>Se guarda un registro histórico de todas las modificaciones de configuración.</p></div>
         </div>
       </div>
     </DashboardLayout>

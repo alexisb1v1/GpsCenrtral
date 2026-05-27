@@ -3,16 +3,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Driver, 
-  DriverStatus, 
-  createDriverUseCase, 
-  updateDriverUseCase 
+import {
+  Driver,
+  DriverStatus,
+  createDriverUseCase,
+  updateDriverUseCase
 } from '@/app/features/driver';
 import { getAllTenantsUseCase } from '@/app/features/tenant';
 import { useBranding } from '@/app/shared/providers/BrandingContext';
 import { useToast } from '@/app/shared/providers/ToastProvider';
-import styles from './DriverForm.module.css';
+import styles from '../../AdminForm.module.css';
 
 interface DriverFormProps {
   driver?: Driver;
@@ -23,7 +23,7 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
   const router = useRouter();
   const { branding, slug } = useBranding();
   const { success: showSuccess, error: showError } = useToast();
-  
+
   const isVectura = slug === 'vectura';
   const [tenants, setTenants] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +36,7 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
     tenantId: driver?.tenantId || (isVectura ? '' : branding?.id || ''),
     status: driver?.status || DriverStatus.ACTIVE,
     licenseNumber: driver?.driverInfo?.licenseNumber || '',
-    licenseExpiry: driver?.driverInfo?.licenseExpiry 
+    licenseExpiry: driver?.driverInfo?.licenseExpiry
       ? new Date(driver.driverInfo.licenseExpiry).toISOString().split('T')[0]
       : '',
   });
@@ -51,15 +51,15 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
     const result = await getAllTenantsUseCase.execute();
     result.match(
       (data) => setTenants(data),
-      () => {}
+      () => { }
     );
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: value 
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
 
@@ -117,63 +117,21 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
 
   return (
     <div className={styles.container}>
-      {/* Breadcrumbs */}
-      <div className={styles.breadcrumbs}>
-        <span className={styles.breadcrumbLink} onClick={() => router.push('/admin/drivers')}>
-          Gestión de Choferes
-        </span>
-        <span className={styles.breadcrumbSeparator}>&gt;</span>
-        <span className={styles.breadcrumbActive}>
-          {isEdit ? 'Editar Chofer' : 'Nuevo Chofer'}
-        </span>
-      </div>
-
       <form onSubmit={handleSubmit}>
         {/* Header */}
         <div className={styles.headerRow}>
           <div className={styles.headerTitleSection}>
             <h2>{isEdit ? 'Editar Chofer' : 'Crear Nuevo Chofer'}</h2>
             <p>
-              {isEdit 
-                ? 'Edite la información detallada del operador en el sistema.' 
+              {isEdit
+                ? 'Edite la información detallada del operador en el sistema.'
                 : 'Registre la información detallada para habilitar a un nuevo operador en el sistema.'}
             </p>
-          </div>
-          <div className={styles.headerActions}>
-            <button 
-              type="button" 
-              className={styles.cancelBtn} 
-              onClick={() => router.push('/admin/drivers')}
-              disabled={isLoading}
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              className={styles.submitBtn} 
-              disabled={isLoading}
-            >
-              {isLoading ? 'Guardando...' : (isEdit ? 'Actualizar Chofer' : 'Guardar Chofer')}
-            </button>
           </div>
         </div>
 
         {/* Content Layout */}
         <div className={styles.contentLayout}>
-          {/* Left Panel */}
-          <div className={styles.leftPanel}>
-            <div className={styles.infoBox}>
-              <div className={styles.infoBoxHeader}>
-                <span className="material-symbols-rounded">info</span>
-                <span>Requisitos Legales</span>
-              </div>
-              <p className={styles.infoBoxText}>
-                Asegúrese de que el Número de Licencia coincida exactamente con el documento físico.
-                El sistema validará automáticamente la fecha de vencimiento.
-              </p>
-            </div>
-          </div>
-
           {/* Right Panel */}
           <div className={styles.rightPanel}>
             {/* Card 1: Datos Personales */}
@@ -183,12 +141,12 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
                 {/* Nombre Completo */}
                 <div className={`${styles.field} ${styles.fullWidth}`}>
                   <label htmlFor="name">Nombre Completo</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     id="name"
-                    name="name" 
-                    className={styles.input} 
-                    placeholder="Ej. Juan Pérez García" 
+                    name="name"
+                    className={styles.input}
+                    placeholder="Ej. Juan Pérez García"
                     value={formData.name}
                     onChange={handleChange}
                     required
@@ -198,12 +156,12 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
                 {/* DNI */}
                 <div className={styles.field}>
                   <label htmlFor="dni">DNI / Documento Identidad</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     id="dni"
-                    name="dni" 
-                    className={styles.input} 
-                    placeholder="8 dígitos" 
+                    name="dni"
+                    className={styles.input}
+                    placeholder="8 dígitos"
                     value={formData.dni}
                     onChange={handleDniChange}
                     pattern="[0-9]{8}"
@@ -217,12 +175,12 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
                   <label htmlFor="phoneEmergency">Teléfono de Emergencia</label>
                   <div className={styles.inputWrapper}>
                     <span className={`material-symbols-rounded ${styles.inputIcon}`}>phone</span>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       id="phoneEmergency"
-                      name="phoneEmergency" 
-                      className={`${styles.input} ${styles.inputWithIcon}`} 
-                      placeholder="+51 987 654 321" 
+                      name="phoneEmergency"
+                      className={`${styles.input} ${styles.inputWithIcon}`}
+                      placeholder="+51 987 654 321"
                       value={formData.phoneEmergency}
                       onChange={handleChange}
                     />
@@ -232,10 +190,10 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
                 {/* Empresa (Tenant) */}
                 <div className={styles.field}>
                   <label htmlFor="tenantId">Empresa (Tenant)</label>
-                  <select 
+                  <select
                     id="tenantId"
-                    name="tenantId" 
-                    className={styles.select} 
+                    name="tenantId"
+                    className={styles.select}
                     value={formData.tenantId}
                     onChange={handleChange}
                     disabled={!isVectura || isEdit}
@@ -257,9 +215,9 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
                   <label>Estado Inicial</label>
                   <div className={styles.radioGroup}>
                     <label className={styles.radioOption}>
-                      <input 
-                        type="radio" 
-                        name="status" 
+                      <input
+                        type="radio"
+                        name="status"
                         value={DriverStatus.ACTIVE}
                         checked={formData.status === DriverStatus.ACTIVE}
                         onChange={() => setFormData(prev => ({ ...prev, status: DriverStatus.ACTIVE }))}
@@ -271,9 +229,9 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
                       </span>
                     </label>
                     <label className={styles.radioOption}>
-                      <input 
-                        type="radio" 
-                        name="status" 
+                      <input
+                        type="radio"
+                        name="status"
                         value={DriverStatus.INACTIVE}
                         checked={formData.status === DriverStatus.INACTIVE}
                         onChange={() => setFormData(prev => ({ ...prev, status: DriverStatus.INACTIVE }))}
@@ -296,12 +254,12 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
                 {/* Número de Licencia */}
                 <div className={styles.field}>
                   <label htmlFor="licenseNumber">Número de Licencia</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     id="licenseNumber"
-                    name="licenseNumber" 
-                    className={styles.input} 
-                    placeholder="Q-45628193" 
+                    name="licenseNumber"
+                    className={styles.input}
+                    placeholder="Q-45628193"
                     value={formData.licenseNumber}
                     onChange={handleChange}
                     required
@@ -311,11 +269,11 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
                 {/* Fecha de Vencimiento */}
                 <div className={styles.field}>
                   <label htmlFor="licenseExpiry">Fecha de Vencimiento</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     id="licenseExpiry"
-                    name="licenseExpiry" 
-                    className={styles.input} 
+                    name="licenseExpiry"
+                    className={styles.input}
                     value={formData.licenseExpiry}
                     onChange={handleChange}
                     required
@@ -324,6 +282,24 @@ export default function DriverForm({ driver, isEdit }: DriverFormProps) {
               </div>
             </div>
           </div>
+        </div>
+        {/* Action Buttons */}
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.cancelBtn}
+            onClick={() => router.push('/admin/drivers')}
+            disabled={isLoading}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className={styles.submitBtn}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Guardando...' : (isEdit ? 'Actualizar Chofer' : 'Guardar Chofer')}
+          </button>
         </div>
       </form>
     </div>

@@ -8,11 +8,11 @@ import TopBar from './TopBar';
 import styles from './DashboardLayout.module.css';
 import { AccessControl } from '@/app/shared/utils/access-control';
 
-export default function DashboardLayout({ 
+export default function DashboardLayout({
   children,
   noPadding = false,
   hideBottomNav = false,
-}: { 
+}: {
   children: React.ReactNode;
   noPadding?: boolean;
   hideBottomNav?: boolean;
@@ -76,9 +76,9 @@ export default function DashboardLayout({
 
   return (
     <div className={styles.layout}>
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
       <div className={styles.mainContent}>
         <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
