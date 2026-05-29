@@ -22,7 +22,7 @@ export class AccessControl {
 
     // El rol ADMIN ve todo excepto la gestión de empresas (tenants)
     if (role === 'ADMIN') {
-      if (cleanPath === '/admin/tenants' || cleanPath.startsWith('/admin/tenants/')) {
+      if (cleanPath === '/admin/tenants' || cleanPath.startsWith('/admin/tenants/') || cleanPath.startsWith('/driver')) {
         return false;
       }
       return true;
@@ -48,7 +48,6 @@ export class AccessControl {
       const allowedPrefixes = [
         '/driver',
         '/penalties',
-        '/payments'
       ];
 
       return allowedPrefixes.some(prefix => cleanPath === prefix || cleanPath.startsWith(prefix + '/'));

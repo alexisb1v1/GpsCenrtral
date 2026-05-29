@@ -45,6 +45,7 @@ export default function DriverPage() {
   const [driverId, setDriverId] = useState<string>(''); // ID inmutable del chofer logueado
   const [isConnected, setIsConnected] = useState(false);
   const [activeNotification, setActiveNotification] = useState<ActiveNotification | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const socketRef = useRef<any>(null);
 
   // 1. Cargar datos de la sesión del chofer desde las cookies
@@ -342,7 +343,7 @@ export default function DriverPage() {
         </div>
 
         {/* Mini Tarjeta Flotante Informativa del Chofer (Vectura Glassmorphism) */}
-        <div className={styles.driverPanel}>
+        <div className={`${styles.driverPanel} ${isCollapsed ? styles.panelCollapsed : ''}`}>
           <div className={styles.panelHeader}>
             <div className={styles.driverHeaderInfo}>
               <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '22px' }}>
@@ -354,86 +355,90 @@ export default function DriverPage() {
               </div>
             </div>
             
-            {activeVehicle && (
-              <span className={`${styles.statusBadge} ${activeVehicle.isActive ? styles.statusActive : styles.statusStopped}`}>
-                {activeVehicle.isActive ? 'En ruta' : 'Detenido'}
-              </span>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {activeVehicle && !isCollapsed && (
+                <span className={`${styles.statusBadge} ${activeVehicle.isActive ? styles.statusActive : styles.statusStopped}`}>
+                  {activeVehicle.isActive ? 'En ruta' : 'Detenido'}
+                </span>
+              )}
+              
+              {/* Botón de Colapsar/Desplegar con feedback visual */}
+              <button 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className={styles.collapseBtn}
+                title={isCollapsed ? "Mostrar detalles" : "Ocultar detalles"}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '24px' }}>
+                  {isCollapsed ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                </span>
+              </button>
+            </div>
           </div>
 
-          <div className={styles.panelDivider} />
+          {!isCollapsed && (
+            <>
+              <div className={styles.panelDivider} />
 
-          {activeVehicle ? (
-            <div className={styles.panelDetails}>
-              {/* Detalle 1: Placa del vehículo */}
-              <div className={styles.detailItem}>
-                <span className="material-symbols-rounded" style={{ color: '#64748b', fontSize: '18px' }}>
-                  directions_bus
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span className={styles.detailLabel}>Unidad Asignada</span>
-                  <span className={styles.detailValue}>{activeVehicle.plate}</span>
+              {activeVehicle ? (
+                <div className={styles.panelDetails}>
+                  {/* Detalle 1: Placa del vehículo */}
+                  <div className={styles.detailItem}>
+                    <span className="material-symbols-rounded" style={{ color: '#64748b', fontSize: '18px' }}>
+                      directions_bus
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className={styles.detailLabel}>Unidad Asignada</span>
+                      <span className={styles.detailValue}>{activeVehicle.plate}</span>
+                    </div>
+                  </div>
+
+                  {/* Detalle 2: Velocidad actual */}
+                  <div className={styles.detailItem}>
+                    <span className="material-symbols-rounded" style={{ color: '#64748b', fontSize: '18px' }}>
+                      speed
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className={styles.detailLabel}>Velocidad</span>
+                      <span className={styles.detailValue}>{activeVehicle.speed} km/h</span>
+                    </div>
+                  </div>
+
+                  {/* Detalle 3: Sentido de la marcha (Ida o Vuelta) */}
+                  <div className={styles.detailItem}>
+                    <span className="material-symbols-rounded" style={{ color: activeVehicle.direction === 'VUELTA' ? '#ef4444' : '#2563eb', fontSize: '18px' }}>
+                      {activeVehicle.direction === 'VUELTA' ? 'keyboard_double_arrow_left' : 'keyboard_double_arrow_right'}
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className={styles.detailLabel}>Sentido de Marcha</span>
+                      <span className={`${styles.detailValue} ${activeVehicle.direction === 'VUELTA' ? styles.directionReturn : styles.directionGo}`}>
+                        {activeVehicle.direction === 'VUELTA' ? 'Retorno / Vuelta' : 'Salida / Ida'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Detalle 4: Ruta Asignada Estática (Al costado del Sentido de Marcha) */}
+                  <div className={styles.detailItem}>
+                    <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '18px' }}>
+                      route
+                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className={styles.detailLabel}>Ruta Asignada</span>
+                      <span className={styles.detailValue} style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+                        {selectedRoute ? selectedRoute.name : 'Sin ruta activa'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {/* Detalle 2: Velocidad actual */}
-              <div className={styles.detailItem}>
-                <span className="material-symbols-rounded" style={{ color: '#64748b', fontSize: '18px' }}>
-                  speed
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span className={styles.detailLabel}>Velocidad</span>
-                  <span className={styles.detailValue}>{activeVehicle.speed} km/h</span>
-                </div>
-              </div>
-
-              {/* Detalle 3: Estado de Recaudación / Boleto diario */}
-              <div className={styles.detailItem}>
-                <span className="material-symbols-rounded" style={{ color: '#64748b', fontSize: '18px' }}>
-                  payments
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span className={styles.detailLabel}>Ticket de Salida</span>
-                  <span className={`${styles.ticketText} ${activeVehicle.hasActiveTicket ? styles.ticketPaid : styles.ticketPending}`}>
-                    {activeVehicle.hasActiveTicket ? 'Pagado / Autorizado' : 'Pendiente de Pago'}
+              ) : (
+                <div className={styles.noVehicleContainer}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '32px', color: '#94a3b8', marginBottom: '8px' }}>
+                    no_accounts
                   </span>
+                  <span className={styles.noVehicleText}>No tienes ninguna unidad asignada hoy</span>
+                  <span className={styles.noVehicleSubtext}>Espera a que el controlador emita tu ticket de salida en el dashboard.</span>
                 </div>
-              </div>
-
-              {/* Detalle 4: Sentido de la marcha (Ida o Vuelta) */}
-              <div className={styles.detailItem}>
-                <span className="material-symbols-rounded" style={{ color: activeVehicle.direction === 'VUELTA' ? '#ef4444' : '#2563eb', fontSize: '18px' }}>
-                  {activeVehicle.direction === 'VUELTA' ? 'keyboard_double_arrow_left' : 'keyboard_double_arrow_right'}
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span className={styles.detailLabel}>Sentido de Marcha</span>
-                  <span className={`${styles.detailValue} ${activeVehicle.direction === 'VUELTA' ? styles.directionReturn : styles.directionGo}`}>
-                    {activeVehicle.direction === 'VUELTA' ? 'Retorno / Vuelta' : 'Salida / Ida'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Detalle 5: Ruta activa asignada (Estático y Premium) */}
-              <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '18px' }}>
-                  route
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                  <span className={styles.detailLabel}>Ruta Asignada</span>
-                  <span className={styles.routeActiveValue}>
-                    {selectedRoute ? selectedRoute.name : 'Consultando ruta...'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className={styles.noVehicleContainer}>
-              <span className="material-symbols-rounded" style={{ fontSize: '32px', color: '#94a3b8', marginBottom: '8px' }}>
-                no_accounts
-              </span>
-              <span className={styles.noVehicleText}>No tienes ninguna unidad asignada hoy</span>
-              <span className={styles.noVehicleSubtext}>Espera a que el controlador emita tu ticket de salida en el dashboard.</span>
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>

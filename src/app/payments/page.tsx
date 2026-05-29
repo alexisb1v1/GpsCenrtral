@@ -101,7 +101,8 @@ export default function PaymentsPage() {
   };
 
   const getPaymentMethodDetails = (method: string) => {
-    switch (method.toUpperCase()) {
+    const safeMethod = (method || 'EFECTIVO').toUpperCase();
+    switch (safeMethod) {
       case 'TRANSFERENCIA':
       case 'TRANSFERENCIA_BANCARIA':
         return { label: 'Transferencia', icon: 'account_balance', color: '#0ea5e9' };
@@ -115,7 +116,8 @@ export default function PaymentsPage() {
   };
 
   const getStatusBadgeStyle = (status: string) => {
-    switch (status.toUpperCase()) {
+    const safeStatus = (status || 'PENDING').toUpperCase();
+    switch (safeStatus) {
       case 'ACTIVE':
         return { background: '#dcfce7', color: '#15803d', label: 'Pagado' };
       case 'VOIDED':

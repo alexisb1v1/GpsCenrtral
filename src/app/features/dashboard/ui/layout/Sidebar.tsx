@@ -12,6 +12,7 @@ const mainMenuItems = [
   { id: 'dashboard', label: 'Panel de Control', icon: 'dashboard', href: '/dashboard' },
   { id: 'fleet', label: 'Monitoreo de Flota', icon: 'directions_bus', href: '/fleet' },
   { id: 'payments', label: 'Registro de Salida', icon: 'payments', href: '/payments' },
+  { id: 'route', label: 'Ruta', icon: 'bus_map_pin', href: '/driver' },
   { id: 'penalties', label: 'Sanciones', icon: 'gavel', href: '/penalties' },
   { id: 'history', label: 'Historial de Salidas', icon: 'history', href: '/history' },
 ];
@@ -65,10 +66,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const renderMenuItems = (items: typeof mainMenuItems) => (
     items.map((item) => {
       const isActive = pathname === item.href;
-      
+
       return (
-        <Link 
-          key={item.id} 
+        <Link
+          key={item.id}
           href={item.href}
           className={`${styles.navItem} ${isActive ? styles.active : ''}`}
           onClick={onClose}
@@ -105,30 +106,30 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
 
-      <nav className={styles.nav}>
-        <div className={styles.section}>
-          {renderMenuItems(visibleMainMenuItems)}
-        </div>
-
-        {visibleAdminMenuItems.length > 0 && (
+        <nav className={styles.nav}>
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Administración</h3>
-            {renderMenuItems(visibleAdminMenuItems)}
+            {renderMenuItems(visibleMainMenuItems)}
           </div>
-        )}
-      </nav>
 
-      <div className={styles.footer}>
-        <button className={styles.logoutBtn} onClick={handleLogout}>
-          <span className="material-symbols-rounded">logout</span>
-          <span>Cerrar Sesión</span>
-        </button>
-        {slug !== 'vectura' && (
-          <div className={styles.poweredBy}>
-            Potenciado por VECTURA
-          </div>
-        )}
-      </div>
+          {visibleAdminMenuItems.length > 0 && (
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Administración</h3>
+              {renderMenuItems(visibleAdminMenuItems)}
+            </div>
+          )}
+        </nav>
+
+        <div className={styles.footer}>
+          <button className={styles.logoutBtn} onClick={handleLogout}>
+            <span className="material-symbols-rounded">logout</span>
+            <span>Cerrar Sesión</span>
+          </button>
+          {slug !== 'vectura' && (
+            <div className={styles.poweredBy}>
+              Potenciado por VECTURA
+            </div>
+          )}
+        </div>
       </aside>
     </>
   );

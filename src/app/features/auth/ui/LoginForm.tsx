@@ -42,9 +42,9 @@ export default function LoginForm() {
         // Éxito: Redirigir según el rol del usuario
         console.log('Login exitoso:', session.user.name, 'Rol:', session.user.role);
         setIsLoading(false);
-        
+
         // Usamos location.href para asegurar que el middleware de Next.js 
-        // capture la nueva cookie en la primera petición
+        // capture la nueva cookie en la primera petición        
         if (session.user.role === 'DRIVER') {
           window.location.href = '/driver';
         } else {
@@ -63,10 +63,10 @@ export default function LoginForm() {
     <main className={styles.main}>
       {/* Background Section */}
       <div className={styles.backgroundArea}>
-        <img 
-          className={styles.bgImage} 
+        <img
+          className={styles.bgImage}
           style={{ opacity: 0.8 }}
-          src={getBrandingImageUrl(branding?.loginBackground) || "/imagelogin.png"} 
+          src={getBrandingImageUrl(branding?.loginBackground) || "/imagelogin.png"}
           alt={`${branding?.name || 'Vectura'} Background`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
@@ -74,7 +74,7 @@ export default function LoginForm() {
           }}
         />
         <div className={styles.overlay}></div>
-        
+
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>Control total sobre la movilidad urbana.</h1>
           <p className={styles.heroSubtitle}>
@@ -86,14 +86,14 @@ export default function LoginForm() {
       {/* Login Interaction Section */}
       <div className={styles.formSection}>
         <div className={styles.mobileContent}>
-          
+
           <div className={styles.logoArea}>
             <div className={styles.logoIcon}>
               {branding?.logo && !logoError ? (
-                <img 
-                  src={getBrandingImageUrl(branding.logo)} 
-                  alt={branding.name} 
-                  style={{ width: '48px', height: '48px', objectFit: 'contain' }} 
+                <img
+                  src={getBrandingImageUrl(branding.logo)}
+                  alt={branding.name}
+                  style={{ width: '48px', height: '48px', objectFit: 'contain' }}
                   onError={() => setLogoError(true)}
                 />
               ) : (
@@ -120,9 +120,9 @@ export default function LoginForm() {
                 <label className={styles.label}>CORREO ELECTRÓNICO</label>
                 <div className={styles.inputWrapper}>
                   <Mail className={styles.icon} size={20} />
-                  <input 
-                    type="email" 
-                    placeholder="usuario@vectura.com" 
+                  <input
+                    type="email"
+                    placeholder="usuario@vectura.com"
                     className={styles.input}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -141,16 +141,16 @@ export default function LoginForm() {
                 </div>
                 <div className={styles.inputWrapper}>
                   <Lock className={styles.icon} size={20} />
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="••••••••" 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
                     className={styles.input}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
@@ -167,11 +167,11 @@ export default function LoginForm() {
                 </label>
               </div>
 
-              <button 
-                type="submit" 
-                className={styles.submitBtn} 
+              <button
+                type="submit"
+                className={styles.submitBtn}
                 disabled={isLoading}
-                style={{ 
+                style={{
                   backgroundColor: 'var(--primary)',
                   color: (branding?.colors.primary === '#EBCB00' || branding?.colors.primary.toLowerCase() === '#ebcb00') ? '#000000' : '#ffffff'
                 }}
