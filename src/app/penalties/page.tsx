@@ -4,10 +4,11 @@
 import React, { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
-import { getInfractionsUseCase, Infraction, InfractionType, InfractionStatus } from '@/app/features/infraction';
+import { getInfractionsUseCase, payMultipleInfractionsUseCase, Infraction, InfractionType, InfractionStatus } from '@/app/features/infraction';
 import { getDriversUseCase, Driver } from '@/app/features/driver';
 import { getAllTenantsUseCase } from '@/app/features/tenant';
 import { useToast } from '@/app/shared/providers/ToastProvider';
+import PrintTicketModal, { PrintTicketData } from '@/app/shared/components/PrintTicketModal';
 import styles from '../admin/AdminList.module.css';
 
 interface SessionData {
@@ -22,7 +23,7 @@ interface SessionData {
 }
 
 export default function PenaltiesPage() {
-  const { error: showError } = useToast();
+  const { error: showError, success: showSuccess } = useToast();
 
   const [role, setRole] = useState<string>('');
   const [sessionTenantId, setSessionTenantId] = useState<string>('');
@@ -30,9 +31,21 @@ export default function PenaltiesPage() {
   const [userName, setUserName] = useState<string>('');
 
   const [infractions, setInfractions] = useState<Infraction[]>([]);
+  const [rawInfractions, setRawInfractions] = useState<Infraction[]>([]);
   const [tenants, setTenants] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Estados para Pago Consolidado
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>('EFECTIVO');
+  const [operationReference, setOperationReference] = useState<string>('');
+  const [isSubmittingPay, setIsSubmittingPay] = useState(false);
+
+  // Estados para Impresión de Ticket de Sanción
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [printTicketData, setPrintTicketData] = useState<PrintTicketData | null>(null);
 
   // Helper para obtener fecha local en formato YYYY-MM-DD
   const getTodayString = () => {
@@ -143,15 +156,7 @@ export default function PenaltiesPage() {
 
     result.match(
       async (data) => {
-        // Enriquecer las infracciones con el nombre del chofer de la lista local
-        const enriched = data.map(inf => {
-          const matchDriver = drivers.find(d => d.id === inf.userId);
-          return {
-            ...inf,
-            driverName: matchDriver ? matchDriver.name : 'Chofer Desconocido',
-          };
-        });
-        setInfractions(enriched);
+        setRawInfractions(data);
         setIsLoading(false);
       },
       (err) => {
@@ -160,6 +165,23 @@ export default function PenaltiesPage() {
       }
     );
   };
+
+  // Sincronización reactiva de enriquecimiento de choferes (resuelve condiciones de carrera)
+  useEffect(() => {
+    if (rawInfractions.length === 0) {
+      setInfractions([]);
+      return;
+    }
+
+    const enriched = rawInfractions.map(inf => {
+      const matchDriver = drivers.find(d => d.id === inf.userId);
+      return {
+        ...inf,
+        driverName: matchDriver ? matchDriver.name : 'Chofer Desconocido',
+      };
+    });
+    setInfractions(enriched);
+  }, [rawInfractions, drivers]);
 
   // Helper para formatear montos en Soles
   const formatCurrency = (val: number) => {
@@ -216,6 +238,78 @@ export default function PenaltiesPage() {
     amountPending: infractions
       .filter(i => i.status === InfractionStatus.PENDING)
       .reduce((sum, item) => sum + Number(item.amount), 0),
+  };
+
+  // Interactividad de Selección y Pago Consolidado
+  const handleSelectInfraction = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const selectedInfractions = infractions.filter(inf => selectedIds.includes(inf.id));
+  const totalSelectedAmount = selectedInfractions.reduce((sum, inf) => sum + Number(inf.amount), 0);
+
+  const handleConfirmPayment = async () => {
+    if (selectedIds.length === 0) return;
+    setIsSubmittingPay(true);
+    
+    const result = await payMultipleInfractionsUseCase.execute({
+      infractionIds: selectedIds,
+      paymentMethod,
+      operationReference: paymentMethod !== 'EFECTIVO' ? operationReference : undefined,
+    });
+
+    result.match(
+      (data) => {
+        showSuccess(
+          'Pago consolidado exitoso',
+          `Se generó el recibo ${data.paymentNumber} por un total de ${formatCurrency(data.totalAmount)}.`
+        );
+        setSelectedIds([]);
+        setIsPayModalOpen(false);
+        loadInfractions(); // Recargar la lista de infracciones
+      },
+      (err) => {
+        showError('Error al procesar pago consolidado', err.message);
+      }
+    );
+    setIsSubmittingPay(false);
+  };
+
+  // Lógica para formatear y abrir la impresión de sanciones de forma consolidada
+  const handleOpenPrintTicket = (infraction: Infraction) => {
+    if (infraction.status !== InfractionStatus.PAID) return;
+
+    // Buscar todas las infracciones locales asociadas al mismo pago (paymentId)
+    const relatedInfractions = infraction.paymentId
+      ? infractions.filter(inf => inf.paymentId === infraction.paymentId)
+      : [infraction];
+
+    const items = relatedInfractions.map(inf => ({
+      label: `#SAN-${inf.id.substring(0, 5).toUpperCase()} - ${getInfractionTypeLabel(inf.type)} [Placa: ${inf.vehicle?.plate || 'S/P'}]`,
+      value: Number(inf.amount)
+    }));
+
+    const totalAmount = relatedInfractions.reduce((sum, inf) => sum + Number(inf.amount), 0);
+    const description = `Regularización consolidada de ${relatedInfractions.length} sanción(es) operativa(s).`;
+
+    const ticketData: PrintTicketData = {
+      ticketNumber: infraction.payment?.paymentNumber || `REC-${infraction.id.substring(0, 5).toUpperCase()}`,
+      dateTime: formatDate(infraction.payment?.createdAt || infraction.createdAt),
+      vehiclePlate: infraction.vehicle?.plate || 'S/P',
+      vehicleNumber: (infraction.vehicle as any)?.number || null,
+      driverName: infraction.driverName || 'Chofer Desconocido',
+      routeName: 'Control Operativo Interno',
+      description: description,
+      items: items,
+      totalAmount: totalAmount,
+      paymentMethod: infraction.payment?.paymentMethod || 'EFECTIVO',
+      verificationUrl: `https://gpscentral.afbv.com/verify/payment/${infraction.paymentId || infraction.id}`
+    };
+
+    setPrintTicketData(ticketData);
+    setIsPrintModalOpen(true);
   };
 
   return (
@@ -354,6 +448,28 @@ export default function PenaltiesPage() {
                 <table className={styles.table}>
                   <thead>
                     <tr>
+                      {(role === 'ADMIN' || role === 'OPERATOR') && (
+                        <th className={styles.th} style={{ width: '50px', textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            className={styles.checkboxInput}
+                            checked={
+                              infractions.length > 0 &&
+                              infractions
+                                .filter((i) => i.status === InfractionStatus.PENDING)
+                                .every((i) => selectedIds.includes(i.id))
+                            }
+                            onChange={(e) => {
+                              const pendingInfractions = infractions.filter((i) => i.status === InfractionStatus.PENDING);
+                              if (e.target.checked) {
+                                setSelectedIds(pendingInfractions.map((i) => i.id));
+                              } else {
+                                setSelectedIds([]);
+                              }
+                            }}
+                          />
+                        </th>
+                      )}
                       <th className={styles.th}>Fecha</th>
                       <th className={styles.th}>Vehículo</th>
                       {role !== 'DRIVER' && <th className={styles.th}>Chofer</th>}
@@ -366,12 +482,34 @@ export default function PenaltiesPage() {
                   <tbody>
                     {infractions.map((item) => {
                       const statusInfo = getStatusInfo(item.status);
+                      const isSelected = selectedIds.includes(item.id);
                       return (
-                        <tr key={item.id} className={styles.tr}>
+                        <tr key={item.id} className={`${styles.tr} ${isSelected ? styles.trSelected : ''}`}>
+                          {(role === 'ADMIN' || role === 'OPERATOR') && (
+                            <td className={styles.td} style={{ textAlign: 'center' }}>
+                              {item.status === InfractionStatus.PENDING ? (
+                                <input
+                                  type="checkbox"
+                                  className={styles.checkboxInput}
+                                  checked={isSelected}
+                                  onChange={() => handleSelectInfraction(item.id)}
+                                />
+                              ) : (
+                                <span className="material-symbols-rounded" style={{ fontSize: '18px', color: '#cbd5e1' }}>
+                                  lock
+                                </span>
+                              )}
+                            </td>
+                          )}
                           <td className={styles.td}>
-                            <span style={{ fontWeight: 500, color: '#475569' }}>
-                              {formatDate(item.createdAt)}
-                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#0052cc', fontFamily: 'monospace' }}>
+                                #SAN-{item.id.substring(0, 5).toUpperCase()}
+                              </span>
+                              <span style={{ fontWeight: 500, color: '#475569', fontSize: '13px' }}>
+                                {formatDate(item.createdAt)}
+                              </span>
+                            </div>
                           </td>
                           <td className={styles.td}>
                             <div className={styles.plateCell}>
@@ -414,6 +552,35 @@ export default function PenaltiesPage() {
                             >
                               {statusInfo.label}
                             </span>
+                            {item.status === InfractionStatus.PAID && item.payment?.paymentNumber && (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '6px' }}>
+                                <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                  <span className="material-symbols-rounded" style={{ fontSize: '12px' }}>receipt_long</span>
+                                  Recibo: {item.payment.paymentNumber}
+                                </div>
+                                <button
+                                  type="button"
+                                  title="Imprimir Comprobante"
+                                  onClick={() => handleOpenPrintTicket(item)}
+                                  style={{
+                                    background: '#f0fdf4',
+                                    border: '1px solid #bbf7d0',
+                                    color: '#16a34a',
+                                    borderRadius: '6px',
+                                    padding: '2px 6px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px',
+                                    fontSize: '11px',
+                                    fontWeight: 700
+                                  }}
+                                >
+                                  <span className="material-symbols-rounded" style={{ fontSize: '12px' }}>print</span>
+                                  Imprimir
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );
@@ -437,17 +604,34 @@ export default function PenaltiesPage() {
               <div className={styles.mobileList}>
                 {infractions.map((item) => {
                   const statusInfo = getStatusInfo(item.status);
+                  const isSelected = selectedIds.includes(item.id);
                   return (
-                    <div key={item.id} className={styles.mobileCard}>
+                    <div key={item.id} className={`${styles.mobileCard} ${isSelected ? styles.mobileCardSelected : ''}`} style={{ position: 'relative' }}>
+                      {(role === 'ADMIN' || role === 'OPERATOR') && item.status === InfractionStatus.PENDING && (
+                        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 10 }}>
+                          <input
+                            type="checkbox"
+                            className={styles.checkboxInput}
+                            checked={isSelected}
+                            onChange={() => handleSelectInfraction(item.id)}
+                            style={{ transform: 'scale(1.2)' }}
+                          />
+                        </div>
+                      )}
                       <div className={styles.cardMainInfo}>
                         <div className={styles.cardLeft}>
                           <div className={styles.avatarCircle} style={{ width: '40px', height: '40px', backgroundColor: '#fcfdfe', color: '#475569', border: '1.5px solid #e2e8f0' }}>
                             <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>gavel</span>
                           </div>
                           <div className={styles.avatarInfo}>
-                            <span className={styles.mobileDriverName} style={{ fontSize: '14px', fontWeight: 700 }}>
-                              Vehículo: {item.vehicle?.plate || 'Sin Placa'}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span className={styles.mobileDriverName} style={{ fontSize: '14px', fontWeight: 700 }}>
+                                Vehículo: {item.vehicle?.plate || 'Sin Placa'}
+                              </span>
+                              <span style={{ fontSize: '10px', fontWeight: 700, color: '#0052cc', background: '#eff6ff', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                                #SAN-{item.id.substring(0, 5).toUpperCase()}
+                              </span>
+                            </div>
                             {role !== 'DRIVER' && (
                               <span className={styles.driverEmail} style={{ fontSize: '12px', color: '#475569' }}>
                                 Chofer: {item.driverName}
@@ -458,7 +642,7 @@ export default function PenaltiesPage() {
                             </span>
                           </div>
                         </div>
-                        <div className={styles.cardRight}>
+                        <div className={styles.cardRight} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', paddingRight: (role === 'ADMIN' || role === 'OPERATOR') && item.status === InfractionStatus.PENDING ? '24px' : '0' }}>
                           <span
                             className={styles.statusBadge}
                             style={{
@@ -473,6 +657,35 @@ export default function PenaltiesPage() {
                           >
                             {statusInfo.label}
                           </span>
+                          {item.status === InfractionStatus.PAID && item.payment?.paymentNumber && (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                              <span style={{ fontSize: '10px', color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '1px' }}>
+                                <span className="material-symbols-rounded" style={{ fontSize: '11px' }}>receipt_long</span>
+                                {item.payment.paymentNumber}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenPrintTicket(item)}
+                                style={{
+                                  background: 'white',
+                                  border: '1px solid #bbf7d0',
+                                  color: '#16a34a',
+                                  borderRadius: '12px',
+                                  padding: '2px 8px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                  fontSize: '9px',
+                                  fontWeight: 700,
+                                  marginTop: '2px'
+                                }}
+                              >
+                                <span className="material-symbols-rounded" style={{ fontSize: '10px' }}>print</span>
+                                Imprimir
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -539,6 +752,166 @@ export default function PenaltiesPage() {
           </div>
         </div>
       </div>
+
+      {/* Barra Flotante de Pago Consolidado */}
+      {selectedIds.length > 0 && (
+        <div className={styles.floatingStatusBar}>
+          <div className={styles.floatingStatusContent}>
+            <div className={styles.floatingStatusLeft}>
+              <div className={styles.selectedCountBadge}>
+                {selectedIds.length}
+              </div>
+              <div>
+                <span className={styles.floatingStatusTitle}>
+                  {selectedIds.length === 1 ? 'Sanción seleccionada' : 'Sanciones seleccionadas'}
+                </span>
+                <span className={styles.floatingStatusSubtitle}>
+                  Total a cobrar: <strong className={styles.floatingStatusTotal}>{formatCurrency(totalSelectedAmount)}</strong>
+                </span>
+              </div>
+            </div>
+            <div className={styles.floatingStatusActions}>
+              <button
+                type="button"
+                className={styles.floatingCancelBtn}
+                onClick={() => setSelectedIds([])}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.floatingPayBtn}
+                onClick={() => {
+                  setPaymentMethod('EFECTIVO');
+                  setOperationReference('');
+                  setIsPayModalOpen(true);
+                }}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>point_of_sale</span>
+                Registrar Pago Consolidado
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Pago de Caja */}
+      {isPayModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
+            <div className={styles.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-rounded" style={{ color: '#10b981', fontSize: '28px' }}>point_of_sale</span>
+                <h3>Caja: Registro de Pago Consolidado</h3>
+              </div>
+              <button
+                type="button"
+                className={styles.closeModalBtn}
+                onClick={() => setIsPayModalOpen(false)}
+                disabled={isSubmittingPay}
+              >
+                <span className="material-symbols-rounded">close</span>
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '16px' }}>
+                Estás a punto de registrar un cobro único que regularizará las siguientes sanciones seleccionadas.
+              </p>
+
+              {/* Lista corta de sanciones seleccionadas */}
+              <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '12px', backgroundColor: '#f8fafc', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {selectedInfractions.map((inf, idx) => (
+                  <div key={inf.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', borderBottom: idx < selectedInfractions.length - 1 ? '1px solid #e2e8f0' : 'none', paddingBottom: idx < selectedInfractions.length - 1 ? '8px' : '0' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#1e293b' }}>{getInfractionTypeLabel(inf.type)}</div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>Placa: {inf.vehicle?.plate || 'S/P'} | Chofer: {inf.driverName}</div>
+                    </div>
+                    <div style={{ fontWeight: 700, color: '#1e293b' }}>
+                      {formatCurrency(Number(inf.amount))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', marginBottom: '20px' }}>
+                <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '14px' }}>Total Consolidado</span>
+                <span style={{ fontWeight: 800, color: '#15803d', fontSize: '16px' }}>{formatCurrency(totalSelectedAmount)}</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Método de pago */}
+                <div className={styles.formGroup} style={{ margin: 0 }}>
+                  <label className={styles.formLabel} style={{ fontWeight: 600, color: '#475569' }}>Método de Pago</label>
+                  <select
+                    className={styles.formInput}
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    disabled={isSubmittingPay}
+                  >
+                    <option value="EFECTIVO">💵 Efectivo (Caja Central)</option>
+                    <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
+                    <option value="BILLETERA_DIGITAL">📱 Billetera Digital (Yape/Plin)</option>
+                  </select>
+                </div>
+
+                {/* Referencia */}
+                {paymentMethod !== 'EFECTIVO' && (
+                  <div className={styles.formGroup} style={{ margin: 0 }}>
+                    <label className={styles.formLabel} style={{ fontWeight: 600, color: '#475569' }}>Número de Operación / Referencia</label>
+                    <input
+                      type="text"
+                      className={styles.formInput}
+                      placeholder="Ej: REF-109283"
+                      value={operationReference}
+                      onChange={(e) => setOperationReference(e.target.value)}
+                      disabled={isSubmittingPay}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter} style={{ borderTop: '1px solid #f1f5f9', marginTop: '20px', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                className={styles.formCancelBtn}
+                onClick={() => setIsPayModalOpen(false)}
+                disabled={isSubmittingPay}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.formSubmitBtn}
+                onClick={handleConfirmPayment}
+                disabled={isSubmittingPay}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                {isSubmittingPay ? (
+                  <>
+                    <div className={styles.spinner} style={{ width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', margin: 0 }}></div>
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>check_circle</span>
+                    Confirmar y Cobrar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Impresión Universal */}
+      <PrintTicketModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        ticketType="SANCION"
+        ticketData={printTicketData}
+      />
     </DashboardLayout>
   );
 }

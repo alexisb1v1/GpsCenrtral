@@ -1646,3 +1646,355 @@
   border-color: #cbd5e1;
   color: #1e293b;
 }
+
+/* ==========================================
+   ESTILOS PREMIUM PARA COBRO MASIVO (GPS)
+   ========================================== */
+
+/* Checkbox Estilizado */
+.checkboxInput {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 2px solid #cbd5e1;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  accent-color: #10b981;
+}
+
+.checkboxInput:hover {
+  border-color: #10b981;
+  transform: scale(1.05);
+}
+
+/* Fila de tabla seleccionada */
+.trSelected {
+  background-color: #f0fdf4 !important;
+  transition: background-color 0.25s ease;
+}
+
+.trSelected:hover {
+  background-color: #f0fdf4 !important;
+}
+
+/* Mobile Card seleccionada */
+.mobileCardSelected {
+  border-color: #bbf7d0 !important;
+  background-color: #f0fdf4 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08) !important;
+  transition: all 0.25s ease;
+}
+
+/* Barra Flotante de Pago Consolidado (Glassmorphism) */
+.floatingStatusBar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 800px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  padding: 16px 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
+  z-index: 1000;
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 30px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.floatingStatusContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.floatingStatusLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.selectedCountBadge {
+  background: #10b981;
+  color: white;
+  font-weight: 800;
+  font-size: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+  animation: scalePop 0.3s ease;
+}
+
+@keyframes scalePop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.floatingStatusTitle {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.floatingStatusSubtitle {
+  display: block;
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.floatingStatusTotal {
+  color: #15803d;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.floatingStatusActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.floatingCancelBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.floatingCancelBtn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1e293b;
+}
+
+.floatingPayBtn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  transition: all 0.25s ease;
+}
+
+.floatingPayBtn:hover {
+  background: #059669;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.floatingPayBtn:active {
+  transform: translateY(0);
+}
+
+/* Modal Overlay & Card styling */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+  animation: fadeInModal 0.25s ease-out;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  background: white;
+  border-radius: 24px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+  border: 1px solid #f1f5f9;
+  animation: scaleUpModal 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes scaleUpModal {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modalHeader h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.closeModalBtn {
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeModalBtn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+  transform: rotate(90deg);
+}
+
+.modalBody {
+  padding: 24px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.formInput {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  background-color: white;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.formInput:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.formCancelBtn {
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.formCancelBtn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.formSubmitBtn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  transition: all 0.2s ease;
+}
+
+.formSubmitBtn:hover {
+  background: #059669;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+}
+
+.formSubmitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsivo para la Barra Flotante */
+@media (max-width: 480px) {
+  .floatingStatusBar {
+    bottom: 12px;
+    padding: 12px 16px;
+    width: 92%;
+  }
+  
+  .floatingStatusContent {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .floatingStatusActions {
+    justify-content: flex-end;
+    width: 100%;
+  }
+  
+  .floatingPayBtn {
+    flex: 1;
+    justify-content: center;
+  }
+}

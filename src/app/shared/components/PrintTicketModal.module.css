@@ -1,0 +1,429 @@
+/* d:\Personal\Repositorios\GpsCentral\src\app\shared\components\PrintTicketModal.module.css */
+
+/* Overlay de desenfoque premium */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Contenedor del Modal interactivo */
+.container {
+  background: #f8fafc;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.18);
+  border: 1px solid #f1f5f9;
+  animation: scaleUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Botones superiores de interacción */
+.actionsBar {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  background: white;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.printBtn {
+  flex: 1.3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #0052cc;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 82, 204, 0.18);
+}
+
+.printBtn:hover {
+  background-color: #0043a4;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 82, 204, 0.28);
+}
+
+.shareBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shareBtn:hover {
+  background-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.closeBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+/* Área de desplazamiento del Recibo */
+.scrollableArea {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Estructura del Ticket de Recibo (Vectura Style) */
+.ticket {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Franja Azul Superior */
+.ticketHeader {
+  background-color: #0052cc;
+  color: white;
+  padding: 24px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.ticketLogo {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.ticketTitle {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.9;
+  margin: 6px 0 0 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Calado de Recorte Circular (Efecto Cupón Físico) */
+.ticketHeader::before,
+.ticketHeader::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--ticket-bg-clip, #f8fafc); /* Variable CSS para blending dinámico */
+  border-radius: 50%;
+  z-index: 10;
+}
+
+.ticketHeader::before {
+  left: -10px;
+  box-shadow: inset -1px 0px 1px rgba(0, 0, 0, 0.05);
+}
+
+.ticketHeader::after {
+  right: -10px;
+  box-shadow: inset 1px 0px 1px rgba(0, 0, 0, 0.05);
+}
+
+/* Contenido Principal del Recibo */
+.ticketBody {
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+/* Cuadrícula de Información */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  border-bottom: 1.5px dashed #e2e8f0;
+  padding-bottom: 20px;
+}
+
+.fullWidthRow {
+  grid-column: span 2;
+}
+
+.infoLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.infoValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.infoValueHighlight {
+  color: #0052cc;
+  font-size: 14px;
+}
+
+/* Lista de Desglose de Tarifas */
+.breakdownList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1.5px dashed #e2e8f0;
+  padding-bottom: 20px;
+}
+
+.breakdownItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #475569;
+}
+
+.breakdownLabel {
+  font-weight: 500;
+  flex: 1; /* Ocupar todo el espacio disponible */
+  padding-right: 12px; /* Espacio de seguridad antes del precio */
+  word-break: break-word; /* Romper palabras largas de forma segura */
+  text-align: left;
+}
+
+.breakdownValue {
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap; /* Evitar que el precio se rompa en dos líneas */
+  text-align: right;
+}
+
+/* Fila de Total */
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.totalLabel {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.totalValue {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0052cc;
+}
+
+/* Sección de Verificación y Código QR */
+.verificationSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding-top: 10px;
+}
+
+.qrContainer {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  box-sizing: border-box;
+}
+
+.qrImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.footerText {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0;
+  max-width: 240px;
+}
+
+/* Contenedor wrapper para aislamiento y empaquetado de exportación de imagen */
+.ticketWrapperForPrint {
+  background-color: white;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* ==========================================
+   OPTIMIZACIONES DE IMPRESIÓN (@media print)
+   ========================================== */
+@media print {
+  .ticketWrapperForPrint {
+    padding: 0 !important;
+    background: transparent !important;
+    width: 100% !important;
+  }
+
+  /* Hacer visible el modal de impresión y sus descendientes */
+  .overlay,
+  .overlay * {
+    visibility: visible !important;
+  }
+  
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 0;
+    margin: 0;
+    display: block;
+  }
+
+  .container {
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    animation: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .actionsBar, .scrollableArea::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .scrollableArea {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .ticket {
+    border: none;
+    box-shadow: none;
+    width: 100%;
+    max-width: 80mm; /* Ancho optimizado para ticketeras térmicas estándar */
+    margin: 0 auto;
+    page-break-inside: avoid;
+  }
+
+  /* Ajustar colores para impresoras blanco y negro / térmicas */
+  .ticketHeader {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .ticketHeader::before,
+  .ticketHeader::after {
+    background-color: #ffffff !important; /* Forzar fondo blanco en impresión */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .infoValueHighlight, .totalValue {
+    color: #000000 !important;
+  }
+
+  .qrContainer {
+    background: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+}

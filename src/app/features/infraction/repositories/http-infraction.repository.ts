@@ -109,9 +109,47 @@ export class HttpInfractionRepository implements InfractionRepository {
           tenantId: dto.vehicle.tenantId,
           createdAt: new Date(dto.vehicle.createdAt),
         } : undefined,
+        payment: dto.payment ? {
+          id: dto.payment.id,
+          paymentNumber: dto.payment.paymentNumber,
+          amount: Number(dto.payment.amount),
+          paymentMethod: dto.payment.paymentMethod,
+          createdAt: new Date(dto.payment.createdAt),
+        } : undefined,
       }));
 
       return ok(domainInfractions);
+    } catch (e: any) {
+      return err(new DomainError(e.message || 'Error de conexión', 'ERR_CONNECTION'));
+    }
+  }
+
+  async payMultiple(params: {
+    infractionIds: string[];
+    paymentMethod: string;
+    operationReference?: string;
+  }): Promise<Result<{ paymentNumber: string; totalAmount: number }, DomainError>> {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/infractions/pay-multiple`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          infractionIds: params.infractionIds,
+          paymentMethod: params.paymentMethod,
+          operationReference: params.operationReference || undefined,
+        }),
+      });
+
+      const apiResult = await this.handleResponse<{ paymentNumber: string; totalAmount: number }>(response);
+
+      if (!apiResult.success) {
+        return err(new DomainError(
+          apiResult.errorMessage || 'Error al registrar pago consolidado',
+          apiResult.errorCode || 'ERR_UNKNOWN'
+        ));
+      }
+
+      return ok(apiResult.data);
     } catch (e: any) {
       return err(new DomainError(e.message || 'Error de conexión', 'ERR_CONNECTION'));
     }

@@ -48,3 +48,12 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* ==========================================
+   REGLAS GLOBALES DE IMPRESIÓN (TICKET)
+   ========================================== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+}

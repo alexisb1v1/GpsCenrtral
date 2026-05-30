@@ -8,4 +8,10 @@ export interface InfractionRepository {
     driverId?: string;
     date?: string;
   }): Promise<Result<Infraction[], DomainError>>;
+  
+  payMultiple(params: {
+    infractionIds: string[];
+    paymentMethod: string;
+    operationReference?: string;
+  }): Promise<Result<{ paymentNumber: string; totalAmount: number }, DomainError>>;
 }

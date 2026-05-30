@@ -9,6 +9,7 @@ import { DriverApiService } from '@/app/features/driver/services/driver-api.serv
 import { RouteApiService } from '@/app/features/route/services/route-api.service';
 import { VehicleDto } from '@/app/features/vehicle/dto/vehicle.dto';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
+import PrintTicketModal, { PrintTicketData } from '@/app/shared/components/PrintTicketModal';
 import styles from '../admin/AdminList.module.css';
 
 const paymentApi = new PaymentApiService();
@@ -25,7 +26,12 @@ export default function PaymentsPage() {
   const [timeFilter, setTimeFilter] = useState<'hoy' | 'semana'>('hoy');
   const [currentPage, setCurrentPage] = useState(1);
   const [routes, setRoutes] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
   const itemsPerPage = 10;
+
+  // Estados para Impresión de Ticket de Salida
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [printTicketData, setPrintTicketData] = useState<PrintTicketData | null>(null);
 
   useEffect(() => {
     loadData();
@@ -43,6 +49,9 @@ export default function PaymentsPage() {
       // 3. Cargar rutas
       const routesRes = await routeApi.getList();
 
+      // 4. Cargar choferes
+      const driversRes = await driverApi.getAll();
+
       if (ticketsRes.success && ticketsRes.data) {
         setTickets(ticketsRes.data);
       }
@@ -51,6 +60,9 @@ export default function PaymentsPage() {
       }
       if (routesRes.success && routesRes.data) {
         setRoutes(routesRes.data);
+      }
+      if (driversRes.success && driversRes.data) {
+        setDrivers(driversRes.data);
       }
     } catch (e) {
       console.error('Error al cargar datos en gestión de tickets:', e);
@@ -125,6 +137,56 @@ export default function PaymentsPage() {
       default:
         return { background: '#fef3c7', color: '#d97706', label: 'Pendiente' };
     }
+  };
+
+  // Lógica para formatear y abrir la impresión de tickets de salida
+  const handleOpenPrintTicket = (ticket: DailyTicketDto) => {
+    if (ticket.status !== 'ACTIVE') return;
+
+    const vehicleObj = ticket.vehicle || vehicles.find(v => v.id === ticket.vehicleId);
+    const matchDriver = drivers.find(d => d.id === ticket.driverId);
+    const driverName = matchDriver ? matchDriver.name : (ticket.driver?.name || "No asignado");
+
+    let routeName = "Sin Ruta";
+    if (ticket.routeId) {
+      const r = routes.find(item => item.id === ticket.routeId);
+      if (r) {
+        routeName = r.name;
+      }
+    }
+
+    const firstRound = ticket.rounds?.find(r => r.roundNumber === 1);
+    const senseLabel = firstRound?.direction || 'IDA';
+
+    const total = Number(ticket.totalAmount);
+    const cuotaAdmin = 3.50;
+    const tarifaRuta = total > cuotaAdmin ? total - cuotaAdmin : total;
+
+    const ticketData: PrintTicketData = {
+      ticketNumber: `TK-${ticket.id.substring(0, 5).toUpperCase()}`,
+      dateTime: new Date(ticket.createdAt).toLocaleDateString('es-PE', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      vehiclePlate: vehicleObj?.plate || 'S/P',
+      vehicleNumber: (vehicleObj as any)?.number || null,
+      driverName: driverName,
+      routeName: routeName,
+      routeDirection: senseLabel,
+      items: [
+        { label: 'Tarifa de Ruta', value: tarifaRuta },
+        { label: 'Cuota Admin', value: total > cuotaAdmin ? cuotaAdmin : 0 }
+      ],
+      totalAmount: total,
+      paymentMethod: ticket.paymentMethod || 'EFECTIVO',
+      verificationUrl: `https://gpscentral.afbv.com/verify/ticket/${ticket.id}`
+    };
+
+    setPrintTicketData(ticketData);
+    setIsPrintModalOpen(true);
   };
 
   return (
@@ -252,7 +314,8 @@ export default function PaymentsPage() {
                     {currentTickets.map((ticket) => {
                       // Resolver información enriquecida local si el join no viniera completo
                       const vehicleObj = ticket.vehicle || vehicles.find(v => v.id === ticket.vehicleId);
-                      const driverName = ticket.driver?.name || "No asignado";
+                      const matchDriver = drivers.find(d => d.id === ticket.driverId);
+                      const driverName = matchDriver ? matchDriver.name : (ticket.driver?.name || "No asignado");
 
                       // Obtener ruta asignada
                       let routeName = "Sin Ruta";
@@ -313,9 +376,34 @@ export default function PaymentsPage() {
                             </div>
                           </td>
                           <td className={styles.td}>
-                            <span className={styles.statusBadge} style={{ background: statusStyle.background, color: statusStyle.color }}>
-                              {statusStyle.label}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                              <span className={styles.statusBadge} style={{ background: statusStyle.background, color: statusStyle.color, fontWeight: 700 }}>
+                                {statusStyle.label}
+                              </span>
+                              {ticket.status === 'ACTIVE' && (
+                                <button
+                                  type="button"
+                                  title="Imprimir Comprobante"
+                                  onClick={() => handleOpenPrintTicket(ticket)}
+                                  style={{
+                                    background: '#eff6ff',
+                                    border: '1px solid #bfdbfe',
+                                    color: '#2563eb',
+                                    borderRadius: '6px',
+                                    padding: '4px 8px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '11px',
+                                    fontWeight: 700
+                                  }}
+                                >
+                                  <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>print</span>
+                                  Imprimir
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -328,7 +416,8 @@ export default function PaymentsPage() {
                 <div className={styles.mobileList}>
                   {currentTickets.map((ticket) => {
                     const vehicleObj = ticket.vehicle || vehicles.find(v => v.id === ticket.vehicleId);
-                    const driverName = ticket.driver?.name || "No asignado";
+                    const matchDriver = drivers.find(d => d.id === ticket.driverId);
+                    const driverName = matchDriver ? matchDriver.name : (ticket.driver?.name || "No asignado");
 
                     let routeName = "Sin Ruta";
                     if (ticket.routeId) {
@@ -357,14 +446,37 @@ export default function PaymentsPage() {
                             </div>
                           </div>
                         </div>
-                        <div className={styles.cardHeaderRight}>
+                        <div className={styles.cardHeaderRight} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                           <div className={styles.mobileAmount}>{formatCurrency(Number(ticket.totalAmount))}</div>
                           <span
                             className={styles.mobileStatusBadge}
-                            style={{ background: statusStyle.background, color: statusStyle.color }}
+                            style={{ background: statusStyle.background, color: statusStyle.color, fontWeight: 700 }}
                           >
                             {statusStyle.label}
                           </span>
+                          {ticket.status === 'ACTIVE' && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPrintTicket(ticket)}
+                              style={{
+                                background: 'white',
+                                border: '1px solid #bfdbfe',
+                                color: '#2563eb',
+                                borderRadius: '12px',
+                                padding: '2px 8px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '2px',
+                                fontSize: '9px',
+                                fontWeight: 700,
+                                marginTop: '2px'
+                              }}
+                            >
+                              <span className="material-symbols-rounded" style={{ fontSize: '10px' }}>print</span>
+                              Imprimir
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -408,6 +520,14 @@ export default function PaymentsPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de Impresión Universal */}
+      <PrintTicketModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        ticketType="SALIDA"
+        ticketData={printTicketData}
+      />
     </DashboardLayout>
   );
 }

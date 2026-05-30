@@ -26,4 +26,11 @@ export interface Infraction {
   createdAt: string | Date;
   vehicle?: Vehicle;
   driverName?: string;
+  payment?: {
+    id: string;
+    paymentNumber: string | null;
+    amount: number;
+    paymentMethod: string;
+    createdAt: string | Date;
+  };
 }
