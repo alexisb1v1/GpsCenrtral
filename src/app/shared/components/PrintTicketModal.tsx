@@ -42,6 +42,7 @@ export interface PrintTicketData {
   totalAmount: number;
   paymentMethod: string;
   verificationUrl?: string;
+  tenantName?: string;
 }
 
 interface PrintTicketModalProps {
@@ -175,7 +176,8 @@ export default function PrintTicketModal({
   };
 
   // Generación dinámica del QR de QR Server (API sumamente estable y sin problemas de CSP/CORS)
-  const encodedUrl = encodeURIComponent(ticketData.verificationUrl || `https://gpscentral.afbv.com/verify/${ticketData.ticketNumber}`);
+  const host = typeof window !== 'undefined' ? window.location.origin : 'https://gpscentral.afbv.com';
+  const encodedUrl = encodeURIComponent(ticketData.verificationUrl || `${host}/verify/${ticketData.ticketNumber}`);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodedUrl}`;
 
   return (
@@ -202,7 +204,7 @@ export default function PrintTicketModal({
             <div id="print-ticket-content" className={styles.ticket}>
             {/* Encabezado */}
             <div className={styles.ticketHeader}>
-              <h1 className={styles.ticketLogo}>Vectura</h1>
+              <h1 className={styles.ticketLogo}>{ticketData.tenantName || 'Vectura'}</h1>
               <p className={styles.ticketTitle}>
                 {ticketType === 'SALIDA' ? 'Ticket de Salida' : 'Comprobante de Pago'}
               </p>

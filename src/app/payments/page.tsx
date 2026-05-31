@@ -10,6 +10,7 @@ import { RouteApiService } from '@/app/features/route/services/route-api.service
 import { VehicleDto } from '@/app/features/vehicle/dto/vehicle.dto';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import PrintTicketModal, { PrintTicketData } from '@/app/shared/components/PrintTicketModal';
+import { useBranding } from '@/app/shared/providers/BrandingContext';
 import styles from '../admin/AdminList.module.css';
 
 const paymentApi = new PaymentApiService();
@@ -19,6 +20,7 @@ const routeApi = new RouteApiService();
 
 export default function PaymentsPage() {
   const router = useRouter();
+  const { branding } = useBranding();
   const [tickets, setTickets] = useState<DailyTicketDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,7 +184,8 @@ export default function PaymentsPage() {
       ],
       totalAmount: total,
       paymentMethod: ticket.paymentMethod || 'EFECTIVO',
-      verificationUrl: `https://gpscentral.afbv.com/verify/ticket/${ticket.id}`
+      verificationUrl: `https://gpscentral.afbv.com/verify/ticket/${ticket.id}`,
+      tenantName: branding?.name || 'Vectura'
     };
 
     setPrintTicketData(ticketData);

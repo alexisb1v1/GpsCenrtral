@@ -9,6 +9,7 @@ import { getDriversUseCase, Driver } from '@/app/features/driver';
 import { getAllTenantsUseCase } from '@/app/features/tenant';
 import { useToast } from '@/app/shared/providers/ToastProvider';
 import PrintTicketModal, { PrintTicketData } from '@/app/shared/components/PrintTicketModal';
+import { useBranding } from '@/app/shared/providers/BrandingContext';
 import styles from '../admin/AdminList.module.css';
 
 interface SessionData {
@@ -24,6 +25,7 @@ interface SessionData {
 
 export default function PenaltiesPage() {
   const { error: showError, success: showSuccess } = useToast();
+  const { branding } = useBranding();
 
   const [role, setRole] = useState<string>('');
   const [sessionTenantId, setSessionTenantId] = useState<string>('');
@@ -305,7 +307,8 @@ export default function PenaltiesPage() {
       items: items,
       totalAmount: totalAmount,
       paymentMethod: infraction.payment?.paymentMethod || 'EFECTIVO',
-      verificationUrl: `https://gpscentral.afbv.com/verify/payment/${infraction.paymentId || infraction.id}`
+      verificationUrl: `https://gpscentral.afbv.com/verify/payment/${infraction.paymentId || infraction.id}`,
+      tenantName: branding?.name || 'Vectura'
     };
 
     setPrintTicketData(ticketData);
