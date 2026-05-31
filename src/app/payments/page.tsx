@@ -184,7 +184,7 @@ export default function PaymentsPage() {
       ],
       totalAmount: total,
       paymentMethod: ticket.paymentMethod || 'EFECTIVO',
-      verificationUrl: `https://gpscentral.afbv.com/verify/ticket/${ticket.id}`,
+      verificationUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://gpscentral.afbv.com'}/verify/ticket/${ticket.id}`,
       tenantName: branding?.name || 'Vectura'
     };
 

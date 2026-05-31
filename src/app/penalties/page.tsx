@@ -307,7 +307,7 @@ export default function PenaltiesPage() {
       items: items,
       totalAmount: totalAmount,
       paymentMethod: infraction.payment?.paymentMethod || 'EFECTIVO',
-      verificationUrl: `https://gpscentral.afbv.com/verify/payment/${infraction.paymentId || infraction.id}`,
+      verificationUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://gpscentral.afbv.com'}/verify/payment/${infraction.paymentId || infraction.id}`,
       tenantName: branding?.name || 'Vectura'
     };
 
