@@ -20,7 +20,7 @@ const routeApi = new RouteApiService();
 
 export default function PaymentsPage() {
   const router = useRouter();
-  const { branding } = useBranding();
+  const { branding, slug } = useBranding();
   const [tickets, setTickets] = useState<DailyTicketDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,7 +184,13 @@ export default function PaymentsPage() {
       ],
       totalAmount: total,
       paymentMethod: ticket.paymentMethod || 'EFECTIVO',
-      verificationUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://gpscentral.afbv.com'}/verify/ticket/${ticket.id}`,
+      verificationUrl: (() => {
+        const ticketNumber = `TK-${ticket.id.substring(0, 5).toUpperCase()}`;
+        const path = `/verify/${ticketNumber}`;
+        if (typeof window === 'undefined') return `https://${slug || 'gpscentral'}.centralafbv.com${path}`;
+        const isLocal = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
+        return isLocal ? `${window.location.origin}${path}` : `https://${slug || 'gpscentral'}.centralafbv.com${path}`;
+      })(),
       tenantName: branding?.name || 'Vectura'
     };
 

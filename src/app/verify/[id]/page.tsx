@@ -38,11 +38,29 @@ export default function VerifyTicketPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getSubdomain = () => {
+    if (typeof window === 'undefined') return '';
+    const host = window.location.hostname;
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+      return '';
+    }
+    const parts = host.split('.');
+    if (parts.length > 2) {
+      return parts[0];
+    }
+    return '';
+  };
+
   const fetchVerifyData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/dashboard/verify/${ticketId}`, {
+      const subdomain = getSubdomain();
+      const url = subdomain 
+        ? `${API_CONFIG.BASE_URL}/dashboard/verify/${ticketId}?subdomain=${subdomain}`
+        : `${API_CONFIG.BASE_URL}/dashboard/verify/${ticketId}`;
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

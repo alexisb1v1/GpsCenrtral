@@ -25,7 +25,7 @@ interface SessionData {
 
 export default function PenaltiesPage() {
   const { error: showError, success: showSuccess } = useToast();
-  const { branding } = useBranding();
+  const { branding, slug } = useBranding();
 
   const [role, setRole] = useState<string>('');
   const [sessionTenantId, setSessionTenantId] = useState<string>('');
@@ -307,7 +307,13 @@ export default function PenaltiesPage() {
       items: items,
       totalAmount: totalAmount,
       paymentMethod: infraction.payment?.paymentMethod || 'EFECTIVO',
-      verificationUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://gpscentral.afbv.com'}/verify/payment/${infraction.paymentId || infraction.id}`,
+      verificationUrl: (() => {
+        const ticketNumber = infraction.payment?.paymentNumber || `REC-${infraction.id.substring(0, 5).toUpperCase()}`;
+        const path = `/verify/${ticketNumber}`;
+        if (typeof window === 'undefined') return `https://${slug || 'gpscentral'}.centralafbv.com${path}`;
+        const isLocal = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1');
+        return isLocal ? `${window.location.origin}${path}` : `https://${slug || 'gpscentral'}.centralafbv.com${path}`;
+      })(),
       tenantName: branding?.name || 'Vectura'
     };
 
