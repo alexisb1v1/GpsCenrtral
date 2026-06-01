@@ -198,39 +198,118 @@ export default function EmbedMapPage({ params }: EmbedPageProps) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-screen bg-slate-900 text-slate-100">
-        <div className="relative flex items-center justify-center w-16 h-16">
-          <div className="absolute w-full h-full border-4 border-slate-700 rounded-full"></div>
-          <div className="absolute w-full h-full border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div 
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#0f172a',
+          color: '#f8fafc',
+          fontFamily: "'Montserrat', sans-serif"
+        }}
+      >
+        <div style={{ position: 'relative', width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', width: '100%', height: '100%', border: '4px solid #334155', borderRadius: '50%' }}></div>
+          <div 
+            style={{ 
+              position: 'absolute', 
+              width: '100%', 
+              height: '100%', 
+              border: '4px solid #10b981', 
+              borderTopColor: 'transparent', 
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}
+          ></div>
         </div>
-        <p className="mt-4 text-sm font-semibold tracking-wide text-slate-400 uppercase animate-pulse">Cargando Mapa del Tenant...</p>
+        <p style={{ marginTop: '16px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', color: '#94a3b8', textTransform: 'uppercase' }}>
+          Cargando Mapa de Telemetría...
+        </p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-screen p-6 bg-slate-950 text-slate-200 text-center font-sans">
-        <div className="flex items-center justify-center w-16 h-16 bg-red-950/40 border border-red-500/30 rounded-2xl mb-4 text-red-500 shadow-lg shadow-red-950/20">
-          <span className="material-symbols-rounded text-3xl font-bold">lock_open</span>
+      <div 
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100vw',
+          height: '100vh',
+          padding: '24px',
+          backgroundColor: '#020617',
+          color: '#f1f5f9',
+          textAlign: 'center',
+          fontFamily: "'Montserrat', sans-serif"
+        }}
+      >
+        <div 
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '64px',
+            height: '64px',
+            backgroundColor: 'rgba(127, 29, 29, 0.2)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '16px',
+            marginBottom: '16px',
+            color: '#ef4444',
+            fontSize: '30px',
+            fontWeight: 'bold',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+          }}
+        >
+          !
         </div>
-        <h3 className="text-xl font-bold text-slate-100 mb-2">Monitoreo Restringido</h3>
-        <p className="text-sm text-slate-400 max-w-md leading-relaxed mb-6">{error}</p>
-        <span className="text-[11px] font-mono text-slate-600 bg-slate-900/60 border border-slate-800/40 px-3 py-1.5 rounded-lg">Vectura Telemetry Security Suite v1.1</span>
+        <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#f8fafc', marginBottom: '8px' }}>Monitoreo Restringido</h3>
+        <p style={{ fontSize: '12px', color: '#94a3b8', maxWidth: '400px', lineHeight: '1.6', marginBottom: '24px' }}>{error}</p>
+        <span style={{ fontSize: '10px', fontFamily: 'monospace', color: '#475569', backgroundColor: '#0f172a', border: '1px solid #1e293b', padding: '6px 12px', borderRadius: '8px' }}>
+          Vectura Telemetry Security Suite v1.2
+        </span>
       </div>
     );
   }
 
   return (
     <main 
-      className="relative w-full h-screen bg-slate-900 overflow-hidden select-none font-sans"
       style={{
+        position: 'relative',
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#0f172a',
+        overflow: 'hidden',
+        margin: 0,
+        padding: 0,
+        userSelect: 'none',
+        fontFamily: "'Montserrat', sans-serif",
         '--primary-color': colors.primary,
         '--accent-color': colors.accent,
       } as any}
     >
-      {/* Contenedor del Mapa Embebido */}
-      <div className="w-full h-full z-1">
+      {/* Contenedor del Mapa Embebido a Pantalla Completa */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 1
+        }}
+      >
         <GpsMap
           mode="controller"
           routesCoordinates={filteredRoute ? filteredRoute.outboundCoordinates : []}
@@ -248,35 +327,73 @@ export default function EmbedMapPage({ params }: EmbedPageProps) {
         />
       </div>
 
-      {/* Selector de Ruta Flotante en Desplegable Moderno Premium */}
+      {/* Selector de Ruta Flotante en Desplegable Moderno Premium - Esquina Superior Derecha */}
       {routes.length > 0 && (
         <div 
-          className="absolute top-4 left-4 z-[999] flex items-center gap-2.5 bg-slate-950/90 backdrop-blur-md border border-slate-800/80 p-2.5 px-3.5 shadow-xl shadow-slate-950/40 select-none"
           style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px', // Esquina Superior Derecha para un look despejado y limpio
+            zIndex: 9999, // Encima de los controles de Leaflet
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            backgroundColor: 'rgba(15, 23, 42, 0.92)', // Glassmorphism oscuro premium
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '8px', // ROUND_EIGHT según diseño.md
+            padding: '10px 14px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
             fontFamily: "'Montserrat', sans-serif"
           }}
         >
           <div 
-            className="flex items-center justify-center w-7 h-7 rounded-md border text-xs"
             style={{ 
-              backgroundColor: `${colors.primary}12`, 
-              borderColor: `${colors.primary}30`,
-              color: colors.primary 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '6px',
+              backgroundColor: 'rgba(16, 185, 129, 0.12)', 
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              color: '#10b981',
+              fontSize: '12px'
             }}
           >
             <i className="fa-solid fa-route"></i>
           </div>
-          <div className="flex flex-col min-w-[160px]">
-            <label className="text-[8px] font-bold text-slate-500 tracking-wider uppercase block mb-0.5 leading-none">
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: '170px' }}>
+            <label 
+              style={{ 
+                fontSize: '8px', 
+                fontWeight: 700, 
+                color: '#64748b', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.08em',
+                marginBottom: '2px', 
+                lineHeight: 1 
+              }}
+            >
               Recorrido de Ruta
             </label>
             <select
               value={selectedRouteId || ''}
               onChange={(e) => setSelectedRouteId(e.target.value)}
-              className="bg-transparent text-slate-100 text-[11px] font-bold border-none outline-none cursor-pointer w-full pr-6 py-0.5 appearance-none focus:ring-0 leading-tight focus:outline-none"
               style={{
+                backgroundColor: 'transparent',
+                color: '#f8fafc',
+                fontSize: '12px',
+                fontWeight: 700,
+                border: 'none',
+                outline: 'none',
+                cursor: 'pointer',
+                width: '100%',
                 fontFamily: "'Montserrat', sans-serif",
+                paddingRight: '22px',
+                appearance: 'none',
+                WebkitAppearance: 'none',
                 backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%2394a3b8'><path d='M7 10l5 5 5-5z'/></svg>")`,
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'right center',
@@ -286,7 +403,7 @@ export default function EmbedMapPage({ params }: EmbedPageProps) {
               {routes.map((route) => {
                 const routeVehs = vehicles.filter((v) => v.routeId === route.id);
                 return (
-                  <option key={route.id} value={route.id} className="bg-slate-950 text-slate-200">
+                  <option key={route.id} value={route.id} style={{ backgroundColor: '#0f172a', color: '#e2e8f0' }}>
                     {route.name} ({routeVehs.length} en servicio)
                   </option>
                 );
