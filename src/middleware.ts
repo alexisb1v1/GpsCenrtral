@@ -56,14 +56,20 @@ export async function middleware(request: NextRequest) {
 
     const response = NextResponse.next();
     
+    // Si no hay dominios restringidos configurados en el tenant (nulo o vacío), permitimos la carga libre (sin inyectar CSP)
+    if (!allowedDomains || allowedDomains.trim() === '' || allowedDomains === 'null') {
+      return response;
+    }
+    
     // Formatear dominios para la directiva CSP (separados por espacios en CSP)
     const domainsList = allowedDomains
-      ? allowedDomains.split(',').map(d => d.trim()).join(' ')
-      : '';
+      .split(',')
+      .map(d => d.trim())
+      .join(' ');
 
     const cspValue = `frame-ancestors 'self' ${domainsList}`.trim() + ';';
     
-    // Inyectar cabecera de seguridad
+    // Inyectar cabecera de seguridad estricta
     response.headers.set('Content-Security-Policy', cspValue);
     return response;
   }
