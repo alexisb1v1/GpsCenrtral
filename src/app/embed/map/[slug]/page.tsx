@@ -77,6 +77,8 @@ export default function EmbedMapPage({ params }: EmbedPageProps) {
         const formattedVehs = (data.vehicles || []).map((v: any) => ({
           id: v.vehicleId,
           plate: v.plate,
+          routeId: v.routeId,
+          direction: v.direction,
           lat: v.lat,
           lng: v.lng,
           speed: v.speed || 0,
@@ -152,6 +154,8 @@ export default function EmbedMapPage({ params }: EmbedPageProps) {
             const mappedVeh = {
               id: newPos.vehicleId,
               plate: newPos.plate || `Bus`,
+              routeId: newPos.routeId,
+              direction: newPos.direction,
               lat: newPos.lat,
               lng: newPos.lng,
               speed: newPos.speed || 0,
