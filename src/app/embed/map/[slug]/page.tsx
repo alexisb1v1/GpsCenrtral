@@ -65,7 +65,13 @@ export default function EmbedMapPage({ params }: EmbedPageProps) {
           primary: data.primaryColor || '#10b981',
           accent: data.accentColor || '#047857',
         });
-        setRoutes(data.routes || []);
+        const fetchedRoutes = data.routes || [];
+        setRoutes(fetchedRoutes);
+        
+        // Seleccionar automáticamente la primera ruta si no está parametrizada en la URL
+        if (fetchedRoutes.length > 0 && !routeIdParam) {
+          setSelectedRouteId(fetchedRoutes[0].id);
+        }
         
         // Formatear vehículos recibidos inicialmente
         const formattedVehs = (data.vehicles || []).map((v: any) => ({
@@ -242,59 +248,50 @@ export default function EmbedMapPage({ params }: EmbedPageProps) {
         />
       </div>
 
-      {/* Panel Superior Flotante Premium de Branding */}
-      <div className="absolute top-4 left-4 z-[999] flex items-center gap-3 bg-slate-950/80 backdrop-blur-md border border-slate-800/60 px-4 py-2.5 rounded-2xl shadow-xl shadow-slate-950/40">
-        <div 
-          className="w-3.5 h-3.5 rounded-full animate-ping"
-          style={{ backgroundColor: colors.primary }}
-        ></div>
-        <div className="flex flex-col">
-          <h1 className="text-xs font-bold text-slate-100 tracking-wide uppercase">{tenantName}</h1>
-          <span className="text-[10px] text-slate-400 font-medium">Buses en servicio y ruta en vivo</span>
-        </div>
-      </div>
-
-      {/* Selector de Ruta Flotante Minimalista */}
+      {/* Selector de Ruta Flotante en Desplegable Moderno Premium */}
       {routes.length > 0 && (
-        <div className="absolute bottom-6 left-4 z-[999] bg-slate-950/80 backdrop-blur-md border border-slate-800/60 p-3 rounded-2xl shadow-xl shadow-slate-950/40 max-w-[280px]">
-          <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase block mb-2">Seleccionar Recorrido</span>
-          <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto pr-1">
-            <button
-              onClick={() => setSelectedRouteId(null)}
-              className={`flex items-center justify-between text-xs px-3 py-2 rounded-xl border transition-all text-left ${
-                selectedRouteId === null
-                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400 font-bold'
-                  : 'bg-slate-900/60 border-slate-800/40 text-slate-300 hover:bg-slate-800/50'
-              }`}
+        <div 
+          className="absolute top-4 left-4 z-[999] flex items-center gap-2.5 bg-slate-950/90 backdrop-blur-md border border-slate-800/80 p-2.5 px-3.5 shadow-xl shadow-slate-950/40 select-none"
+          style={{
+            borderRadius: '8px', // ROUND_EIGHT según diseño.md
+            fontFamily: "'Montserrat', sans-serif"
+          }}
+        >
+          <div 
+            className="flex items-center justify-center w-7 h-7 rounded-md border text-xs"
+            style={{ 
+              backgroundColor: `${colors.primary}12`, 
+              borderColor: `${colors.primary}30`,
+              color: colors.primary 
+            }}
+          >
+            <i className="fa-solid fa-route"></i>
+          </div>
+          <div className="flex flex-col min-w-[160px]">
+            <label className="text-[8px] font-bold text-slate-500 tracking-wider uppercase block mb-0.5 leading-none">
+              Recorrido de Ruta
+            </label>
+            <select
+              value={selectedRouteId || ''}
+              onChange={(e) => setSelectedRouteId(e.target.value)}
+              className="bg-transparent text-slate-100 text-[11px] font-bold border-none outline-none cursor-pointer w-full pr-6 py-0.5 appearance-none focus:ring-0 leading-tight focus:outline-none"
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%2394a3b8'><path d='M7 10l5 5 5-5z'/></svg>")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right center',
+                backgroundSize: '16px',
+              }}
             >
-              <span>Ver todas las rutas</span>
-              <span className="bg-slate-800 text-[10px] px-1.5 py-0.5 rounded-md font-semibold text-slate-400">
-                {vehicles.length}
-              </span>
-            </button>
-            
-            {routes.map((route) => {
-              const routeVehs = vehicles.filter((v) => v.routeId === route.id);
-              const isSelected = selectedRouteId === route.id;
-              
-              return (
-                <button
-                  key={route.id}
-                  onClick={() => setSelectedRouteId(route.id)}
-                  className={`flex items-center justify-between text-xs px-3 py-2 rounded-xl border transition-all text-left ${
-                    isSelected
-                      ? 'border-emerald-500/40 text-emerald-400 font-bold'
-                      : 'bg-slate-900/60 border-slate-800/40 text-slate-300 hover:bg-slate-800/50'
-                  }`}
-                  style={isSelected ? { backgroundColor: `${colors.primary}15`, borderColor: `${colors.primary}50`, color: colors.primary } : {}}
-                >
-                  <span className="truncate pr-2">{route.name}</span>
-                  <span className="bg-slate-800 text-[10px] px-1.5 py-0.5 rounded-md font-semibold text-slate-400">
-                    {routeVehs.length}
-                  </span>
-                </button>
-              );
-            })}
+              {routes.map((route) => {
+                const routeVehs = vehicles.filter((v) => v.routeId === route.id);
+                return (
+                  <option key={route.id} value={route.id} className="bg-slate-950 text-slate-200">
+                    {route.name} ({routeVehs.length} en servicio)
+                  </option>
+                );
+              })}
+            </select>
           </div>
         </div>
       )}
