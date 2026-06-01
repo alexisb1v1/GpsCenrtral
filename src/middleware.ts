@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { API_CONFIG } from '@/core/config/api.config';
 
 // Caché simple en memoria para dominios permitidos del tenant con TTL de 5 minutos
 const domainsCache = new Map<string, { allowedDomains: string | null; expireAt: number }>();
@@ -30,7 +31,7 @@ export async function middleware(request: NextRequest) {
       allowedDomains = cached.allowedDomains;
     } else {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+        const apiUrl = API_CONFIG.BASE_URL;
         
         // Hacemos un fetch rápido con timeout para no bloquear la petición
         const controller = new AbortController();
