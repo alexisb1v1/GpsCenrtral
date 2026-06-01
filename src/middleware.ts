@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Caché simple en memoria para dominios permitidos del tenant con TTL de 5 minutos
+const domainsCache = new Map<string, { allowedDomains: string | null; expireAt: number }>();
+
 // Función segura de extracción y parseo del rol
 function parseRoleFromCookie(cookieValue: string): string | null {
   try {
@@ -12,8 +15,59 @@ function parseRoleFromCookie(cookieValue: string): string | null {
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
+
+  // 0. Interceptar vistas embebidas del mapa y establecer CSP frame-ancestors dinámico
+  const embedMatch = url.pathname.match(/^\/embed\/map\/([^/]+)/);
+  if (embedMatch) {
+    const slug = embedMatch[1];
+    let allowedDomains: string | null = null;
+    const now = Date.now();
+    const cached = domainsCache.get(slug);
+
+    if (cached && cached.expireAt > now) {
+      allowedDomains = cached.allowedDomains;
+    } else {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+        
+        // Hacemos un fetch rápido con timeout para no bloquear la petición
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+        const res = await fetch(`${apiUrl.replace(/\/$/, '')}/public/monitoring/${slug}/allowed-domains`, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          allowedDomains = data.allowedDomains;
+          domainsCache.set(slug, {
+            allowedDomains,
+            expireAt: now + 5 * 60 * 1000, // 5 min TTL
+          });
+        }
+      } catch (e) {
+        console.error('[Middleware] Error al obtener dominios permitidos para slug:', slug, e);
+      }
+    }
+
+    const response = NextResponse.next();
+    
+    // Formatear dominios para la directiva CSP (separados por espacios en CSP)
+    const domainsList = allowedDomains
+      ? allowedDomains.split(',').map(d => d.trim()).join(' ')
+      : '';
+
+    const cspValue = `frame-ancestors 'self' ${domainsList}`.trim() + ';';
+    
+    // Inyectar cabecera de seguridad
+    response.headers.set('Content-Security-Policy', cspValue);
+    return response;
+  }
+
   const response = NextResponse.next();
 
   // 1. Lógica de Detección de Dispositivo
