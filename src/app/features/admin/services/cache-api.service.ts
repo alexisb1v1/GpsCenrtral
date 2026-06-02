@@ -78,14 +78,20 @@ export class CacheApiService {
       cache: 'no-store',
     });
     
-    const result = await this.handleResponse<{ status: string; data: CacheItemDto[] }>(response);
-    if (result.success && result.data) {
-      return {
-        ...result,
-        data: result.data.data
-      } as any;
-    }
-    return result as any;
+    const result = await this.handleResponse<any>(response) as any;
+    
+    // Mapear de forma robusta al formato estándar del frontend
+    const isSuccess = result?.status === 'success' || result?.success === true;
+    const dataList = result?.data || [];
+    
+    return {
+      success: isSuccess,
+      data: dataList,
+      errorMessage: isSuccess ? undefined : (result?.errorMessage || 'No se pudo obtener el estado de la caché'),
+      meta: {
+        timestamp: new Date().toISOString()
+      }
+    } as ApiResponseDto<CacheItemDto[]>;
   }
 
   /**
@@ -98,6 +104,17 @@ export class CacheApiService {
       body: JSON.stringify({ unlinkDevices }),
     });
 
-    return this.handleResponse<any>(response);
+    const result = await this.handleResponse<any>(response) as any;
+    
+    const isSuccess = result?.status === 'success' || result?.success === true;
+    
+    return {
+      success: isSuccess,
+      data: result,
+      errorMessage: isSuccess ? undefined : (result?.errorMessage || result?.message || 'Error al restablecer la caché'),
+      meta: {
+        timestamp: new Date().toISOString()
+      }
+    } as ApiResponseDto<any>;
   }
 }
