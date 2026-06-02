@@ -60,6 +60,7 @@ export default function RouteStopsPage() {
   const [modalLat, setModalLat] = useState('');
   const [modalLng, setModalLng] = useState('');
   const [modalMinutes, setModalMinutes] = useState(10);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -224,32 +225,69 @@ export default function RouteStopsPage() {
   const handleSaveStops = async () => {
     setIsSaving(true);
 
-    // Preparar payload para el backend con el formato esperado por RouteStopItemDto
-    const payload = currentStops.map(s => ({
-      traccarGeofenceId: s.traccarGeofenceId || undefined,
-      name: s.name || `Paradero ${s.stopOrder}`,
-      lat: s.lat ?? 0,
-      lng: s.lng ?? 0,
-      stopOrder: s.stopOrder,
-      minutesFromStart: s.minutesFromStart,
-      polygonCoordinates: s.polygonCoordinates // Enviar geometría del paradero
-    }));
+    try {
+      // 1. Guardar el trayecto y paraderos de IDA
+      const outboundPayload = outboundStops.map(s => ({
+        traccarGeofenceId: s.traccarGeofenceId || undefined,
+        name: s.name || `Paradero ${s.stopOrder}`,
+        lat: s.lat ?? 0,
+        lng: s.lng ?? 0,
+        stopOrder: s.stopOrder,
+        minutesFromStart: s.minutesFromStart,
+        polygonCoordinates: s.polygonCoordinates
+      }));
 
-    const result = await updateRouteStopsUseCase.execute(id, payload, direction, routeName, routeStatus, routePath);
+      const outboundResult = await updateRouteStopsUseCase.execute(
+        id,
+        outboundPayload,
+        'IDA',
+        routeName,
+        routeStatus,
+        outboundPath
+      );
 
-    result.match(
-      () => {
-        showSuccess('Guardado exitoso', `La ruta y paraderos de ${direction === 'IDA' ? 'IDA' : 'VUELTA'} se han guardado correctamente.`);
-        const now = new Date();
-        setLastSaved(`Hoy a las ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
-        loadData(false); // Recargar de fondo de forma fluida y sin overlay
-      },
-      (err) => {
-        showError('Error al guardar', err.message);
+      if (outboundResult.isErr()) {
+        showError('Error al guardar el trayecto de IDA', outboundResult.error.message);
+        setIsSaving(false);
+        return;
       }
-    );
 
-    setIsSaving(false);
+      // 2. Guardar el trayecto y paraderos de VUELTA
+      const inboundPayload = inboundStops.map(s => ({
+        traccarGeofenceId: s.traccarGeofenceId || undefined,
+        name: s.name || `Paradero ${s.stopOrder}`,
+        lat: s.lat ?? 0,
+        lng: s.lng ?? 0,
+        stopOrder: s.stopOrder,
+        minutesFromStart: s.minutesFromStart,
+        polygonCoordinates: s.polygonCoordinates
+      }));
+
+      const inboundResult = await updateRouteStopsUseCase.execute(
+        id,
+        inboundPayload,
+        'VUELTA',
+        routeName,
+        routeStatus,
+        inboundPath
+      );
+
+      if (inboundResult.isErr()) {
+        showError('Error al guardar el trayecto de VUELTA', inboundResult.error.message);
+        setIsSaving(false);
+        return;
+      }
+
+      // 3. Notificación de éxito global
+      showSuccess('Guardado exitoso', 'La ruta, trayectos y paraderos de IDA y VUELTA se han guardado correctamente.');
+      const now = new Date();
+      setLastSaved(`Hoy a las ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+      loadData(false); // Recargar datos
+    } catch (err: any) {
+      showError('Error inesperado', err.message || 'Ocurrió un error al procesar el guardado.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -302,10 +340,31 @@ export default function RouteStopsPage() {
           {/* Columna Izquierda: Detalles & Timeline */}
           <div className={styles.leftPanel}>
             <div className={styles.headerSection}>
-              <button onClick={() => router.push('/admin/routes')} className={styles.backBtn}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <button onClick={() => router.push('/admin/routes')} className={styles.backBtn} style={{ marginBottom: 0 }}>
                 <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>arrow_back</span>
                 Volver a Rutas
               </button>
+              <button
+                type="button"
+                onClick={() => setIsHelpModalOpen(true)}
+                className={styles.backBtn}
+                style={{
+                  marginBottom: 0,
+                  color: '#475569',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  backgroundColor: '#f1f5f9',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1'
+                }}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>help</span>
+                Ayuda / Manual
+              </button>
+            </div>
               <h2 className={styles.titleText}>
                 <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '24px' }}>edit_road</span>
                 Editar Ruta
@@ -588,8 +647,99 @@ export default function RouteStopsPage() {
               </div>
             </form>
           </div>
-        </div>
-      )}
-    </DashboardLayout>
-  );
-}
+          </div>
+        )}
+
+        {/* Modal Overlay para Manual de Ayuda */}
+        {isHelpModalOpen && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modalContent} style={{ maxWidth: '600px' }}>
+              <div className={styles.modalHeader}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  <span className="material-symbols-rounded" style={{ color: '#2563eb' }}>menu_book</span>
+                  Manual de Uso: Creación de Rutas y Paraderos
+                </h3>
+                <button onClick={() => setIsHelpModalOpen(false)} className={styles.closeBtn}>
+                  <span className="material-symbols-rounded">close</span>
+                </button>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+                maxHeight: '65vh',
+                overflowY: 'auto',
+                paddingRight: '0.5rem',
+                fontSize: '0.9rem',
+                lineHeight: '1.5',
+                color: '#334155'
+              }}>
+                <section style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 0.5rem 0', color: '#0f172a', fontWeight: 700 }}>
+                    <span className="material-symbols-rounded" style={{ color: '#10b981', fontSize: '20px' }}>gesture</span>
+                    1. Trazado del Recorrido (Línea de Ruta)
+                  </h4>
+                  <p style={{ margin: 0 }}>
+                    Usa la herramienta de <strong>Trazado de Línea (Polyline)</strong> en los controles del mapa. Haz clic consecutivamente para dibujar el camino por donde circulará el autobús.
+                  </p>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                    💡 <strong>¿Cómo finalizar la línea?</strong> Haz doble clic en el último punto que dibujaste o haz clic sobre el último punto creado para concluir el trazado.
+                  </p>
+                </section>
+
+                <section style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 0.5rem 0', color: '#0f172a', fontWeight: 700 }}>
+                    <span className="material-symbols-rounded" style={{ color: '#ef4444', fontSize: '20px' }}>category</span>
+                    2. Dibujo de Paraderos / Puntos de Control
+                  </h4>
+                  <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <li>
+                      <strong>Paraderos Geocercados (Polígonos):</strong> Usa la herramienta de <strong>Polígono</strong> o <strong>Rectángulo</strong> en el mapa para trazar el área exacta de parada sobre la calzada (escala 1:1). 
+                      <br />
+                      <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                        💡 <strong>¿Cómo finalizar el polígono?</strong> Haz clic en el primer punto de inicio del polígono para cerrarlo y completar el área.
+                      </span>
+                    </li>
+                    <li>
+                      <strong>Paraderos Circulares (Marcadores):</strong> Si colocas un pin simple usando el <strong>Marcador</strong> en el mapa, el sistema generará automáticamente una geocerca circular a la redonda de <strong>5 metros de radio</strong> (10m de diámetro total).
+                    </li>
+                  </ul>
+                </section>
+
+                <section style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 0.5rem 0', color: '#0f172a', fontWeight: 700 }}>
+                    <span className="material-symbols-rounded" style={{ color: '#f59e0b', fontSize: '20px' }}>edit_note</span>
+                    3. Asignación de Nombres y Tiempos
+                  </h4>
+                  <p style={{ margin: 0 }}>
+                    Al trazar un paradero, este aparecerá listado al instante en el panel izquierdo. Puedes editar libremente:
+                  </p>
+                  <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.25rem' }}>
+                    <li><strong>Nombre del paradero:</strong> Escribe un título descriptivo en la caja de texto (ej. <em>Paradero Av. Unión</em>).</li>
+                    <li><strong>Minutos desde salida:</strong> Configura los minutos acumulados estimados que el bus deba tardar desde el inicio del recorrido.</li>
+                  </ul>
+                </section>
+
+                <section style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 0.5rem 0', color: '#0f172a', fontWeight: 700 }}>
+                    <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '20px' }}>cloud_upload</span>
+                    4. Guardado Unificado
+                  </h4>
+                  <p style={{ margin: 0 }}>
+                    No es necesario guardar cada sentido por separado. Al presionar el botón <strong>Guardar Ruta</strong> en la barra inferior, el sistema procesará y guardará de forma integrada y simultánea tanto la <strong>Ruta de Ida</strong> como la <strong>Ruta de Vuelta</strong>, evitando pérdidas accidentales.
+                  </p>
+                </section>
+              </div>
+
+              <div style={{ display: 'flex', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setIsHelpModalOpen(false)} className={styles.btnSubmit} style={{ boxShadow: 'none' }}>
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </DashboardLayout>
+    );
+  }
