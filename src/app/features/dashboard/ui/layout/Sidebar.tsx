@@ -14,7 +14,6 @@ const mainMenuItems = [
   { id: 'payments', label: 'Registro de Salida', icon: 'payments', href: '/payments' },
   { id: 'route', label: 'Ruta', icon: 'bus_map_pin', href: '/driver' },
   { id: 'penalties', label: 'Sanciones', icon: 'gavel', href: '/penalties' },
-  { id: 'history', label: 'Historial de Salidas', icon: 'history', href: '/history' },
 ];
 
 const adminMenuItems = [

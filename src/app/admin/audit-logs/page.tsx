@@ -347,6 +347,9 @@ export default function AuditLogsPage() {
             </div>
           ) : (
             <>
+              <div className={styles.tableHelper}>
+                Desliza horizontalmente para ver más columnas →
+              </div>
               <table className={styles.table}>
                 <thead>
                   <tr>
