@@ -22,7 +22,8 @@ import {
   User,
   Info
 } from 'lucide-react';
-import styles from './AuditLogs.module.css';
+import styles from '../AdminList.module.css';
+import auditStyles from './AuditLogs.module.css';
 
 interface SessionData {
   token: string;
@@ -190,10 +191,10 @@ export default function AuditLogsPage() {
   // Obtener Badge CSS Class
   const getBadgeClass = (action: string) => {
     switch (action.toUpperCase()) {
-      case 'CREATE': return styles.badgeCreate;
-      case 'UPDATE': return styles.badgeUpdate;
-      case 'DELETE': return styles.badgeDelete;
-      default: return styles.badgeDefault;
+      case 'CREATE': return auditStyles.badgeCreate;
+      case 'UPDATE': return auditStyles.badgeUpdate;
+      case 'DELETE': return auditStyles.badgeDelete;
+      default: return auditStyles.badgeDefault;
     }
   };
 
@@ -219,10 +220,10 @@ export default function AuditLogsPage() {
     return (
       <DashboardLayout>
         <div className={styles.container}>
-          <div className={styles.emptyArea}>
-            <AlertCircle size={48} color="#ef4444" />
-            <h2>Acceso No Autorizado</h2>
-            <p>Esta sección está restringida únicamente para los administradores del sistema.</p>
+          <div className={styles.emptyState} style={{ padding: '5rem 2rem' }}>
+            <span className="material-symbols-rounded" style={{ fontSize: '48px', color: '#ef4444', marginBottom: '1rem' }}>cancel</span>
+            <h2 className={styles.emptyTitle}>Acceso No Autorizado</h2>
+            <p className={styles.emptyDesc}>Esta sección está restringida únicamente para los administradores del sistema.</p>
           </div>
         </div>
       </DashboardLayout>
@@ -235,33 +236,26 @@ export default function AuditLogsPage() {
         
         {/* Cabecera Premium */}
         <div className={styles.header}>
-          <div className={styles.titleArea}>
-            <h1 className={styles.title}>
-              <Server size={28} color="#6366f1" />
-              Bitácora de Auditoría
-            </h1>
-            <p className={styles.subtitle}>
-              Monitoreo y auditoría de todas las operaciones realizadas en la plataforma en tiempo real.
-            </p>
+          <div className={styles.titleSection}>
+            <h2>Bitácora de Auditoría</h2>
+            <p>Monitoreo y auditoría de todas las operaciones realizadas en la plataforma en tiempo real.</p>
           </div>
-          <div>
-            <button className={styles.clearButton} onClick={loadAuditLogs} disabled={isLoading}>
-              <RefreshCw size={16} className={isLoading ? styles.loadingSpinner : ''} />
-              Refrescar
-            </button>
-          </div>
+          <button className={styles.addBtn} onClick={loadAuditLogs} disabled={isLoading}>
+            <span className={`material-symbols-rounded ${isLoading ? auditStyles.loadingSpinner : ''}`}>refresh</span>
+            Refrescar
+          </button>
         </div>
 
         {/* Panel de Filtros Modernos */}
-        <div className={styles.filtersPanel}>
-          <div className={styles.filtersGrid}>
+        <div className={styles.card} style={{ padding: '24px', marginBottom: '8px' }}>
+          <div className={auditStyles.filtersGrid}>
             
             {/* Filtro por Tenant (Cooperativa) - Solo SUPER_ADMIN */}
             {role === 'SUPER_ADMIN' && (
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Cooperativa</label>
+              <div className={auditStyles.filterGroup}>
+                <label className={auditStyles.filterLabel}>Cooperativa</label>
                 <select 
-                  className={styles.filterInput} 
+                  className={auditStyles.filterInput} 
                   value={filterTenant} 
                   onChange={(e) => { setFilterTenant(e.target.value); setPage(1); }}
                 >
@@ -274,10 +268,10 @@ export default function AuditLogsPage() {
             )}
 
             {/* Filtro por Acción */}
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Operación</label>
+            <div className={auditStyles.filterGroup}>
+              <label className={auditStyles.filterLabel}>Operación</label>
               <select 
-                className={styles.filterInput} 
+                className={auditStyles.filterInput} 
                 value={filterAction} 
                 onChange={(e) => { setFilterAction(e.target.value); setPage(1); }}
               >
@@ -288,11 +282,11 @@ export default function AuditLogsPage() {
             </div>
 
             {/* Filtro por Entidad */}
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Entidad Afectada</label>
+            <div className={auditStyles.filterGroup}>
+              <label className={auditStyles.filterLabel}>Entidad Afectada</label>
               <input 
                 type="text" 
-                className={styles.filterInput} 
+                className={auditStyles.filterInput} 
                 placeholder="Ej. VehicleEntity" 
                 value={filterEntity}
                 onChange={(e) => { setFilterEntity(e.target.value); setPage(1); }}
@@ -300,30 +294,30 @@ export default function AuditLogsPage() {
             </div>
 
             {/* Filtro por Fecha de Inicio */}
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Fecha Inicio</label>
+            <div className={auditStyles.filterGroup}>
+              <label className={auditStyles.filterLabel}>Fecha Inicio</label>
               <input 
                 type="date" 
-                className={styles.filterInput} 
+                className={auditStyles.filterInput} 
                 value={filterStartDate}
                 onChange={(e) => { setFilterStartDate(e.target.value); setPage(1); }}
               />
             </div>
 
             {/* Filtro por Fecha de Fin */}
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Fecha Fin</label>
+            <div className={auditStyles.filterGroup}>
+              <label className={auditStyles.filterLabel}>Fecha Fin</label>
               <input 
                 type="date" 
-                className={styles.filterInput} 
+                className={auditStyles.filterInput} 
                 value={filterEndDate}
                 onChange={(e) => { setFilterEndDate(e.target.value); setPage(1); }}
               />
             </div>
 
             {/* Limpiar Filtros */}
-            <div className={styles.filterGroup}>
-              <button className={styles.clearButton} onClick={handleClearFilters}>
+            <div className={auditStyles.filterGroup}>
+              <button className={auditStyles.clearButton} onClick={handleClearFilters}>
                 <Filter size={16} />
                 Limpiar Filtros
               </button>
@@ -332,24 +326,26 @@ export default function AuditLogsPage() {
           </div>
         </div>
 
-        {/* Grilla / Tabla de Datos */}
-        <div className={styles.tableContainer}>
-          {isLoading ? (
-            <div className={styles.loadingArea}>
-              <div className={styles.loadingSpinner}></div>
+        {/* Grilla / Listado de Datos */}
+        {isLoading ? (
+          <div className={styles.card} style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className={styles.loading}>
+              <div className={styles.spinner}></div>
               <p>Consultando bitácora de auditoría...</p>
             </div>
-          ) : logs.length === 0 ? (
-            <div className={styles.emptyArea}>
-              <Info size={40} color="#94a3b8" />
-              <h3>Sin registros en la bitácora</h3>
-              <p>No se encontraron registros de auditoría que coincidan con los filtros seleccionados.</p>
+          </div>
+        ) : logs.length === 0 ? (
+          <div className={styles.card} style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className={styles.emptyState}>
+              <span className="material-symbols-rounded" style={{ fontSize: '48px', color: '#94a3b8', marginBottom: '1rem' }}>info</span>
+              <h3 className={styles.emptyTitle}>Sin registros en la bitácora</h3>
+              <p className={styles.emptyDesc}>No se encontraron registros de auditoría que coincidan con los filtros seleccionados.</p>
             </div>
-          ) : (
-            <>
-              <div className={styles.tableHelper}>
-                Desliza horizontalmente para ver más columnas →
-              </div>
+          </div>
+        ) : (
+          <div className={styles.card}>
+            {/* Escritorio: Grilla de Tabla (oculta en mobile por CSS) */}
+            <div className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
                   <tr>
@@ -359,185 +355,236 @@ export default function AuditLogsPage() {
                     <th>Usuario (ID)</th>
                     <th>Dirección IP</th>
                     <th>Fecha / Hora</th>
-                    <th>Detalle</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {logs.map((log) => (
-                    <tr key={log.id} className={styles.rowLink} onClick={() => setSelectedLog(log)}>
+                    <tr key={log.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedLog(log)}>
                       <td>
-                        <span className={`${styles.badge} ${getBadgeClass(log.action)}`}>
+                        <span className={`${auditStyles.badge} ${getBadgeClass(log.action)}`}>
                           {log.action}
                         </span>
                       </td>
                       <td>
-                        <span className={styles.primaryText}>{log.entityName}</span>
+                        <span className={styles.tenantName} style={{ fontSize: '14px' }}>{log.entityName}</span>
                       </td>
                       <td>
-                        <span className={styles.secondaryText}>{log.entityId || 'N/A'}</span>
+                        <span style={{ fontWeight: 600, color: '#475569', fontSize: '13px' }}>{log.entityId || 'N/A'}</span>
                       </td>
                       <td>
-                        <div className={styles.userInfo}>
-                          <span className={styles.primaryText}>{log.userId ? 'Usuario' : 'Sistema'}</span>
-                          <span className={styles.secondaryText}>{log.userId || 'N/A'}</span>
+                        <div className={styles.tenantMeta}>
+                          <span className={styles.tenantName} style={{ fontSize: '13px' }}>{log.userId ? 'Usuario' : 'Sistema'}</span>
+                          <span className={styles.tenantId}>{log.userId || 'N/A'}</span>
                         </div>
                       </td>
                       <td>
-                        <span className={styles.secondaryText}>{log.ipAddress || '127.0.0.1'}</span>
+                        <span style={{ color: '#475569', fontSize: '13px', fontWeight: 500 }}>{log.ipAddress || '127.0.0.1'}</span>
                       </td>
                       <td>
-                        <span className={styles.primaryText}>{formatDateTime(log.createdAt)}</span>
+                        <span className={styles.dateCell} style={{ fontSize: '13px' }}>{formatDateTime(log.createdAt)}</span>
                       </td>
                       <td>
-                        <button className={styles.clearButton} style={{ height: '32px', padding: '0 0.75rem' }} onClick={(e) => { e.stopPropagation(); setSelectedLog(log); }}>
-                          <Eye size={14} />
-                          Ver
-                        </button>
+                        <div className={styles.actions}>
+                          <button
+                            className={styles.actionBtn}
+                            onClick={(e) => { e.stopPropagation(); setSelectedLog(log); }}
+                            title="Ver detalle comparativo"
+                          >
+                            <span className="material-symbols-rounded">visibility</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
 
-              {/* Paginación */}
-              <div className={styles.pagination}>
-                <div className={styles.pageInfo}>
-                  Mostrando logs de auditoría <strong>{(page - 1) * limit + 1}</strong> al <strong>{Math.min(page * limit, totalItems)}</strong> de un total de <strong>{totalItems}</strong> registros
-                </div>
-                <div className={styles.paginationButtons}>
-                  <button 
-                    className={styles.pageButton} 
-                    onClick={() => handlePageChange(page - 1)} 
-                    disabled={page === 1}
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum = page;
-                    if (page <= 3) {
-                      pageNum = i + 1;
-                    } else if (page >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = page - 2 + i;
-                    }
-                    
-                    if (pageNum <= 0 || pageNum > totalPages) return null;
-
-                    return (
-                      <button 
-                        key={pageNum} 
-                        className={`${styles.pageButton} ${page === pageNum ? styles.pageButtonActive : ''}`}
-                        onClick={() => handlePageChange(pageNum)}
+            {/* Móvil: Grid de Tarjetas (ocultas en escritorio por CSS) */}
+            <div className={styles.mobileList}>
+              {logs.map((log) => (
+                <div key={log.id} className={styles.mobileCard} onClick={() => setSelectedLog(log)}>
+                  <div className={styles.cardMainInfo}>
+                    <div className={styles.cardLeft}>
+                      <div className={styles.avatarBox} style={{ background: '#eff6ff', color: '#2563eb', border: '1.5px solid #bfdbfe' }}>
+                        <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>history</span>
+                      </div>
+                      <div className={styles.cardMeta}>
+                        <h4 className={styles.mobileDriverName} style={{ fontSize: '14px', fontWeight: 700 }}>{log.entityName}</h4>
+                        <span className={styles.mobileDriverInfo} style={{ fontSize: '11px' }}>
+                          Reg ID: {log.entityId || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.cardRight}>
+                      <span className={`${auditStyles.badge} ${getBadgeClass(log.action)}`} style={{ fontSize: '10px', padding: '4px 10px' }}>
+                        {log.action}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.cardBottomRow}>
+                    <div className={styles.cardTags}>
+                      <span className={styles.mobileTag}>
+                        IP: {log.ipAddress || '127.0.0.1'}
+                      </span>
+                      <span className={styles.mobileTag}>
+                        {formatDateTime(log.createdAt)}
+                      </span>
+                    </div>
+                    <div className={styles.mobileActions}>
+                      <button
+                        className={styles.actionBtn}
+                        onClick={(e) => { e.stopPropagation(); setSelectedLog(log); }}
+                        title="Ver detalle comparativo"
+                        style={{ width: '32px', height: '32px' }}
                       >
-                        {pageNum}
+                        <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>visibility</span>
                       </button>
-                    );
-                  })}
-
-                  <button 
-                    className={styles.pageButton} 
-                    onClick={() => handlePageChange(page + 1)} 
-                    disabled={page === totalPages}
-                  >
-                    <ChevronRight size={16} />
-                  </button>
+                    </div>
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Footer paginación */}
+            <div className={styles.footer} style={{ borderTop: '1px solid #f1f5f9' }}>
+              <span className={styles.resultsCount}>
+                Mostrando logs <strong>{(page - 1) * limit + 1}</strong> al <strong>{Math.min(page * limit, totalItems)}</strong> de <strong>{totalItems}</strong> registros
+              </span>
+              <div className={styles.pagination}>
+                <button 
+                  className={styles.pageBtn} 
+                  onClick={() => handlePageChange(page - 1)} 
+                  disabled={page === 1}
+                >
+                  <span className="material-symbols-rounded">chevron_left</span>
+                </button>
+                
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum = page;
+                  if (page <= 3) {
+                    pageNum = i + 1;
+                  } else if (page >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+                  
+                  if (pageNum <= 0 || pageNum > totalPages) return null;
+
+                  return (
+                    <button 
+                      key={pageNum} 
+                      className={`${styles.pageBtn} ${page === pageNum ? styles.pageActive : ''}`}
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button 
+                  className={styles.pageBtn} 
+                  onClick={() => handlePageChange(page + 1)} 
+                  disabled={page === totalPages}
+                >
+                  <span className="material-symbols-rounded">chevron_right</span>
+                </button>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal Comparativo JSON Premium */}
         {selectedLog && (
-          <div className={styles.modalOverlay} onClick={() => setSelectedLog(null)}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={auditStyles.modalOverlay} onClick={() => setSelectedLog(null)}>
+            <div className={auditStyles.modalContent} onClick={(e) => e.stopPropagation()}>
               
-              <div className={styles.modalHeader}>
-                <h2 className={styles.modalTitle}>
+              <div className={auditStyles.modalHeader}>
+                <h2 className={auditStyles.modalTitle}>
                   <Activity size={20} color="#6366f1" />
                   Detalle de Operación: {selectedLog.action}
                 </h2>
-                <button className={styles.closeButton} onClick={() => setSelectedLog(null)}>
+                <button className={auditStyles.closeButton} onClick={() => setSelectedLog(null)}>
                   <X size={18} />
                 </button>
               </div>
 
-              <div className={styles.modalBody}>
+              <div className={auditStyles.modalBody}>
                 
                 {/* Tabla de Metadatos */}
-                <div className={styles.metaGrid}>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>ID del Log</span>
-                    <span className={styles.metaValue}>{selectedLog.id}</span>
+                <div className={auditStyles.metaGrid}>
+                  <div className={auditStyles.metaItem}>
+                    <span className={auditStyles.metaLabel}>ID del Log</span>
+                    <span className={auditStyles.metaValue}>{selectedLog.id}</span>
                   </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Entidad Afectada</span>
-                    <span className={styles.metaValue}>{selectedLog.entityName}</span>
+                  <div className={auditStyles.metaItem}>
+                    <span className={auditStyles.metaLabel}>Entidad Afectada</span>
+                    <span className={auditStyles.metaValue}>{selectedLog.entityName}</span>
                   </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>ID del Registro</span>
-                    <span className={styles.metaValue}>{selectedLog.entityId || 'N/A'}</span>
+                  <div className={auditStyles.metaItem}>
+                    <span className={auditStyles.metaLabel}>ID del Registro</span>
+                    <span className={auditStyles.metaValue}>{selectedLog.entityId || 'N/A'}</span>
                   </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Ejecutado Por</span>
-                    <span className={styles.metaValue}>
+                  <div className={auditStyles.metaItem}>
+                    <span className={auditStyles.metaLabel}>Ejecutado Por</span>
+                    <span className={auditStyles.metaValue}>
                       <User size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
                       {selectedLog.userId ? `Usuario (${selectedLog.userId})` : 'Sistema / Webhook'}
                     </span>
                   </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Origen (IP)</span>
-                    <span className={styles.metaValue}>{selectedLog.ipAddress || '127.0.0.1'}</span>
+                  <div className={auditStyles.metaItem}>
+                    <span className={auditStyles.metaLabel}>Origen (IP)</span>
+                    <span className={auditStyles.metaValue}>{selectedLog.ipAddress || '127.0.0.1'}</span>
                   </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Fecha y Hora</span>
-                    <span className={styles.metaValue}>{formatDateTime(selectedLog.createdAt)}</span>
+                  <div className={auditStyles.metaItem}>
+                    <span className={auditStyles.metaLabel}>Fecha y Hora</span>
+                    <span className={auditStyles.metaValue}>{formatDateTime(selectedLog.createdAt)}</span>
                   </div>
                 </div>
 
-                <div className={styles.metaItem} style={{ backgroundColor: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <span className={styles.metaLabel}>Navegador / User Agent</span>
-                  <span className={styles.metaValue} style={{ fontSize: '0.8rem', wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                <div className={auditStyles.metaItem} style={{ backgroundColor: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span className={auditStyles.metaLabel}>Navegador / User Agent</span>
+                  <span className={auditStyles.metaValue} style={{ fontSize: '0.8rem', wordBreak: 'break-all', fontFamily: 'monospace' }}>
                     {selectedLog.userAgent || 'No especificado'}
                   </span>
                 </div>
 
                 {/* Comparador de JSON en Paralelo */}
-                <div className={styles.diffContainer}>
+                <div className={auditStyles.diffContainer}>
                   
                   {/* Columna Izquierda: Old Values */}
-                  <div className={styles.diffColumn}>
-                    <div className={styles.diffHeader}>
-                      <span className={`${styles.diffTitle} ${styles.diffTitleOld}`}>
+                  <div className={auditStyles.diffColumn}>
+                    <div className={auditStyles.diffHeader}>
+                      <span className={`${auditStyles.diffTitle} ${auditStyles.diffTitleOld}`}>
                         Valores Anteriores (Antes)
                       </span>
                     </div>
                     {selectedLog.action.toUpperCase() === 'CREATE' ? (
-                      <div className={`${styles.diffBox} ${styles.diffBoxEmpty}`}>
+                      <div className={`${auditStyles.diffBox} ${auditStyles.diffBoxEmpty}`}>
                         Registro Nuevo (Sin valores previos)
                       </div>
                     ) : (
-                      <pre className={`${styles.diffBox} ${styles.diffBoxOld}`}>
+                      <pre className={`${auditStyles.diffBox} ${auditStyles.diffBoxOld}`}>
                         {formatJson(selectedLog.oldValues, 'Sin datos previos registrados')}
                       </pre>
                     )}
                   </div>
 
                   {/* Columna Derecha: New Values */}
-                  <div className={styles.diffColumn}>
-                    <div className={styles.diffHeader}>
-                      <span className={`${styles.diffTitle} ${styles.diffTitleNew}`}>
+                  <div className={auditStyles.diffColumn}>
+                    <div className={auditStyles.diffHeader}>
+                      <span className={`${auditStyles.diffTitle} ${auditStyles.diffTitleNew}`}>
                         Valores Nuevos (Después)
                       </span>
                     </div>
                     {selectedLog.action.toUpperCase() === 'DELETE' ? (
-                      <div className={`${styles.diffBox} ${styles.diffBoxEmpty}`}>
+                      <div className={`${auditStyles.diffBox} ${auditStyles.diffBoxEmpty}`}>
                         Registro Eliminado (Sin valores posteriores)
                       </div>
                     ) : (
-                      <pre className={`${styles.diffBox} ${styles.diffBoxNew}`}>
+                      <pre className={`${auditStyles.diffBox} ${auditStyles.diffBoxNew}`}>
                         {formatJson(selectedLog.newValues, 'Sin datos posteriores registrados')}
                       </pre>
                     )}
