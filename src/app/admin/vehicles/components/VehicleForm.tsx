@@ -212,7 +212,9 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
               />
             </div>
             <div className={styles.field}>
-              <label>Identificador (IMEI / ID App)</label>
+              <label>
+                Identificador (IMEI / ID App) {formData.status === VehicleStatus.OPERATIVO && <span style={{ color: '#ef4444' }}>*</span>}
+              </label>
               <input 
                 type="text" 
                 name="uniqueId" 
@@ -220,6 +222,7 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
                 placeholder="Ej. 864455001122334" 
                 value={formData.uniqueId}
                 onChange={handleChange}
+                required={formData.status === VehicleStatus.OPERATIVO}
               />
             </div>
 
