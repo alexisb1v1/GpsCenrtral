@@ -48,6 +48,10 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
     soat: '',
     revision: '',
   });
+  const [originalDocDates, setOriginalDocDates] = useState({
+    soat: '',
+    revision: '',
+  });
 
   useEffect(() => {
     if (isVectura) {
@@ -72,10 +76,12 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
       (docs) => {
         const soatDoc = docs.find(d => d.documentType === 'SOAT');
         const revDoc = docs.find(d => d.documentType === 'REVISION_TECNICA');
-        setDocDates({
+        const dates = {
           soat: soatDoc?.expirationDate?.split('T')[0] || '',
           revision: revDoc?.expirationDate?.split('T')[0] || '',
-        });
+        };
+        setDocDates(dates);
+        setOriginalDocDates(dates);
       },
       () => {}
     );
@@ -113,8 +119,8 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
 
       await result.match(
         async (savedVehicle) => {
-          // Guardar Documentos
-          if (docDates.soat) {
+          // Guardar Documentos solo si cambiaron
+          if (docDates.soat && docDates.soat !== originalDocDates.soat) {
             await createVehicleDocumentUseCase.execute({
               vehicleId: savedVehicle.id,
               documentType: 'SOAT',
@@ -123,7 +129,7 @@ export default function VehicleForm({ vehicle, isEdit }: VehicleFormProps) {
               notifyExpiration: true
             });
           }
-          if (docDates.revision) {
+          if (docDates.revision && docDates.revision !== originalDocDates.revision) {
             await createVehicleDocumentUseCase.execute({
               vehicleId: savedVehicle.id,
               documentType: 'REVISION_TECNICA',

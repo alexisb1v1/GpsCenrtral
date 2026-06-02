@@ -61,9 +61,9 @@ export default function VehiclesPage() {
 
   const handleDelete = async (id: string, plate: string) => {
     const isConfirmed = await confirm({
-      title: "¿Eliminar Vehículo?",
-      message: `¿Estás seguro de que deseas eliminar el vehículo con placa "${plate}"? Esta acción no se puede deshacer.`,
-      confirmText: "Sí, eliminar",
+      title: "¿Dar de Baja Vehículo?",
+      message: `¿Estás seguro de que deseas dar de baja el vehículo con placa "${plate}"? Se desactivará del monitoreo satelital y se borrará su IMEI, por lo que deberá ingresarlo nuevamente para su activación si decide reactivarlo en el futuro.`,
+      confirmText: "Sí, dar de baja",
       cancelText: "Cancelar",
       type: "danger"
     });
