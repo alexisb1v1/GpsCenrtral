@@ -499,18 +499,18 @@ export default function CacheManagementPage() {
 
         {/* Modal Diagnóstico JSON en Caliente */}
         {selectedItem && (
-          <div className={styles.modalOverlay} onClick={() => setSelectedItem(null)} style={{ zIndex: 9999 }}>
-            <div className={`${styles.modalContent} ${cacheStyles.jsonModal}`} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <h2 className={styles.modalTitle}>
+          <div className={cacheStyles.modalOverlay} onClick={() => setSelectedItem(null)} style={{ zIndex: 9999 }}>
+            <div className={`${cacheStyles.modalContent} ${cacheStyles.jsonModal}`} onClick={(e) => e.stopPropagation()}>
+              <div className={cacheStyles.modalHeader}>
+                <h2 className={cacheStyles.modalTitle}>
                   <Server size={18} color="#2563eb" />
                   Estado en Memoria: {selectedItem.plate}
                 </h2>
-                <button className={styles.closeButton} onClick={() => setSelectedItem(null)}>
+                <button className={cacheStyles.closeButton} onClick={() => setSelectedItem(null)}>
                   <X size={18} />
                 </button>
               </div>
-              <div className={styles.modalBody} style={{ gap: '1rem' }}>
+              <div className={cacheStyles.modalBody}>
                 <p style={{ fontSize: '0.8125rem', color: '#64748b', margin: 0 }}>
                   A continuación se presenta el objeto JSON de estado en caliente guardado en el servidor para el identificador Traccar <strong>{selectedItem.traccarDeviceId}</strong>:
                 </p>
