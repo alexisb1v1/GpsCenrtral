@@ -40,10 +40,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, 5000);
   }, [removeToast]);
 
-  const success = (title: string, message: string) => showToast('success', title, message);
-  const error = (title: string, message: string) => showToast('error', title, message);
-  const warning = (title: string, message: string) => showToast('warning', title, message);
-  const info = (title: string, message: string) => showToast('info', title, message);
+  const success = useCallback((title: string, message: string) => showToast('success', title, message), [showToast]);
+  const error = useCallback((title: string, message: string) => showToast('error', title, message), [showToast]);
+  const warning = useCallback((title: string, message: string) => showToast('warning', title, message), [showToast]);
+  const info = useCallback((title: string, message: string) => showToast('info', title, message), [showToast]);
 
   const getIcon = (type: ToastType) => {
     switch (type) {
