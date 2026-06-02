@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Cookies from 'js-cookie';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
+import { useToast } from '@/app/shared/providers/ToastProvider';
+import { DailyTicketApiService } from '@/app/features/admin/services/daily-ticket-api.service';
 import styles from './Fleet.module.css';
 
 // Importación dinámica de GpsMap para evitar fallos de compilación Server-Side (Leaflet/DOM dependency)
@@ -24,9 +26,16 @@ interface VehiclePosition {
   lastUpdated: string;
   dailyTicketId?: string | null;
   hasActiveTicket?: boolean;
+  roundId?: string | null;
+  roundStatus?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | null;
+  hasPendingInfractions?: boolean;
+  direction?: 'IDA' | 'VUELTA' | null;
 }
 
 export default function FleetMonitoringPage() {
+  const { success: showSuccess, error: showError } = useToast();
+  const ticketApiService = useMemo(() => new DailyTicketApiService(), []);
+
   const [vehicles, setVehicles] = useState<VehiclePosition[]>([]);
   const [routes, setRoutes] = useState<any[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string>('');
@@ -267,7 +276,6 @@ export default function FleetMonitoringPage() {
       setIsConnected(false);
     });
 
-    // 4. Escuchar las ráfagas de geolocalización satelital enriquecida
     socket.on('positions', (positionsData: any[]) => {
       // Mapear los datos de posiciones recibidos del backend a la interfaz del mapa
       const formattedPositions: VehiclePosition[] = positionsData.map(pos => ({
@@ -282,6 +290,10 @@ export default function FleetMonitoringPage() {
         lastUpdated: pos.deviceTime || pos.lastUpdated || new Date().toISOString(),
         dailyTicketId: pos.dailyTicketId,
         hasActiveTicket: pos.hasActiveTicket,
+        roundId: pos.roundId || null,
+        roundStatus: pos.roundStatus || null,
+        hasPendingInfractions: pos.hasPendingInfractions || false,
+        direction: pos.direction || null,
       }));
 
       setVehicles(prevVehicles => {
@@ -292,6 +304,51 @@ export default function FleetMonitoringPage() {
         return Array.from(updatedMap.values());
       });
     });
+  };
+
+  const handleStartRound = async (roundId: string) => {
+    try {
+      const res = await ticketApiService.startRound(roundId);
+      if (res.success) {
+        showSuccess('Ruta iniciada', 'La unidad ha salido de la terminal con éxito.');
+      } else {
+        showError('Error al iniciar ruta', res.errorMessage || 'No se pudo iniciar el recorrido.');
+      }
+    } catch (err: any) {
+      showError('Error de red', 'No se pudo comunicar con el servidor.');
+    }
+  };
+
+  const handleCompleteRound = async (roundId: string) => {
+    if (!confirm('¿Estás seguro de completar este viaje de forma manual? Usa esto solo si el GPS está fallando.')) {
+      return;
+    }
+    try {
+      const res = await ticketApiService.completeRound(roundId);
+      if (res.success) {
+        showSuccess('Ruta completada', 'El viaje ha sido cerrado manualmente con éxito.');
+      } else {
+        showError('Error al completar ruta', res.errorMessage || 'No se pudo completar el recorrido.');
+      }
+    } catch (err: any) {
+      showError('Error de red', 'No se pudo comunicar con el servidor.');
+    }
+  };
+
+  const handleCloseWorkday = async (ticketId: string) => {
+    if (!confirm('¿Estás seguro de finalizar la jornada laboral de este conductor? Esto completará su viaje y retirará al vehículo de monitoreo.')) {
+      return;
+    }
+    try {
+      const res = await ticketApiService.closeWorkday(ticketId);
+      if (res.success) {
+        showSuccess('Jornada finalizada', 'El ticket diario ha sido cerrado y el vehículo desactivado.');
+      } else {
+        showError('Error al finalizar jornada', res.errorMessage || 'No se pudo cerrar la jornada laboral.');
+      }
+    } catch (err: any) {
+      showError('Error de red', 'No se pudo comunicar con el servidor.');
+    }
   };
 
   // Filtrado local e interactivo de vehículos en tiempo real
@@ -434,32 +491,191 @@ export default function FleetMonitoringPage() {
                       key={vehicle.id}
                       className={`${styles.vehicleCard} ${cardActive ? styles.vehicleCardActive : ''}`}
                       onClick={() => handleCardClick(vehicle.id)}
+                      style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '12px' }}
                     >
-                      <div className={styles.vehicleInfo}>
-                        {/* Círculo indicador de movimiento */}
-                        <div className={styles.iconCircle} style={{ backgroundColor: bgVeh }}>
-                          <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
-                            directions_bus
-                          </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                        <div className={styles.vehicleInfo}>
+                          {/* Círculo indicador de movimiento */}
+                          <div className={styles.iconCircle} style={{ backgroundColor: bgVeh }}>
+                            <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
+                              directions_bus
+                            </span>
+                          </div>
+                          <div className={styles.vehicleText}>
+                            <span className={styles.plateText}>{vehicle.plate}</span>
+                            <span className={styles.driverText}>Chofer: {vehicle.driverName}</span>
+                            <span className={styles.speedText}>Velocidad: {vehicle.speed} km/h</span>
+                          </div>
                         </div>
-                        <div className={styles.vehicleText}>
-                          <span className={styles.plateText}>{vehicle.plate}</span>
-                          <span className={styles.driverText}>Chofer: {vehicle.driverName}</span>
-                          <span className={styles.speedText}>Velocidad: {vehicle.speed} km/h</span>
+
+                        <div className={styles.statusBadges} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                          <span className={`${styles.ticketBadge} ${vehicle.hasActiveTicket ? styles.ticketPaid : styles.ticketPending}`}>
+                            {vehicle.hasActiveTicket ? 'Pagado' : 'Pendiente'}
+                          </span>
+                          
+                          {vehicle.hasActiveTicket && vehicle.roundStatus && (
+                            <span 
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                padding: '3px 8px',
+                                borderRadius: '12px',
+                                textTransform: 'uppercase',
+                                backgroundColor: vehicle.roundStatus === 'PENDING' ? '#eff6ff' : '#faf5ff',
+                                color: vehicle.roundStatus === 'PENDING' ? '#2563eb' : '#7c3aed',
+                                border: `1px solid ${vehicle.roundStatus === 'PENDING' ? '#bfdbfe' : '#e9d5ff'}`
+                              }}
+                            >
+                              {vehicle.roundStatus === 'PENDING' ? 'Espera' : 'En Ruta'} - {vehicle.direction}
+                            </span>
+                          )}
+
+                          {vehicle.hasPendingInfractions && (
+                            <span 
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '9px',
+                                color: '#ef4444',
+                                fontWeight: 700,
+                                backgroundColor: '#fef2f2',
+                                padding: '2px 6px',
+                                borderRadius: '6px',
+                                border: '1px solid #fee2e2'
+                              }}
+                            >
+                              <span className="material-symbols-rounded" style={{ fontSize: '10px' }}>warning</span>
+                              MULTA
+                            </span>
+                          )}
+
+                          {vehicle.isActive && (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#10b981', fontWeight: 600 }}>
+                              <span className={styles.activeStatusIndicator} style={{ backgroundColor: '#10b981' }} />
+                              Señal GPS
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      <div className={styles.statusBadges}>
-                        <span className={`${styles.ticketBadge} ${vehicle.hasActiveTicket ? styles.ticketPaid : styles.ticketPending}`}>
-                          {vehicle.hasActiveTicket ? 'Pagado' : 'Pendiente'}
-                        </span>
-                        {vehicle.isActive && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#10b981', fontWeight: 600 }}>
-                            <span className={styles.activeStatusIndicator} style={{ backgroundColor: '#10b981' }} />
-                            En ruta
-                          </span>
-                        )}
-                      </div>
+                      {/* Panel de Operaciones en Caliente (Solo visible si la tarjeta está seleccionada/activa) */}
+                      {cardActive && vehicle.hasActiveTicket && (
+                        <div 
+                          className={styles.actionPanel} 
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            borderTop: '1px solid #f1f5f9',
+                            paddingTop: '12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            width: '100%'
+                          }}
+                        >
+                          {vehicle.roundStatus === 'PENDING' && (
+                            <div style={{ width: '100%' }}>
+                              {vehicle.hasPendingInfractions ? (
+                                <div 
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    backgroundColor: '#fff5f5',
+                                    border: '1px solid #fed7d7',
+                                    color: '#c53030',
+                                    padding: '8px 12px',
+                                    borderRadius: '8px',
+                                    fontSize: '11px',
+                                    fontWeight: 600
+                                  }}
+                                >
+                                  <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>block</span>
+                                  Despacho bloqueado por multas pendientes.
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => vehicle.roundId && handleStartRound(vehicle.roundId)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    width: '100%',
+                                    backgroundColor: '#2563eb',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>rocket_launch</span>
+                                  Despachar / Iniciar Ruta
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {vehicle.roundStatus === 'IN_PROGRESS' && (
+                            <button
+                              type="button"
+                              onClick={() => vehicle.roundId && handleCompleteRound(vehicle.roundId)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                width: '100%',
+                                backgroundColor: '#f59e0b',
+                                color: 'white',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 4px rgba(245, 158, 11, 0.2)',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>sports_score</span>
+                              Completar Ruta (Manual)
+                            </button>
+                          )}
+
+                          {vehicle.dailyTicketId && (
+                            <button
+                              type="button"
+                              onClick={() => vehicle.dailyTicketId && handleCloseWorkday(vehicle.dailyTicketId)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                width: '100%',
+                                backgroundColor: '#64748b',
+                                color: 'white',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>lock</span>
+                              Finalizar Jornada Laboral
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })
