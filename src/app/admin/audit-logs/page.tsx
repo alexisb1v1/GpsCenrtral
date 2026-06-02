@@ -498,20 +498,20 @@ export default function AuditLogsPage() {
 
         {/* Modal Comparativo JSON Premium */}
         {selectedLog && (
-          <div className={auditStyles.modalOverlay} onClick={() => setSelectedLog(null)}>
-            <div className={auditStyles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalOverlay} onClick={() => setSelectedLog(null)}>
+            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
               
-              <div className={auditStyles.modalHeader}>
-                <h2 className={auditStyles.modalTitle}>
+              <div className={styles.modalHeader}>
+                <h2 className={styles.modalTitle}>
                   <Activity size={20} color="#6366f1" />
                   Detalle de Operación: {selectedLog.action}
                 </h2>
-                <button className={auditStyles.closeButton} onClick={() => setSelectedLog(null)}>
+                <button className={styles.closeButton} onClick={() => setSelectedLog(null)}>
                   <X size={18} />
                 </button>
               </div>
 
-              <div className={auditStyles.modalBody}>
+              <div className={styles.modalBody}>
                 
                 {/* Tabla de Metadatos */}
                 <div className={auditStyles.metaGrid}>
