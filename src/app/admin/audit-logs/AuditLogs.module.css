@@ -250,3 +250,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Clase para hacer el modal más ancho en auditoría */
+.auditModal {
+  max-width: 950px !important;
+}

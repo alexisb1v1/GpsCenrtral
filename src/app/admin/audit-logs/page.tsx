@@ -499,7 +499,7 @@ export default function AuditLogsPage() {
         {/* Modal Comparativo JSON Premium */}
         {selectedLog && (
           <div className={styles.modalOverlay} onClick={() => setSelectedLog(null)}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={`${styles.modalContent} ${auditStyles.auditModal}`} onClick={(e) => e.stopPropagation()}>
               
               <div className={styles.modalHeader}>
                 <h2 className={styles.modalTitle}>
