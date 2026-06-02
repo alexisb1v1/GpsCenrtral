@@ -23,6 +23,7 @@ const adminMenuItems = [
   { id: 'routes', label: 'Rutas y Paraderos', icon: 'alt_route', href: '/admin/routes' },
   { id: 'users', label: 'Gestión de Usuarios', icon: 'group', href: '/admin/users' },
   { id: 'audit-logs', label: 'Bitácora de Auditoría', icon: 'manage_search', href: '/admin/audit-logs' },
+  { id: 'cache-management', label: 'Consola de Caché', icon: 'database', href: '/admin/cache-management' },
   { id: 'branding', label: 'Personalización', icon: 'palette', href: '/admin/branding' },
 ];
 

@@ -15,6 +15,11 @@ export class AccessControl {
       cleanPath = cleanPath.slice(0, -1);
     }
 
+    // El rol de caché de gestión es súper crítico y exclusivo para SUPER_ADMIN
+    if (cleanPath === '/admin/cache-management' || cleanPath.startsWith('/admin/cache-management/')) {
+      return role === 'SUPER_ADMIN';
+    }
+
     // El rol SUPER_ADMIN tiene acceso absoluto a todas las rutas
     if (role === 'SUPER_ADMIN') {
       return true;
