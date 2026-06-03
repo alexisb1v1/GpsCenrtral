@@ -252,13 +252,13 @@ export default function DriverPage() {
     });
   };
 
-  // 4. Buscar el vehículo asignado a este chofer de forma reactiva por su ID de usuario único
+  // Buscar el vehículo asignado a este chofer de forma reactiva por su ID de usuario único
   const myVehicle = vehicles.find(
     v => v.driverId === driverId
   );
 
-  // Si no se encuentra un vehículo asignado al chofer en tiempo real, podemos mostrar el primero de la lista para testing/demo
-  const activeVehicle = myVehicle || (vehicles.length > 0 ? vehicles[0] : null);
+  // En producción, si no tiene asignación, no se debe forzar la visualización de otro vehículo
+  const activeVehicle = myVehicle;
 
   // Obtener la ruta seleccionada para guiar al chofer en el mapa (definido arriba para su uso en hooks de efecto de geocercas)
   const selectedRoute = Array.isArray(routes) ? routes.find(r => r.id === selectedRouteId) : undefined;
