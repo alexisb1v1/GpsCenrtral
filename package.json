@@ -15,6 +15,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@geoman-io/leaflet-geoman-free": "^2.19.3",
+    "@turf/turf": "^7.3.5",
     "date-fns": "^4.1.0",
     "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",

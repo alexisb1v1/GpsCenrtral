@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 import Cookies from 'js-cookie';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
 import { DailyTicketApiService } from '@/app/features/admin/services/daily-ticket-api.service';
+import { useDriverLocation } from './hooks/useDriverLocation';
+import * as turf from '@turf/turf';
 import styles from './Driver.module.css';
 
 // Importación dinámica de GpsMap para evitar fallos de compilación Server-Side (Leaflet/DOM dependency)
@@ -27,6 +29,7 @@ interface VehiclePosition {
   hasActiveTicket?: boolean;
   routeId?: string | null;
   direction?: 'IDA' | 'VUELTA' | null;
+  roundId?: string | null;
 }
 
 interface ActiveNotification {
@@ -48,6 +51,8 @@ export default function DriverPage() {
   const [activeNotification, setActiveNotification] = useState<ActiveNotification | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [offlineCheckpoints, setOfflineCheckpoints] = useState<any[]>([]);
+  const [markedStopsThisRound, setMarkedStopsThisRound] = useState<string[]>([]);
   const socketRef = useRef<any>(null);
 
   // 1. Cargar datos de la sesión del chofer desde las cookies
@@ -229,6 +234,7 @@ export default function DriverPage() {
         hasActiveTicket: pos.hasActiveTicket,
         routeId: pos.routeId || null,
         direction: pos.direction || null,
+        roundId: pos.roundId || null,
       }));
 
       setVehicles(formattedPositions);
@@ -253,6 +259,34 @@ export default function DriverPage() {
 
   // Si no se encuentra un vehículo asignado al chofer en tiempo real, podemos mostrar el primero de la lista para testing/demo
   const activeVehicle = myVehicle || (vehicles.length > 0 ? vehicles[0] : null);
+
+  // Obtener la ruta seleccionada para guiar al chofer en el mapa (definido arriba para su uso en hooks de efecto de geocercas)
+  const selectedRoute = Array.isArray(routes) ? routes.find(r => r.id === selectedRouteId) : undefined;
+  const routeOutboundCoords = selectedRoute?.outboundCoordinates || [];
+  const routeInboundCoords = selectedRoute?.inboundCoordinates || [];
+  const routeStops = selectedRoute?.stops?.map((stop: any) => {
+    let lat = 0;
+    let lng = 0;
+    let polygonCoordinates = undefined;
+
+    if (stop.coordinates && stop.coordinates.length > 0) {
+      polygonCoordinates = stop.coordinates;
+      const sumLat = stop.coordinates.reduce((sum: number, c: any) => sum + c.lat, 0);
+      const sumLng = stop.coordinates.reduce((sum: number, c: any) => sum + c.lng, 0);
+      lat = sumLat / stop.coordinates.length;
+      lng = sumLng / stop.coordinates.length;
+    }
+
+    return {
+      geofenceId: String(stop.traccarGeofenceId),
+      name: stop.name || `Paradero ${stop.stopOrder}`,
+      lat,
+      lng,
+      stopOrder: stop.stopOrder,
+      minutesFromStart: stop.minutesFromStart || 0,
+      polygonCoordinates,
+    };
+  }) || [];
 
   // Sincronizar automáticamente la ruta seleccionada con la asignada en el ticket de salida en caliente
   useEffect(() => {
@@ -320,36 +354,173 @@ export default function DriverPage() {
     }
   };
 
-  // Filtrar vehículos para pasar al mapa: en modo chofer, solo mostramos SU vehículo asignado
-  const mapVehicles = activeVehicle ? [activeVehicle] : [];
+  // 5. Cargar buffer offline desde localStorage al montar
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('gps_central_offline_checkpoints');
+      if (stored) {
+        try {
+          setOfflineCheckpoints(JSON.parse(stored));
+        } catch (e) {
+          console.error('[Chofer Offline] Error al parsear buffer offline', e);
+        }
+      }
+    }
+  }, []);
 
-  // Obtener la ruta seleccionada para guiar al chofer en el mapa
-  const selectedRoute = Array.isArray(routes) ? routes.find(r => r.id === selectedRouteId) : undefined;
-  const routeOutboundCoords = selectedRoute?.outboundCoordinates || [];
-  const routeInboundCoords = selectedRoute?.inboundCoordinates || [];
-  const routeStops = selectedRoute?.stops?.map((stop: any) => {
-    let lat = 0;
-    let lng = 0;
-    let polygonCoordinates = undefined;
+  // Limpiar paraderos marcados localmente si cambia la vuelta (roundId)
+  useEffect(() => {
+    setMarkedStopsThisRound([]);
+  }, [activeVehicle?.roundId]);
 
-    if (stop.coordinates && stop.coordinates.length > 0) {
-      polygonCoordinates = stop.coordinates;
-      const sumLat = stop.coordinates.reduce((sum: number, c: any) => sum + c.lat, 0);
-      const sumLng = stop.coordinates.reduce((sum: number, c: any) => sum + c.lng, 0);
-      lat = sumLat / stop.coordinates.length;
-      lng = sumLng / stop.coordinates.length;
+  // Hook de localización de contingencia híbrido
+  const socketCoords = activeVehicle ? { lat: activeVehicle.lat, lng: activeVehicle.lng } : null;
+  const socketSpeed = activeVehicle ? activeVehicle.speed : 0;
+
+  const { coords: activeCoords, source: locationSource, speed: activeSpeed } = useDriverLocation(
+    socketCoords,
+    socketSpeed,
+    isConnected
+  );
+
+  // 6. Cálculo geométrico local de geocercas (Turf.js) en modo offline
+  useEffect(() => {
+    if (
+      locationSource !== 'gps' ||
+      !activeCoords ||
+      !activeVehicle ||
+      !activeVehicle.dailyTicketId ||
+      !activeVehicle.roundId ||
+      !Array.isArray(routeStops) ||
+      routeStops.length === 0
+    ) {
+      return;
     }
 
-    return {
-      geofenceId: String(stop.traccarGeofenceId),
-      name: stop.name || `Paradero ${stop.stopOrder}`,
-      lat,
-      lng,
-      stopOrder: stop.stopOrder,
-      minutesFromStart: stop.minutesFromStart || 0,
-      polygonCoordinates,
+    for (const stop of routeStops) {
+      if (markedStopsThisRound.includes(stop.geofenceId)) continue;
+
+      let isInside = false;
+
+      try {
+        if (stop.polygonCoordinates && stop.polygonCoordinates.length >= 3) {
+          // Turf requiere un array de coordenadas [lng, lat]
+          const turfCoords = stop.polygonCoordinates.map((c: any) => [c.lng, c.lat]);
+          
+          // Asegurar que el polígono esté cerrado para Turf
+          if (
+            turfCoords[0][0] !== turfCoords[turfCoords.length - 1][0] ||
+            turfCoords[0][1] !== turfCoords[turfCoords.length - 1][1]
+          ) {
+            turfCoords.push(turfCoords[0]);
+          }
+
+          const poly = turf.polygon([turfCoords]);
+          const pt = turf.point([activeCoords.lng, activeCoords.lat]);
+          isInside = turf.booleanPointInPolygon(pt, poly);
+        } else if (stop.lat && stop.lng) {
+          // Geocerca circular de contingencia
+          const from = turf.point([activeCoords.lng, activeCoords.lat]);
+          const to = turf.point([stop.lng, stop.lat]);
+          const dist = turf.distance(from, to, { units: 'meters' });
+          isInside = dist <= 5; // 5 metros de radio por defecto
+        }
+      } catch (err) {
+        console.error('[Chofer Offline] Error al procesar geocerca local para:', stop.name, err);
+      }
+
+      if (isInside) {
+        // Marcado local exitoso
+        playAlertSound('CHECKPOINT_MARKED');
+        setMarkedStopsThisRound(prev => [...prev, stop.geofenceId]);
+
+        const newOfflineEvent = {
+          dailyTicketId: activeVehicle.dailyTicketId,
+          roundId: activeVehicle.roundId,
+          traccarGeofenceId: parseInt(stop.geofenceId, 10),
+          reachedAt: new Date().toISOString(),
+          latitude: activeCoords.lat,
+          longitude: activeCoords.lng,
+        };
+
+        const currentOffline = [...offlineCheckpoints, newOfflineEvent];
+        setOfflineCheckpoints(currentOffline);
+        localStorage.setItem('gps_central_offline_checkpoints', JSON.stringify(currentOffline));
+
+        setActiveNotification({
+          id: String(Date.now()),
+          type: 'CHECKPOINT_MARKED',
+          title: 'Control Marcado (Local)',
+          message: `Has ingresado a: ${stop.name} (Modo Offline)`,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+  }, [activeCoords, locationSource, routeStops, activeVehicle, markedStopsThisRound, offlineCheckpoints]);
+
+  // 7. Sync Engine: Sincronizar paraderos locales al recuperar red
+  useEffect(() => {
+    if (!isConnected || offlineCheckpoints.length === 0) return;
+
+    const syncOfflineData = async () => {
+      const sessionStr = Cookies.get('gps_central_session');
+      if (!sessionStr) return;
+
+      let token = '';
+      try {
+        const session = JSON.parse(sessionStr);
+        token = session.token || '';
+      } catch (e) {
+        console.error('[Chofer Sync] Error al parsear sesión', e);
+        return;
+      }
+
+      if (!token) return;
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+
+      try {
+        const response = await fetch(`${apiUrl}/daily-tickets/sync-offline-checkpoints`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ checkpoints: offlineCheckpoints }),
+        });
+
+        if (response.ok) {
+          setOfflineCheckpoints([]);
+          localStorage.removeItem('gps_central_offline_checkpoints');
+
+          setActiveNotification({
+            id: String(Date.now()),
+            type: 'SYSTEM',
+            title: 'Sincronización Exitosa',
+            message: 'Tus registros de paradero offline se sincronizaron con el servidor.',
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          console.error('[Chofer Sync] Fallo al sincronizar en backend:', response.statusText);
+        }
+      } catch (err) {
+        console.error('[Chofer Sync] Error de red:', err);
+      }
     };
-  }) || [];
+
+    syncOfflineData();
+  }, [isConnected, offlineCheckpoints]);
+
+  // Filtrar vehículos para pasar al mapa: en modo chofer, solo mostramos SU vehículo asignado (adaptado con GPS local si está offline)
+  const mapVehicles = activeVehicle && activeCoords ? [{
+    ...activeVehicle,
+    lat: activeCoords.lat,
+    lng: activeCoords.lng,
+    speed: activeSpeed,
+    isActive: activeSpeed > 0
+  }] : [];
+
+
 
   return (
     <DashboardLayout noPadding={true} hideBottomNav={true}>
@@ -388,6 +559,16 @@ export default function DriverPage() {
           <span className={`${styles.statusDot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`} />
           {isConnected ? 'Sistema conectado en tiempo real' : 'Reconectando con el servidor...'}
         </div>
+
+        {/* Banner de Estado Offline / Contingencia GPS */}
+        {locationSource === 'gps' && (
+          <div className={styles.offlineBanner}>
+            <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>
+              gps_off
+            </span>
+            <span>Modo offline activo: utilizando GPS local del celular</span>
+          </div>
+        )}
 
         {/* Contenedor del Mapa - Pantalla Completa Edge-to-Edge */}
         <div className={styles.mapContainer}>
@@ -461,7 +642,7 @@ export default function DriverPage() {
                       </span>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span className={styles.detailLabel}>Velocidad</span>
-                        <span className={styles.detailValue}>{activeVehicle.speed} km/h</span>
+                        <span className={styles.detailValue}>{activeSpeed} km/h</span>
                       </div>
                     </div>
 

@@ -423,5 +423,39 @@
   cursor: not-allowed;
 }
 
+/* Banner de Estado Offline / Contingencia GPS */
+.offlineBanner {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: rgba(217, 119, 6, 0.92); /* Ámbar oscuro premium */
+  border: 1px solid rgba(217, 119, 6, 0.4);
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.2);
+  backdrop-filter: blur(8px);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  pointer-events: none;
+  animation: pulseOffline 2s infinite ease-in-out;
+}
+
+@keyframes pulseOffline {
+  0%, 100% {
+    opacity: 0.95;
+    transform: translate(-50%, 0) scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translate(-50%, 0) scale(0.98);
+  }
+}
+
 
 
