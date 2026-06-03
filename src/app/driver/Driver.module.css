@@ -457,5 +457,195 @@
   }
 }
 
+/* Banner de Navegación Asistida Premium (Estilo Waze) */
+.navigationBanner {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background-color: rgba(15, 23, 42, 0.9); /* Azul grisáceo oscuro ultra premium */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  max-width: 480px;
+  margin: 0 auto;
+  animation: slideDownNav 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideDownNav {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background-color: #2563eb; /* Azul Vectura */
+  color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+  flex-shrink: 0;
+}
+
+.navInfo {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navInstruction {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.2;
+}
+
+.nextStopName {
+  color: #60a5fa; /* Azul claro brillante de gran visibilidad */
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.navDistance {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.navTelemetryContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.navSpeedBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 10px;
+  border-radius: 10px;
+  min-width: 48px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.navSpeedValue {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #3b82f6; /* Azul brillante */
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.navSpeedLabel {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* Alerta visual dinámica de exceso de velocidad */
+.speedAlerting {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  animation: pulseSpeedAlert 1s infinite ease-in-out;
+}
+
+.speedAlerting .navSpeedValue {
+  color: #ef4444 !important;
+}
+
+@keyframes pulseSpeedAlert {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+  }
+}
+
+.navEtaBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  border-radius: 10px;
+  min-width: 48px;
+  flex-shrink: 0;
+}
+
+.navEtaMinutes {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #10b981; /* Verde esmeralda */
+  line-height: 1;
+}
+
+.navEtaLabel {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* Modificar posición de toast y banners offline si el banner de navegación está activo */
+.navigationBanner ~ .notificationToast,
+.navigationBanner ~ .offlineBanner {
+  top: 102px !important;
+}
+
+@media (max-width: 480px) {
+  .navigationBanner {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+  
+  .navIcon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .nextStopName {
+    font-size: 0.85rem;
+  }
+  
+  .navigationBanner ~ .notificationToast,
+  .navigationBanner ~ .offlineBanner {
+    top: 92px !important;
+  }
+}
+
+
 
 

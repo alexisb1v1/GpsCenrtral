@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Cookies from 'js-cookie';
 import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout';
@@ -373,8 +373,10 @@ export default function DriverPage() {
     setMarkedStopsThisRound([]);
   }, [activeVehicle?.roundId]);
 
-  // Hook de localización de contingencia híbrido
-  const socketCoords = activeVehicle ? { lat: activeVehicle.lat, lng: activeVehicle.lng } : null;
+  // Hook de localización de contingencia híbrido (memorizando coordenadas para evitar re-renders infinitos)
+  const socketCoords = useMemo(() => {
+    return activeVehicle ? { lat: activeVehicle.lat, lng: activeVehicle.lng } : null;
+  }, [activeVehicle?.lat, activeVehicle?.lng]);
   const socketSpeed = activeVehicle ? activeVehicle.speed : 0;
 
   const { coords: activeCoords, source: locationSource, speed: activeSpeed } = useDriverLocation(
@@ -520,11 +522,68 @@ export default function DriverPage() {
     isActive: activeSpeed > 0
   }] : [];
 
+  // 8. Cálculos de navegación asistida en tiempo real (Turf.js)
+  const nextStop = routeStops.find((stop: any) => !markedStopsThisRound.includes(stop.geofenceId));
+  let distanceToNextStop = 0;
+  let nextStopEta = 0;
+  let etaStr = '--:--';
 
+  if (activeCoords && nextStop) {
+    try {
+      const from = turf.point([activeCoords.lng, activeCoords.lat]);
+      const to = turf.point([nextStop.lng, nextStop.lat]);
+      distanceToNextStop = turf.distance(from, to, { units: 'meters' });
+      
+      const speedKmh = activeSpeed > 10 ? activeSpeed : 25;
+      const speedMs = speedKmh / 3.6;
+      const timeSeconds = distanceToNextStop / speedMs;
+      nextStopEta = Math.ceil(timeSeconds / 60);
+
+      // Calcular ETA total de la vuelta basándose en los minutos estimados restantes
+      const lastStop = routeStops[routeStops.length - 1];
+      const remainingMinutes = lastStop ? Math.max(0, lastStop.minutesFromStart - nextStop.minutesFromStart) : 0;
+      const totalEtaMinutes = remainingMinutes + nextStopEta;
+
+      const etaTime = new Date();
+      etaTime.setMinutes(etaTime.getMinutes() + totalEtaMinutes);
+      etaStr = etaTime.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+    } catch (err) {
+      console.error('[Navegación] Error al calcular distancias con Turf.js:', err);
+    }
+  }
 
   return (
     <DashboardLayout noPadding={true} hideBottomNav={true}>
       <div className={styles.container}>
+        {/* Banner Superior de Navegación Asistida Premium (Estilo Waze) */}
+        {activeVehicle?.dailyTicketId && nextStop && (
+          <div className={styles.navigationBanner}>
+            <div className={styles.navIcon}>
+              <span className="material-symbols-rounded" style={{ fontSize: '24px', transform: 'rotate(-45deg)' }}>navigation</span>
+            </div>
+            <div className={styles.navInfo}>
+              <div className={styles.navInstruction}>
+                Avanza hacia <span className={styles.nextStopName}>{nextStop.name}</span>
+              </div>
+              <div className={styles.navDistance}>
+                {distanceToNextStop > 1000 
+                  ? `a ${(distanceToNextStop / 1000).toFixed(1)} km` 
+                  : `a ${Math.round(distanceToNextStop)} metros`}
+              </div>
+            </div>
+            <div className={styles.navTelemetryContainer}>
+              <div className={`${styles.navSpeedBadge} ${activeSpeed > 60 ? styles.speedAlerting : ''}`}>
+                <span className={styles.navSpeedValue}>{activeSpeed}</span>
+                <span className={styles.navSpeedLabel}>km/h</span>
+              </div>
+              <div className={styles.navEtaBadge}>
+                <span className={styles.navEtaMinutes}>{nextStopEta}</span>
+                <span className={styles.navEtaLabel}>min</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Toast de Notificación Premium con Glassmorphism */}
         {activeNotification && (
           <div 
@@ -646,29 +705,25 @@ export default function DriverPage() {
                       </div>
                     </div>
 
-                    {/* Detalle 3: Sentido de la marcha (Ida o Vuelta) */}
+                    {/* Detalle 3: ETA de llegada */}
                     <div className={styles.detailItem}>
-                      <span className="material-symbols-rounded" style={{ color: activeVehicle.direction === 'VUELTA' ? '#ef4444' : '#2563eb', fontSize: '18px' }}>
-                        {activeVehicle.direction === 'VUELTA' ? 'keyboard_double_arrow_left' : 'keyboard_double_arrow_right'}
+                      <span className="material-symbols-rounded" style={{ color: '#10b981', fontSize: '18px' }}>
+                        schedule
                       </span>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span className={styles.detailLabel}>Sentido de Marcha</span>
-                        <span className={`${styles.detailValue} ${activeVehicle.direction === 'VUELTA' ? styles.directionReturn : styles.directionGo}`}>
-                          {activeVehicle.direction === 'VUELTA' ? 'Retorno / Vuelta' : 'Salida / Ida'}
-                        </span>
+                        <span className={styles.detailLabel}>Llegada Estimada</span>
+                        <span className={styles.detailValue} style={{ color: '#10b981', fontWeight: 600 }}>{etaStr}</span>
                       </div>
                     </div>
 
-                    {/* Detalle 4: Ruta Asignada Estática (Al costado del Sentido de Marcha) */}
+                    {/* Detalle 4: Controles de paradero restantes */}
                     <div className={styles.detailItem}>
                       <span className="material-symbols-rounded" style={{ color: '#2563eb', fontSize: '18px' }}>
-                        route
+                        fact_check
                       </span>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span className={styles.detailLabel}>Ruta Asignada</span>
-                        <span className={styles.detailValue} style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
-                          {selectedRoute ? selectedRoute.name : 'Sin ruta activa'}
-                        </span>
+                        <span className={styles.detailLabel}>Controles Marcados</span>
+                        <span className={styles.detailValue}>{markedStopsThisRound.length} de {routeStops.length}</span>
                       </div>
                     </div>
                   </div>

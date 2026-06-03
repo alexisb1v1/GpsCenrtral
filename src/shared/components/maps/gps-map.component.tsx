@@ -101,6 +101,8 @@ export default function GpsMap({
   const alternativePolylineRef = useRef<any>(null);
   const stopMarkersRef = useRef<any[]>([]);
   const vehicleMarkersRef = useRef<Map<string, any>>(new Map());
+  const [autoFollow, setAutoFollow] = useState(true);
+  const lastPositionsRef = useRef<Map<string, { lat: number; lng: number; bearing: number }>>(new Map());
 
   // Referencias para las diferentes capas base premium
   const voyagerLayerRef = useRef<any>(null);
@@ -140,6 +142,15 @@ export default function GpsMap({
         maxZoom: 22,
       }).setView(center, zoom);
       mapRef.current = mapInstance;
+
+      if (mode === 'driver') {
+        mapInstance.on('dragstart', () => {
+          setAutoFollow(false);
+        });
+        mapInstance.on('zoomstart', () => {
+          setAutoFollow(false);
+        });
+      }
 
       // Definición de las diferentes capas base premium nativas de alta resolución (CartoDB & OSM)
       voyagerLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -313,15 +324,13 @@ export default function GpsMap({
     });
   }, [mapLoaded, routesCoordinates, mode]);
 
-  // 2. Sincronización dinámica de los datos geográficos en el mapa
+  // 2. Sincronización dinámica de los datos geográficos ESTÁTICOS (Ruta y Paraderos)
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const currentMap = mapRef.current;
 
-    const syncLayers = async () => {
-      // Si el mapa ya se destruyó o se desmontó en React, cancelamos de inmediato
+    const drawStaticLayers = async () => {
       if (!mapRef.current || !mapContainerRef.current) return;
-
       const L = await import('leaflet');
 
       // --- A. DIBUJAR RUTA (Polilínea) ---
@@ -340,10 +349,10 @@ export default function GpsMap({
         const altLatlngs = alternativeRouteCoordinates.map(c => [c.lat, c.lng]);
         const isHighlighted = activeDirection === 'VUELTA' || activeDirection === null;
         alternativePolylineRef.current = L.polyline(altLatlngs as any, {
-          color: isHighlighted ? '#ef4444' : '#94a3b8', // Rojo si está activo, Gris si está atenuado
+          color: isHighlighted ? '#ef4444' : '#94a3b8',
           weight: isHighlighted ? 6 : 4,
           opacity: isHighlighted ? 0.85 : 0.25,
-          dashArray: isHighlighted ? undefined : '5, 10', // Punteado si está atenuado como guía visual
+          dashArray: isHighlighted ? undefined : '5, 10',
           lineJoin: 'round',
         }).addTo(currentMap);
       }
@@ -352,15 +361,14 @@ export default function GpsMap({
         const latlngs = routesCoordinates.map(c => [c.lat, c.lng]);
         const isHighlighted = activeDirection === 'IDA' || activeDirection === null;
         routePolylineRef.current = L.polyline(latlngs as any, {
-          color: isHighlighted ? '#2563eb' : '#94a3b8', // Azul si está activo, Gris si está atenuado
+          color: isHighlighted ? '#2563eb' : '#94a3b8',
           weight: isHighlighted ? 6 : 4,
           opacity: isHighlighted ? 0.85 : 0.25,
-          dashArray: isHighlighted ? undefined : '5, 10', // Punteado si está atenuado
+          dashArray: isHighlighted ? undefined : '5, 10',
           lineJoin: 'round',
         }).addTo(currentMap);
 
         if (mode === 'admin') {
-          // Permitir editar el trayecto visualmente
           routePolylineRef.current.pm.enable({
             allowSelfIntersection: false,
           });
@@ -380,18 +388,17 @@ export default function GpsMap({
       stopMarkersRef.current = [];
 
       stops.forEach((stop, index) => {
-        let bgStyle = '#2563eb'; // Azul estándar
+        let bgStyle = '#2563eb';
         let borderStyle = '#1e3a8a';
         
         if (stop.stopOrder === 1) {
-          bgStyle = '#10b981'; // Verde inicio
+          bgStyle = '#10b981';
           borderStyle = '#064e3b';
         } else if (stop.stopOrder === stops.length) {
-          bgStyle = '#ef4444'; // Rojo fin
+          bgStyle = '#ef4444';
           borderStyle = '#7f1d1d';
         }
 
-        // Dibujar el polígono translúcido si existe la geometría del paradero
         if (stop.polygonCoordinates && stop.polygonCoordinates.length > 0) {
           const polygonCoords = stop.polygonCoordinates.map(c => [c.lat, c.lng]);
           const polyLayer = L.polygon(polygonCoords as any, {
@@ -404,7 +411,6 @@ export default function GpsMap({
           stopMarkersRef.current.push(polyLayer);
         }
 
-        // Marcador circular súper premium con número de paradero
         const stopIcon = L.divIcon({
           html: `
             <div style="
@@ -433,7 +439,6 @@ export default function GpsMap({
           draggable: mode === 'admin',
         }).addTo(currentMap);
 
-        // Popup con información estilizada
         marker.bindPopup(`
           <div style="font-family: 'Inter', sans-serif; padding: 4px; min-width: 140px;">
             <strong style="color: #1e293b; font-size: 13px; display: block; margin-bottom: 2px;">${stop.name || `Paradero ${stop.stopOrder}`}</strong>
@@ -443,7 +448,6 @@ export default function GpsMap({
         `);
 
         if (mode === 'admin') {
-          // Si el usuario arrastra un paradero en el mapa, actualizamos las coordenadas
           marker.on('dragend', (e: any) => {
             const { lat, lng } = e.target.getLatLng();
             const updatedStops = [...stops];
@@ -455,7 +459,6 @@ export default function GpsMap({
             onStopsChangedRef.current?.(updatedStops);
           });
 
-          // Doble click para eliminar paradero
           marker.on('dblclick', () => {
             const updatedStops = stops
               .filter((_, idx) => idx !== index)
@@ -466,56 +469,108 @@ export default function GpsMap({
 
         stopMarkersRef.current.push(marker);
       });
+    };
 
-      // --- C. DIBUJAR VEHÍCULOS EN TIEMPO REAL ---
-      vehicleMarkersRef.current.forEach(m => m.remove());
-      vehicleMarkersRef.current.clear();
+    drawStaticLayers();
+  }, [mapLoaded, routesCoordinates, alternativeRouteCoordinates, stops, activeDirection, mode]);
 
+  // 3. Sincronización dinámica de VEHÍCULOS en tiempo real (Optimizado: setLatLng y rotación)
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    const currentMap = mapRef.current;
+
+    const syncVehicles = async () => {
+      if (!mapRef.current || !mapContainerRef.current) return;
+      const L = await import('leaflet');
+
+      const activeIds = new Set(vehicles.map(v => v.id));
+
+      // A. Eliminar marcadores de vehículos que ya no están activos
+      for (const [id, marker] of vehicleMarkersRef.current.entries()) {
+        if (!activeIds.has(id)) {
+          marker.remove();
+          vehicleMarkersRef.current.delete(id);
+          lastPositionsRef.current.delete(id);
+        }
+      }
+
+      // Función helper para calcular bearing en grados
+      const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const dLon = ((lon2 - lon1) * Math.PI) / 180;
+        const lat1Rad = (lat1 * Math.PI) / 180;
+        const lat2Rad = (lat2 * Math.PI) / 180;
+        const y = Math.sin(dLon) * Math.cos(lat2Rad);
+        const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+        const brng = (Math.atan2(y, x) * 180) / Math.PI;
+        return (brng + 360) % 360;
+      };
+
+      // B. Actualizar o crear marcadores para cada vehículo
       vehicles.forEach(vehicle => {
-        const bgVeh = 'var(--success, #10b981)';
+        const existingMarker = vehicleMarkersRef.current.get(vehicle.id);
+        const lastPos = lastPositionsRef.current.get(vehicle.id);
+
+        let bearing = lastPos?.bearing || 0;
+
+        if (lastPos) {
+          const distanceMoved = Math.sqrt(
+            Math.pow(vehicle.lat - lastPos.lat, 2) + Math.pow(vehicle.lng - lastPos.lng, 2)
+          );
+          if (distanceMoved > 0.00001 && vehicle.speed > 0) {
+            bearing = calculateBearing(lastPos.lat, lastPos.lng, vehicle.lat, vehicle.lng);
+          }
+        }
+
+        lastPositionsRef.current.set(vehicle.id, { lat: vehicle.lat, lng: vehicle.lng, bearing });
+
+        const bgVeh = '#10b981';
         const opacityVeh = vehicle.isActive ? '1' : '0.65';
         const borderVeh = vehicle.isActive ? '2px solid white' : '2px dashed rgba(255,255,255,0.85)';
-        
-        const vehicleIcon = L.divIcon({
-          html: `
-            <div style="
-              background-color: ${bgVeh};
-              border: ${borderVeh};
-              opacity: ${opacityVeh};
-              color: white;
-              border-radius: 50%;
-              width: 38px;
-              height: 38px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-              position: relative;
-            ">
-              <span class="material-symbols-rounded" style="font-size: 20px; font-weight: bold;">directions_bus</span>
-              <div style="
-                position: absolute;
-                bottom: -20px;
-                background-color: rgba(15, 23, 42, 0.9);
-                color: white;
-                font-family: 'Inter', sans-serif;
-                font-weight: 700;
-                font-size: 9px;
-                padding: 1px 5px;
-                border-radius: 4px;
-                white-space: nowrap;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-              ">${vehicle.plate}</div>
-            </div>
-          `,
-          className: 'custom-vehicle-icon',
-          iconSize: [38, 38],
-          iconAnchor: [19, 19],
-        });
 
-        const marker = L.marker([vehicle.lat, vehicle.lng], {
-          icon: vehicleIcon,
-        }).addTo(currentMap);
+        // Icono de flecha de navegación para choferes, bus para administradores/controladores
+        const iconName = mode === 'driver' ? 'navigation' : 'directions_bus';
+        
+        // Ajuste de rotación para Material Icons: 'navigation' apunta al noreste (45deg), hay que restarle 45.
+        // 'directions_bus' no necesita ajuste
+        const rotationAdjustment = iconName === 'navigation' ? -45 : 0;
+
+        const vehicleIconHtml = `
+          <div style="
+            background-color: ${bgVeh};
+            border: ${borderVeh};
+            opacity: ${opacityVeh};
+            color: white;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            position: relative;
+          ">
+            <span class="material-symbols-rounded" style="
+              font-size: 20px; 
+              font-weight: bold;
+              display: inline-block;
+              transform: rotate(${bearing + rotationAdjustment}deg);
+              transition: transform 0.3s ease;
+            ">${iconName}</span>
+            <div style="
+              position: absolute;
+              bottom: -20px;
+              background-color: rgba(15, 23, 42, 0.9);
+              color: white;
+              font-family: 'Inter', sans-serif;
+              font-weight: 700;
+              font-size: 9px;
+              padding: 1px 5px;
+              border-radius: 4px;
+              white-space: nowrap;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            ">${vehicle.plate}</div>
+          </div>
+        `;
 
         const ticketStatusHtml = vehicle.hasActiveTicket !== undefined 
           ? `
@@ -537,7 +592,7 @@ export default function GpsMap({
           `
           : '';
 
-        marker.bindPopup(`
+        const popupContent = `
           <div style="font-family: 'Inter', sans-serif; padding: 6px; min-width: 180px;">
             <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 14px; display: flex; align-items: center; gap: 6px; font-weight: 700; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
               <span class="material-symbols-rounded" style="color: #2563eb; font-size: 18px;">directions_bus</span>
@@ -549,19 +604,43 @@ export default function GpsMap({
             ${ticketStatusHtml}
             <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 10px; border-top: 1px solid #f1f5f9; padding-top: 4px;"><strong>Actualizado:</strong> ${new Date(vehicle.lastUpdated).toLocaleTimeString()}</p>
           </div>
-        `);
+        `;
 
-        vehicleMarkersRef.current.set(vehicle.id, marker);
+        if (existingMarker) {
+          existingMarker.setLatLng([vehicle.lat, vehicle.lng]);
+          const customIcon = L.divIcon({
+            html: vehicleIconHtml,
+            className: 'custom-vehicle-icon',
+            iconSize: [38, 38],
+            iconAnchor: [19, 19],
+          });
+          existingMarker.setIcon(customIcon);
+          existingMarker.setPopupContent(popupContent);
+        } else {
+          const vehicleIcon = L.divIcon({
+            html: vehicleIconHtml,
+            className: 'custom-vehicle-icon',
+            iconSize: [38, 38],
+            iconAnchor: [19, 19],
+          });
 
-        // Centrado dinámico si es la unidad activa elegida
-        if (activeVehicleId && activeVehicleId === vehicle.id) {
+          const marker = L.marker([vehicle.lat, vehicle.lng], {
+            icon: vehicleIcon,
+          }).addTo(currentMap);
+
+          marker.bindPopup(popupContent);
+          vehicleMarkersRef.current.set(vehicle.id, marker);
+        }
+
+        // Centrado dinámico inteligente respetando el autoFollow del chofer
+        if (activeVehicleId && activeVehicleId === vehicle.id && autoFollow) {
           currentMap.setView([vehicle.lat, vehicle.lng], currentMap.getZoom(), { animate: true });
         }
       });
     };
 
-    syncLayers();
-  }, [mapLoaded, routesCoordinates, alternativeRouteCoordinates, stops, vehicles, activeVehicleId]);
+    syncVehicles();
+  }, [mapLoaded, vehicles, activeVehicleId, autoFollow, mode]);
 
   return (
     <div
@@ -579,6 +658,48 @@ export default function GpsMap({
     }}>
       {/* Contenedor DOM donde se inyecta Leaflet */}
       <div ref={mapContainerRef} style={{ width: '100%', height: '100%', minHeight: '480px', zIndex: 1 }} />
+
+      {/* Botón flotante para recentrar en modo conductor */}
+      {mapLoaded && mode === 'driver' && !autoFollow && (
+        <button
+          type="button"
+          onClick={() => {
+            setAutoFollow(true);
+            const activeVeh = vehicles.find(v => v.id === activeVehicleId);
+            if (activeVeh) {
+              mapRef.current?.setView([activeVeh.lat, activeVeh.lng], mapRef.current.getZoom(), { animate: true });
+            }
+          }}
+          style={{
+            position: 'absolute',
+            bottom: '100px',
+            right: '16px',
+            zIndex: 100,
+            width: '120px',
+            height: '42px',
+            borderRadius: '21px',
+            backgroundColor: '#2563eb',
+            color: '#ffffff',
+            border: '2px solid #ffffff',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '12px',
+            fontWeight: 600,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            outline: 'none',
+            backdropFilter: 'blur(8px)'
+          }}
+          title="Recentrar en mi ubicación"
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>my_location</span>
+          Recentrar
+        </button>
+      )}
 
       {/* Selector de Capas Base Premium Personalizado en React */}
       {mapLoaded && (

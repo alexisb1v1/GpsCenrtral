@@ -14,16 +14,24 @@ export function useDriverLocation(
   const [source, setSource] = useState<'websocket' | 'gps'>('websocket');
   const [speed, setSpeed] = useState<number>(0);
 
-  // 1. Sincronizar posición del websocket cuando está conectado
+  const socketLat = socketPosition?.lat;
+  const socketLng = socketPosition?.lng;
+
+  // 1. Sincronizar posición del websocket cuando está conectado (comparando valores primitivos para evitar bucle infinito)
   useEffect(() => {
     if (isSocketConnected) {
-      if (socketPosition) {
-        setCoords(socketPosition);
+      if (socketLat !== undefined && socketLng !== undefined) {
+        setCoords(prev => {
+          if (prev && prev.lat === socketLat && prev.lng === socketLng) {
+            return prev;
+          }
+          return { lat: socketLat, lng: socketLng };
+        });
       }
       setSpeed(socketSpeed);
       setSource('websocket');
     }
-  }, [socketPosition, socketSpeed, isSocketConnected]);
+  }, [socketLat, socketLng, socketSpeed, isSocketConnected]);
 
   // 2. Activar GPS local del navegador si se cae el websocket
   useEffect(() => {
