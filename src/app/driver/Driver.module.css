@@ -65,7 +65,7 @@
   z-index: 10;
   background-color: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 2px solid rgba(100, 116, 139, 0.35); /* Borde más nítido para resaltar sobre el mapa claro */
   border-radius: 20px;
   padding: 16px;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
@@ -390,6 +390,37 @@
 .toastClose:hover {
   background-color: rgba(0, 0, 0, 0.05);
   color: #475569;
+}
+
+/* Botón de Finalizar Jornada Laboral */
+.closeWorkdayBtn {
+  margin-top: 14px;
+  width: 100%;
+  padding: 11px 16px;
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.closeWorkdayBtn:hover:not(:disabled) {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.closeWorkdayBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 
