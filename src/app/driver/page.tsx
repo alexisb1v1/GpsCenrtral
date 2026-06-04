@@ -30,6 +30,7 @@ interface VehiclePosition {
   routeId?: string | null;
   direction?: 'IDA' | 'VUELTA' | null;
   roundId?: string | null;
+  roundStatus?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | null;
 }
 
 interface ActiveNotification {
@@ -54,6 +55,7 @@ export default function DriverPage() {
   const [offlineCheckpoints, setOfflineCheckpoints] = useState<any[]>([]);
   const [markedStopsThisRound, setMarkedStopsThisRound] = useState<string[]>([]);
   const socketRef = useRef<any>(null);
+  const wakeLockRef = useRef<any>(null);
 
   // 1. Cargar datos de la sesión del chofer desde las cookies
   useEffect(() => {
@@ -99,9 +101,9 @@ export default function DriverPage() {
           const apiResponse = await response.json();
           const loadedRoutes = apiResponse.data || [];
           setRoutes(loadedRoutes);
-          // Seleccionar la primera ruta por defecto si existe como guía
+          // Seleccionar la primera ruta por defecto si existe como guía y no hay una ya preseleccionada en caliente
           if (loadedRoutes.length > 0) {
-            setSelectedRouteId(loadedRoutes[0].id);
+            setSelectedRouteId(prev => prev || loadedRoutes[0].id);
           }
         }
       } catch (err) {
@@ -116,7 +118,7 @@ export default function DriverPage() {
     let script: HTMLScriptElement | null = document.createElement('script');
     script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
     script.async = true;
-    
+
     script.onload = () => {
       initializeSocket();
     };
@@ -136,24 +138,24 @@ export default function DriverPage() {
   const playAlertSound = (type: string) => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
+
       if (type === 'INFRACTION') {
         const playTone = (delay: number) => {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
           osc.type = 'sawtooth';
           osc.frequency.setValueAtTime(160, audioCtx.currentTime);
-          
+
           gain.gain.setValueAtTime(0, audioCtx.currentTime);
           gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.05);
           gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
-          
+
           osc.connect(gain);
           gain.connect(audioCtx.destination);
           osc.start(audioCtx.currentTime + delay);
           osc.stop(audioCtx.currentTime + delay + 0.45);
         };
-        
+
         playTone(0);
         playTone(0.45);
       } else if (type === 'CHECKPOINT_MARKED') {
@@ -162,11 +164,11 @@ export default function DriverPage() {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
         osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
-        
+
         gain.gain.setValueAtTime(0, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
-        
+
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start(audioCtx.currentTime);
@@ -235,6 +237,7 @@ export default function DriverPage() {
         routeId: pos.routeId || null,
         direction: pos.direction || null,
         roundId: pos.roundId || null,
+        roundStatus: pos.roundStatus || null,
       }));
 
       setVehicles(formattedPositions);
@@ -243,6 +246,21 @@ export default function DriverPage() {
     socket.on('notification', (notif: ActiveNotification) => {
       setActiveNotification(notif);
       playAlertSound(notif.type);
+
+      // Sincronizar marcado de control en tiempo real en la UI del conductor
+      const targetGeofenceId = notif.data?.traccarGeofenceId;
+      if (
+        (notif.type === 'CHECKPOINT_MARKED' || notif.type === 'INFRACTION') &&
+        targetGeofenceId
+      ) {
+        const idStr = String(targetGeofenceId);
+        setMarkedStopsThisRound(prev => {
+          if (!prev.includes(idStr)) {
+            return [...prev, idStr];
+          }
+          return prev;
+        });
+      }
 
       // Auto-ocultar: 10 segundos para multas, 5 segundos para otros avisos
       const duration = notif.type === 'INFRACTION' ? 10000 : 5000;
@@ -264,36 +282,92 @@ export default function DriverPage() {
   const selectedRoute = Array.isArray(routes) ? routes.find(r => r.id === selectedRouteId) : undefined;
   const routeOutboundCoords = selectedRoute?.outboundCoordinates || [];
   const routeInboundCoords = selectedRoute?.inboundCoordinates || [];
-  const routeStops = selectedRoute?.stops?.map((stop: any) => {
-    let lat = 0;
-    let lng = 0;
-    let polygonCoordinates = undefined;
+  const activeDirection = activeVehicle?.direction || 'IDA';
 
-    if (stop.coordinates && stop.coordinates.length > 0) {
-      polygonCoordinates = stop.coordinates;
-      const sumLat = stop.coordinates.reduce((sum: number, c: any) => sum + c.lat, 0);
-      const sumLng = stop.coordinates.reduce((sum: number, c: any) => sum + c.lng, 0);
-      lat = sumLat / stop.coordinates.length;
-      lng = sumLng / stop.coordinates.length;
-    }
+  const routeStops = selectedRoute?.stops
+    ?.filter((stop: any) => stop.direction === activeDirection)
+    ?.map((stop: any, index: number) => {
+      let lat = 0;
+      let lng = 0;
+      let polygonCoordinates = undefined;
 
-    return {
-      geofenceId: String(stop.traccarGeofenceId),
-      name: stop.name || `Paradero ${stop.stopOrder}`,
-      lat,
-      lng,
-      stopOrder: stop.stopOrder,
-      minutesFromStart: stop.minutesFromStart || 0,
-      polygonCoordinates,
-    };
-  }) || [];
+      if (stop.coordinates && stop.coordinates.length > 0) {
+        polygonCoordinates = stop.coordinates;
+        const sumLat = stop.coordinates.reduce((sum: number, c: any) => sum + c.lat, 0);
+        const sumLng = stop.coordinates.reduce((sum: number, c: any) => sum + c.lng, 0);
+        lat = sumLat / stop.coordinates.length;
+        lng = sumLng / stop.coordinates.length;
+      }
+
+      return {
+        geofenceId: String(stop.traccarGeofenceId),
+        name: stop.name || `Paradero ${index + 1}`,
+        lat,
+        lng,
+        stopOrder: index + 1,
+        minutesFromStart: stop.minutesFromStart || 0,
+        polygonCoordinates,
+      };
+    }) || [];
 
   // Sincronizar automáticamente la ruta seleccionada con la asignada en el ticket de salida en caliente
   useEffect(() => {
     if (activeVehicle && activeVehicle.routeId) {
       setSelectedRouteId(activeVehicle.routeId);
     }
-  }, [activeVehicle?.routeId]);
+  }, [activeVehicle?.routeId, routes]);
+
+  const requestWakeLock = async () => {
+    if (typeof window !== 'undefined' && 'wakeLock' in navigator) {
+      try {
+        if (wakeLockRef.current) return;
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        console.log('[Wake Lock] La pantalla se mantendrá encendida.');
+      } catch (err: any) {
+        console.warn('[Wake Lock] Error al solicitar Wake Lock:', err.message);
+      }
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+        console.log('[Wake Lock] Bloqueo de pantalla liberado.');
+      } catch (err: any) {
+        console.warn('[Wake Lock] Error al liberar Wake Lock:', err.message);
+      }
+    }
+  };
+
+  // Mantener la pantalla encendida (Screen Wake Lock API) mientras la página del conductor esté visible en primer plano
+  useEffect(() => {
+    const initWakeLock = async () => {
+      if (document.visibilityState === 'visible') {
+        await requestWakeLock();
+      } else {
+        await releaseWakeLock();
+      }
+    };
+
+    initWakeLock();
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        await requestWakeLock();
+      } else {
+        await releaseWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      releaseWakeLock();
+    };
+  }, []);
 
   const handleCloseWorkday = async () => {
     if (!activeVehicle || !activeVehicle.dailyTicketId) return;
@@ -408,7 +482,7 @@ export default function DriverPage() {
         if (stop.polygonCoordinates && stop.polygonCoordinates.length >= 3) {
           // Turf requiere un array de coordenadas [lng, lat]
           const turfCoords = stop.polygonCoordinates.map((c: any) => [c.lng, c.lat]);
-          
+
           // Asegurar que el polígono esté cerrado para Turf
           if (
             turfCoords[0][0] !== turfCoords[turfCoords.length - 1][0] ||
@@ -533,7 +607,7 @@ export default function DriverPage() {
       const from = turf.point([activeCoords.lng, activeCoords.lat]);
       const to = turf.point([nextStop.lng, nextStop.lat]);
       distanceToNextStop = turf.distance(from, to, { units: 'meters' });
-      
+
       const speedKmh = activeSpeed > 10 ? activeSpeed : 25;
       const speedMs = speedKmh / 3.6;
       const timeSeconds = distanceToNextStop / speedMs;
@@ -566,8 +640,8 @@ export default function DriverPage() {
                 Avanza hacia <span className={styles.nextStopName}>{nextStop.name}</span>
               </div>
               <div className={styles.navDistance}>
-                {distanceToNextStop > 1000 
-                  ? `a ${(distanceToNextStop / 1000).toFixed(1)} km` 
+                {distanceToNextStop > 1000
+                  ? `a ${(distanceToNextStop / 1000).toFixed(1)} km`
                   : `a ${Math.round(distanceToNextStop)} metros`}
               </div>
             </div>
@@ -586,10 +660,9 @@ export default function DriverPage() {
 
         {/* Toast de Notificación Premium con Glassmorphism */}
         {activeNotification && (
-          <div 
-            className={`${styles.notificationToast} ${
-              activeNotification.type === 'INFRACTION' ? styles.toastInfraction : styles.toastSuccess
-            }`}
+          <div
+            className={`${styles.notificationToast} ${activeNotification.type === 'INFRACTION' ? styles.toastInfraction : styles.toastSuccess
+              }`}
             onClick={() => setActiveNotification(null)}
           >
             <div className={styles.toastIcon}>
@@ -601,11 +674,11 @@ export default function DriverPage() {
               <div className={styles.toastTitle}>{activeNotification.title}</div>
               <div className={styles.toastMessage}>{activeNotification.message}</div>
             </div>
-            <button 
-              className={styles.toastClose} 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                setActiveNotification(null); 
+            <button
+              className={styles.toastClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveNotification(null);
               }}
             >
               <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>close</span>
@@ -655,16 +728,60 @@ export default function DriverPage() {
                 <span className={styles.driverNameText}>{driverName}</span>
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {activeVehicle && !isCollapsed && (
-                <span className={`${styles.statusBadge} ${activeVehicle.isActive ? styles.statusActive : styles.statusStopped}`}>
-                  {activeVehicle.isActive ? 'En ruta' : 'Detenido'}
-                </span>
-              )}
-              
+              {activeVehicle && !isCollapsed && (() => {
+                const status = activeVehicle.roundStatus;
+                const direction = activeVehicle.direction || 'IDA';
+
+                if (status === 'PENDING') {
+                  return (
+                    <span
+                      className={styles.statusBadge}
+                      style={{
+                        backgroundColor: '#eff6ff',
+                        color: '#2563eb',
+                        border: '1px solid #bfdbfe'
+                      }}
+                    >
+                      Espera - {direction}
+                    </span>
+                  );
+                }
+
+                if (status === 'IN_PROGRESS') {
+                  return (
+                    <span className={`${styles.statusBadge} ${styles.statusActive}`}>
+                      En Ruta - {direction}
+                    </span>
+                  );
+                }
+
+                if (status === 'COMPLETED') {
+                  return (
+                    <span
+                      className={styles.statusBadge}
+                      style={{
+                        backgroundColor: '#faf5ff',
+                        color: '#7c3aed',
+                        border: '1px solid #e9d5ff'
+                      }}
+                    >
+                      Completa - {direction}
+                    </span>
+                  );
+                }
+
+                // Fallback en caso de ausencia de estados de vuelta o ticket diario
+                return (
+                  <span className={`${styles.statusBadge} ${styles.statusStopped}`}>
+                    Sin ticket
+                  </span>
+                );
+              })()}
+
               {/* Botón de Colapsar/Desplegar con feedback visual */}
-              <button 
+              <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 className={styles.collapseBtn}
                 title={isCollapsed ? "Mostrar detalles" : "Ocultar detalles"}
@@ -745,8 +862,10 @@ export default function DriverPage() {
                   <span className="material-symbols-rounded" style={{ fontSize: '32px', color: '#94a3b8', marginBottom: '8px' }}>
                     no_accounts
                   </span>
-                  <span className={styles.noVehicleText}>No tienes ninguna unidad asignada hoy</span>
-                  <span className={styles.noVehicleSubtext}>Espera a que el controlador emita tu ticket de salida en el dashboard.</span>
+                  <span className={styles.noVehicleText}>Jornada pendiente de inicio</span>
+                  <span className={styles.noVehicleSubtext}>
+                    Acércate a la oficina de control para realizar el pago de tu salida, registrar la unidad asignada y habilitar tu ticket diario de monitoreo.
+                  </span>
                 </div>
               )}
             </>
