@@ -11,32 +11,11 @@ export function useDriverLocation(
   isSocketConnected: boolean
 ) {
   const [coords, setCoords] = useState<Coords | null>(null);
-  const [source, setSource] = useState<'websocket' | 'gps'>('websocket');
+  const [source, setSource] = useState<'websocket' | 'gps'>('gps');
   const [speed, setSpeed] = useState<number>(0);
 
-  const socketLat = socketPosition?.lat;
-  const socketLng = socketPosition?.lng;
-
-  // 1. Sincronizar posición del websocket cuando está conectado (comparando valores primitivos para evitar bucle infinito)
+  // Utilizar geolocalización local en todo momento para asegurar fluidez y operabilidad offline
   useEffect(() => {
-    if (isSocketConnected) {
-      if (socketLat !== undefined && socketLng !== undefined) {
-        setCoords(prev => {
-          if (prev && prev.lat === socketLat && prev.lng === socketLng) {
-            return prev;
-          }
-          return { lat: socketLat, lng: socketLng };
-        });
-      }
-      setSpeed(socketSpeed);
-      setSource('websocket');
-    }
-  }, [socketLat, socketLng, socketSpeed, isSocketConnected]);
-
-  // 2. Activar GPS local del navegador si se cae el websocket
-  useEffect(() => {
-    if (isSocketConnected) return;
-
     if (typeof window === 'undefined' || !navigator.geolocation) {
       console.warn('[GPS Local] Geolocalización no disponible en este entorno.');
       return;
@@ -57,7 +36,7 @@ export function useDriverLocation(
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      console.error('[GPS Local] Error al obtener posición de contingencia:', error.message);
+      console.error('[GPS Local] Error al obtener posición de alta precisión:', error.message);
     };
 
     const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
@@ -69,7 +48,7 @@ export function useDriverLocation(
     return () => {
       navigator.geolocation.clearWatch(watchId);
     };
-  }, [isSocketConnected]);
+  }, []);
 
   return { coords, source, speed };
 }

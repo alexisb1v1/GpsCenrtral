@@ -7,6 +7,7 @@ import DashboardLayout from '@/app/features/dashboard/ui/layout/DashboardLayout'
 import { DailyTicketApiService } from '@/app/features/admin/services/daily-ticket-api.service';
 import { useDriverLocation } from './hooks/useDriverLocation';
 import * as turf from '@turf/turf';
+import localforage from 'localforage';
 import styles from './Driver.module.css';
 
 // Importación dinámica de GpsMap para evitar fallos de compilación Server-Side (Leaflet/DOM dependency)
@@ -54,6 +55,7 @@ export default function DriverPage() {
   const [isClosing, setIsClosing] = useState(false);
   const [offlineCheckpoints, setOfflineCheckpoints] = useState<any[]>([]);
   const [markedStopsThisRound, setMarkedStopsThisRound] = useState<string[]>([]);
+  const [localActiveVehicle, setLocalActiveVehicle] = useState<VehiclePosition | null>(null);
   const socketRef = useRef<any>(null);
   const wakeLockRef = useRef<any>(null);
 
@@ -69,6 +71,21 @@ export default function DriverPage() {
         console.error('[Chofer] Error al parsear los datos de sesión de la cookie', e);
       }
     }
+  }, []);
+
+  // 1.1. Cargar el vehículo activo guardado en IndexedDB localmente para contingencia offline
+  useEffect(() => {
+    const loadLocalActiveVehicle = async () => {
+      try {
+        const stored = await localforage.getItem<VehiclePosition>('gps_central_local_active_vehicle');
+        if (stored) {
+          setLocalActiveVehicle(stored);
+        }
+      } catch (err) {
+        console.error('[Chofer Cache] Error al cargar localActiveVehicle de localforage:', err);
+      }
+    };
+    loadLocalActiveVehicle();
   }, []);
 
   // 2. Cargar las rutas de la empresa para guía de navegación
@@ -241,6 +258,29 @@ export default function DriverPage() {
       }));
 
       setVehicles(formattedPositions);
+
+      // Guardar sincronización de tiempo con el servidor usando la hora de la última posición del socket
+      if (positionsData.length > 0) {
+        const samplePos = positionsData[0];
+        const serverTimeStr = samplePos.deviceTime || samplePos.lastUpdated;
+        if (serverTimeStr) {
+          const serverTimeMs = new Date(serverTimeStr).getTime();
+          localStorage.setItem('sync_server_time', String(serverTimeMs));
+          localStorage.setItem('sync_performance_time', String(performance.now()));
+          // Guardar también un offset simple de contingencia
+          const localOffset = serverTimeMs - Date.now();
+          localStorage.setItem('sync_time_offset', String(localOffset));
+        }
+      }
+
+      // Si entre las posiciones del socket viene nuestro bus, actualizar localActiveVehicle y guardarlo
+      const myBus = formattedPositions.find(v => v.driverId === driverId);
+      if (myBus) {
+        setLocalActiveVehicle(myBus);
+        localforage.setItem('gps_central_local_active_vehicle', myBus).catch(err => {
+          console.error('[Chofer Cache] Error al persistir localActiveVehicle en IndexedDB', err);
+        });
+      }
     });
 
     socket.on('notification', (notif: ActiveNotification) => {
@@ -275,8 +315,8 @@ export default function DriverPage() {
     v => v.driverId === driverId
   );
 
-  // En producción, si no tiene asignación, no se debe forzar la visualización de otro vehículo
-  const activeVehicle = myVehicle;
+  // Híbrido: Si no hay señal de red, se cae el websocket y la lista de vehículos, caer en la persistencia local
+  const activeVehicle = myVehicle || localActiveVehicle;
 
   // Obtener la ruta seleccionada para guiar al chofer en el mapa (definido arriba para su uso en hooks de efecto de geocercas)
   const selectedRoute = Array.isArray(routes) ? routes.find(r => r.id === selectedRouteId) : undefined;
@@ -428,18 +468,19 @@ export default function DriverPage() {
     }
   };
 
-  // 5. Cargar buffer offline desde localStorage al montar
+  // 5. Cargar buffer offline desde localforage al montar
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('gps_central_offline_checkpoints');
-      if (stored) {
-        try {
-          setOfflineCheckpoints(JSON.parse(stored));
-        } catch (e) {
-          console.error('[Chofer Offline] Error al parsear buffer offline', e);
+    const loadOfflineCheckpoints = async () => {
+      try {
+        const stored = await localforage.getItem<any[]>('gps_central_offline_checkpoints');
+        if (stored) {
+          setOfflineCheckpoints(stored);
         }
+      } catch (err) {
+        console.error('[Chofer Offline] Error al precargar buffer offline de localforage:', err);
       }
-    }
+    };
+    loadOfflineCheckpoints();
   }, []);
 
   // Limpiar paraderos marcados localmente si cambia la vuelta (roundId)
@@ -459,10 +500,9 @@ export default function DriverPage() {
     isConnected
   );
 
-  // 6. Cálculo geométrico local de geocercas (Turf.js) en modo offline
+  // 6. Cálculo geométrico local de geocercas (Turf.js) en modo offline y móvil-first
   useEffect(() => {
     if (
-      locationSource !== 'gps' ||
       !activeCoords ||
       !activeVehicle ||
       !activeVehicle.dailyTicketId ||
@@ -473,66 +513,91 @@ export default function DriverPage() {
       return;
     }
 
-    for (const stop of routeStops) {
-      if (markedStopsThisRound.includes(stop.geofenceId)) continue;
+    const checkGeofences = async () => {
+      for (const stop of routeStops) {
+        if (markedStopsThisRound.includes(stop.geofenceId)) continue;
 
-      let isInside = false;
+        let isInside = false;
 
-      try {
-        if (stop.polygonCoordinates && stop.polygonCoordinates.length >= 3) {
-          // Turf requiere un array de coordenadas [lng, lat]
-          const turfCoords = stop.polygonCoordinates.map((c: any) => [c.lng, c.lat]);
+        try {
+          if (stop.polygonCoordinates && stop.polygonCoordinates.length >= 3) {
+            // Turf requiere un array de coordenadas [lng, lat]
+            const turfCoords = stop.polygonCoordinates.map((c: any) => [c.lng, c.lat]);
 
-          // Asegurar que el polígono esté cerrado para Turf
-          if (
-            turfCoords[0][0] !== turfCoords[turfCoords.length - 1][0] ||
-            turfCoords[0][1] !== turfCoords[turfCoords.length - 1][1]
-          ) {
-            turfCoords.push(turfCoords[0]);
+            // Asegurar que el polígono esté cerrado para Turf
+            if (
+              turfCoords[0][0] !== turfCoords[turfCoords.length - 1][0] ||
+              turfCoords[0][1] !== turfCoords[turfCoords.length - 1][1]
+            ) {
+              turfCoords.push(turfCoords[0]);
+            }
+
+            const poly = turf.polygon([turfCoords]);
+            const pt = turf.point([activeCoords.lng, activeCoords.lat]);
+            isInside = turf.booleanPointInPolygon(pt, poly);
+          } else if (stop.lat && stop.lng) {
+            // Geocerca circular de contingencia
+            const from = turf.point([activeCoords.lng, activeCoords.lat]);
+            const to = turf.point([stop.lng, stop.lat]);
+            const dist = turf.distance(from, to, { units: 'meters' });
+            isInside = dist <= 15; // Ajustamos a 15 metros para mayor margen de tolerancia GPS en carretera
+          }
+        } catch (err) {
+          console.error('[Chofer Offline] Error al procesar geocerca local para:', stop.name, err);
+        }
+
+        if (isInside) {
+          // Marcado local exitoso
+          playAlertSound('CHECKPOINT_MARKED');
+          setMarkedStopsThisRound(prev => [...prev, stop.geofenceId]);
+
+          // Calcular la hora real del servidor usando el reloj monótono (performance.now) contra fraudes
+          let trueEventTime = new Date();
+          try {
+            const syncServerTime = parseInt(localStorage.getItem('sync_server_time') || '0', 10);
+            const syncPerformanceTime = parseFloat(localStorage.getItem('sync_performance_time') || '0');
+            if (syncServerTime > 0 && syncPerformanceTime > 0) {
+              const elapsedMs = performance.now() - syncPerformanceTime;
+              trueEventTime = new Date(syncServerTime + elapsedMs);
+            } else {
+              const timeOffset = parseInt(localStorage.getItem('sync_time_offset') || '0', 10);
+              trueEventTime = new Date(Date.now() + timeOffset);
+            }
+          } catch (e) {
+            console.error('[Chofer Time] Error al calcular la hora real del servidor:', e);
           }
 
-          const poly = turf.polygon([turfCoords]);
-          const pt = turf.point([activeCoords.lng, activeCoords.lat]);
-          isInside = turf.booleanPointInPolygon(pt, poly);
-        } else if (stop.lat && stop.lng) {
-          // Geocerca circular de contingencia
-          const from = turf.point([activeCoords.lng, activeCoords.lat]);
-          const to = turf.point([stop.lng, stop.lat]);
-          const dist = turf.distance(from, to, { units: 'meters' });
-          isInside = dist <= 5; // 5 metros de radio por defecto
+          const newOfflineEvent = {
+            dailyTicketId: activeVehicle.dailyTicketId,
+            roundId: activeVehicle.roundId,
+            traccarGeofenceId: parseInt(stop.geofenceId, 10),
+            reachedAt: trueEventTime.toISOString(),
+            latitude: activeCoords.lat,
+            longitude: activeCoords.lng,
+          };
+
+          try {
+            const currentOffline = (await localforage.getItem<any[]>('gps_central_offline_checkpoints')) || [];
+            currentOffline.push(newOfflineEvent);
+            setOfflineCheckpoints(currentOffline);
+            await localforage.setItem('gps_central_offline_checkpoints', currentOffline);
+          } catch (err) {
+            console.error('[Chofer Offline] Error al guardar checkpoint en IndexedDB con localforage:', err);
+          }
+
+          setActiveNotification({
+            id: String(Date.now()),
+            type: 'CHECKPOINT_MARKED',
+            title: 'Control Marcado (Celular)',
+            message: `Has ingresado a: ${stop.name} (Calculado por tu celular)`,
+            timestamp: new Date().toISOString()
+          });
         }
-      } catch (err) {
-        console.error('[Chofer Offline] Error al procesar geocerca local para:', stop.name, err);
       }
+    };
 
-      if (isInside) {
-        // Marcado local exitoso
-        playAlertSound('CHECKPOINT_MARKED');
-        setMarkedStopsThisRound(prev => [...prev, stop.geofenceId]);
-
-        const newOfflineEvent = {
-          dailyTicketId: activeVehicle.dailyTicketId,
-          roundId: activeVehicle.roundId,
-          traccarGeofenceId: parseInt(stop.geofenceId, 10),
-          reachedAt: new Date().toISOString(),
-          latitude: activeCoords.lat,
-          longitude: activeCoords.lng,
-        };
-
-        const currentOffline = [...offlineCheckpoints, newOfflineEvent];
-        setOfflineCheckpoints(currentOffline);
-        localStorage.setItem('gps_central_offline_checkpoints', JSON.stringify(currentOffline));
-
-        setActiveNotification({
-          id: String(Date.now()),
-          type: 'CHECKPOINT_MARKED',
-          title: 'Control Marcado (Local)',
-          message: `Has ingresado a: ${stop.name} (Modo Offline)`,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
-  }, [activeCoords, locationSource, routeStops, activeVehicle, markedStopsThisRound, offlineCheckpoints]);
+    checkGeofences();
+  }, [activeCoords, routeStops, activeVehicle, markedStopsThisRound]);
 
   // 7. Sync Engine: Sincronizar paraderos locales al recuperar red
   useEffect(() => {
@@ -567,7 +632,7 @@ export default function DriverPage() {
 
         if (response.ok) {
           setOfflineCheckpoints([]);
-          localStorage.removeItem('gps_central_offline_checkpoints');
+          await localforage.removeItem('gps_central_offline_checkpoints');
 
           setActiveNotification({
             id: String(Date.now()),
@@ -692,15 +757,7 @@ export default function DriverPage() {
           {isConnected ? 'Sistema conectado en tiempo real' : 'Reconectando con el servidor...'}
         </div>
 
-        {/* Banner de Estado Offline / Contingencia GPS */}
-        {locationSource === 'gps' && (
-          <div className={styles.offlineBanner}>
-            <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>
-              gps_off
-            </span>
-            <span>Modo offline activo: utilizando GPS local del celular</span>
-          </div>
-        )}
+
 
         {/* Contenedor del Mapa - Pantalla Completa Edge-to-Edge */}
         <div className={styles.mapContainer}>
