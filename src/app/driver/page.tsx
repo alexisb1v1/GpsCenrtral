@@ -9,6 +9,8 @@ import { useDriverLocation } from './hooks/useDriverLocation';
 import * as turf from '@turf/turf';
 import localforage from 'localforage';
 import styles from './Driver.module.css';
+import { ROUTE_DELAY_TOLERANCE_MINUTES, ETA_REFERENCE_SPEED_KMH } from '@/shared/constants/business.constants';
+
 
 // Importación dinámica de GpsMap para evitar fallos de compilación Server-Side (Leaflet/DOM dependency)
 const GpsMap = dynamic(
@@ -280,6 +282,14 @@ export default function DriverPage() {
         localforage.setItem('gps_central_local_active_vehicle', myBus).catch(err => {
           console.error('[Chofer Cache] Error al persistir localActiveVehicle en IndexedDB', err);
         });
+
+        // Guardar hora de inicio de la vuelta si está IN_PROGRESS y no existía localmente
+        if (myBus.roundId && myBus.roundStatus === 'IN_PROGRESS') {
+          const key = `round_start_time_${myBus.roundId}`;
+          if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, new Date().toISOString());
+          }
+        }
       }
     });
 
@@ -296,17 +306,24 @@ export default function DriverPage() {
         const idStr = String(targetGeofenceId);
         setMarkedStopsThisRound(prev => {
           if (!prev.includes(idStr)) {
-            return [...prev, idStr];
+            const nextList = [...prev, idStr];
+            if (activeVehicle?.roundId) {
+              localforage.setItem(`gps_central_marked_stops_${activeVehicle.roundId}`, nextList).catch(err => {
+                console.error('[Chofer Cache] Error al guardar markedStops en IndexedDB', err);
+              });
+            }
+            return nextList;
           }
           return prev;
         });
       }
 
-      // Auto-ocultar: 10 segundos para multas, 5 segundos para otros avisos
-      const duration = notif.type === 'INFRACTION' ? 10000 : 5000;
-      setTimeout(() => {
-        setActiveNotification(prev => prev?.id === notif.id ? null : prev);
-      }, duration);
+      // Auto-ocultar solo si NO es una multa confirmada (las infracciones oficiales se quedan persistentes para que el chofer las cierre manualmente)
+      if (notif.type !== 'INFRACTION') {
+        setTimeout(() => {
+          setActiveNotification(prev => prev?.id === notif.id ? null : prev);
+        }, 5000);
+      }
     });
   };
 
@@ -483,10 +500,39 @@ export default function DriverPage() {
     loadOfflineCheckpoints();
   }, []);
 
-  // Limpiar paraderos marcados localmente si cambia la vuelta (roundId)
+  // Cargar paraderos marcados de IndexedDB cuando cambie el roundId
   useEffect(() => {
-    setMarkedStopsThisRound([]);
+    const loadMarkedStops = async () => {
+      if (activeVehicle?.roundId) {
+        try {
+          const stored = await localforage.getItem<string[]>(`gps_central_marked_stops_${activeVehicle.roundId}`);
+          if (stored) {
+            console.log('[Chofer Cache] Cargando paraderos marcados de IndexedDB para la vuelta:', activeVehicle.roundId, stored);
+            setMarkedStopsThisRound(stored);
+          } else {
+            setMarkedStopsThisRound([]);
+          }
+        } catch (err) {
+          console.error('[Chofer Cache] Error al cargar markedStops de localforage:', err);
+          setMarkedStopsThisRound([]);
+        }
+      } else {
+        setMarkedStopsThisRound([]);
+      }
+    };
+    loadMarkedStops();
   }, [activeVehicle?.roundId]);
+
+  // Auto-ocultar toasts que no sean infracciones
+  useEffect(() => {
+    if (activeNotification && activeNotification.type !== 'INFRACTION') {
+      const timer = setTimeout(() => {
+        setActiveNotification(prev => (prev?.id === activeNotification.id ? null : prev));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeNotification]);
+
 
   // Hook de localización de contingencia híbrido (memorizando coordenadas para evitar re-renders infinitos)
   const socketCoords = useMemo(() => {
@@ -547,10 +593,6 @@ export default function DriverPage() {
         }
 
         if (isInside) {
-          // Marcado local exitoso
-          playAlertSound('CHECKPOINT_MARKED');
-          setMarkedStopsThisRound(prev => [...prev, stop.geofenceId]);
-
           // Calcular la hora real del servidor usando el reloj monótono (performance.now) contra fraudes
           let trueEventTime = new Date();
           try {
@@ -567,6 +609,42 @@ export default function DriverPage() {
             console.error('[Chofer Time] Error al calcular la hora real del servidor:', e);
           }
 
+          // Obtener o inicializar la hora de inicio de la vuelta
+          const startKey = `round_start_time_${activeVehicle.roundId}`;
+          let roundStartTimeStr = localStorage.getItem(startKey);
+          if (!roundStartTimeStr) {
+            roundStartTimeStr = trueEventTime.toISOString();
+            localStorage.setItem(startKey, roundStartTimeStr);
+          }
+          const roundStartTime = new Date(roundStartTimeStr);
+
+          // Calcular la diferencia en minutos entre el evento actual y el inicio de la vuelta
+          const minutesElapsed = (trueEventTime.getTime() - roundStartTime.getTime()) / 60000;
+
+          // El paradero tiene stop.minutesFromStart (el tiempo teórico acumulado para llegar a este punto)
+          const delayMinutes = minutesElapsed - stop.minutesFromStart;
+
+          // Tolerancia a 1 minuto
+          const isLate = delayMinutes > ROUTE_DELAY_TOLERANCE_MINUTES;
+          const notifType: 'CHECKPOINT_MARKED' | 'INFRACTION' = isLate ? 'INFRACTION' : 'CHECKPOINT_MARKED';
+          const notifTitle = isLate ? 'Sanción Tentativa (Celular)' : 'Control Marcado (Celular)';
+          const notifMessage = isLate
+            ? `¡Retraso de ${Math.round(delayMinutes)} min en paradero ${stop.name}! Multa registrada localmente.`
+            : `Has ingresado a: ${stop.name}. ¡Llegaste a tiempo!`;
+
+          playAlertSound(notifType);
+
+          setMarkedStopsThisRound(prev => {
+            if (!prev.includes(stop.geofenceId)) {
+              const nextList = [...prev, stop.geofenceId];
+              localforage.setItem(`gps_central_marked_stops_${activeVehicle.roundId}`, nextList).catch(err => {
+                console.error('[Chofer Cache] Error al guardar markedStops en IndexedDB', err);
+              });
+              return nextList;
+            }
+            return prev;
+          });
+
           const newOfflineEvent = {
             dailyTicketId: activeVehicle.dailyTicketId,
             roundId: activeVehicle.roundId,
@@ -578,18 +656,21 @@ export default function DriverPage() {
 
           try {
             const currentOffline = (await localforage.getItem<any[]>('gps_central_offline_checkpoints')) || [];
-            currentOffline.push(newOfflineEvent);
-            setOfflineCheckpoints(currentOffline);
-            await localforage.setItem('gps_central_offline_checkpoints', currentOffline);
+            const existsInOffline = currentOffline.some(cp => cp.roundId === newOfflineEvent.roundId && cp.traccarGeofenceId === newOfflineEvent.traccarGeofenceId);
+            if (!existsInOffline) {
+              currentOffline.push(newOfflineEvent);
+              setOfflineCheckpoints(currentOffline);
+              await localforage.setItem('gps_central_offline_checkpoints', currentOffline);
+            }
           } catch (err) {
             console.error('[Chofer Offline] Error al guardar checkpoint en IndexedDB con localforage:', err);
           }
 
           setActiveNotification({
             id: String(Date.now()),
-            type: 'CHECKPOINT_MARKED',
-            title: 'Control Marcado (Celular)',
-            message: `Has ingresado a: ${stop.name} (Calculado por tu celular)`,
+            type: notifType,
+            title: notifTitle,
+            message: notifMessage,
             timestamp: new Date().toISOString()
           });
         }
@@ -633,14 +714,6 @@ export default function DriverPage() {
         if (response.ok) {
           setOfflineCheckpoints([]);
           await localforage.removeItem('gps_central_offline_checkpoints');
-
-          setActiveNotification({
-            id: String(Date.now()),
-            type: 'SYSTEM',
-            title: 'Sincronización Exitosa',
-            message: 'Tus registros de paradero offline se sincronizaron con el servidor.',
-            timestamp: new Date().toISOString()
-          });
         } else {
           console.error('[Chofer Sync] Fallo al sincronizar en backend:', response.statusText);
         }
@@ -673,10 +746,10 @@ export default function DriverPage() {
       const to = turf.point([nextStop.lng, nextStop.lat]);
       distanceToNextStop = turf.distance(from, to, { units: 'meters' });
 
-      const speedKmh = activeSpeed > 10 ? activeSpeed : 25;
+      const speedKmh = ETA_REFERENCE_SPEED_KMH;
       const speedMs = speedKmh / 3.6;
       const timeSeconds = distanceToNextStop / speedMs;
-      nextStopEta = Math.ceil(timeSeconds / 60);
+      nextStopEta = Math.max(1, Math.ceil(timeSeconds / 60));
 
       // Calcular ETA total de la vuelta basándose en los minutos estimados restantes
       const lastStop = routeStops[routeStops.length - 1];
@@ -752,10 +825,31 @@ export default function DriverPage() {
         )}
 
         {/* Indicador de Estado de Conexión flotante */}
-        <div className={styles.connectionStatus}>
+        <div className={styles.connectionStatus} title={isConnected ? 'Sistema conectado en tiempo real' : 'Reconectando con el servidor...'}>
           <span className={`${styles.statusDot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`} />
-          {isConnected ? 'Sistema conectado en tiempo real' : 'Reconectando con el servidor...'}
         </div>
+
+        {/* Indicador de Sincronización flotante */}
+        <div className={styles.syncStatus} title={offlineCheckpoints.length > 0 ? `${offlineCheckpoints.length} marcas pendientes de sincronización` : 'Sincronizado'}>
+          <span className={`material-symbols-rounded ${styles.syncIcon} ${
+            offlineCheckpoints.length > 0 ? styles.syncPending : styles.syncOk
+          }`} style={{ fontSize: '18px' }}>
+            {offlineCheckpoints.length > 0 ? 'sync' : 'cloud_done'}
+          </span>
+        </div>
+
+        {/* Banner de Espera de Salida (Chofer en PENDING) */}
+        {activeVehicle?.dailyTicketId && activeVehicle?.roundStatus === 'PENDING' && (
+          <div className={styles.waitingBanner}>
+            <div className={styles.waitingIcon}>
+              <span className="material-symbols-rounded" style={{ fontSize: '24px', animation: 'pulse 2s infinite' }}>schedule</span>
+            </div>
+            <div className={styles.waitingInfo}>
+              <div className={styles.waitingTitle}>Vuelta Finalizada</div>
+              <div className={styles.waitingSubtitle}>Vuelta finalizada. Espera tu turno para tu siguiente salida ({activeVehicle.direction || 'IDA'})</div>
+            </div>
+          </div>
+        )}
 
 
 

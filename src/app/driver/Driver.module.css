@@ -26,17 +26,15 @@
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   background-color: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 9999px;
+  border-radius: 50%;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(8px);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #334155;
-  pointer-events: none;
+  pointer-events: auto; /* Permitir interacción/hover para ver tooltip */
 }
 
 .statusDot {
@@ -618,7 +616,9 @@
 
 /* Modificar posición de toast y banners offline si el banner de navegación está activo */
 .navigationBanner ~ .notificationToast,
-.navigationBanner ~ .offlineBanner {
+.navigationBanner ~ .offlineBanner,
+.navigationBanner ~ .connectionStatus,
+.navigationBanner ~ .syncStatus {
   top: 102px !important;
 }
 
@@ -641,10 +641,128 @@
   }
   
   .navigationBanner ~ .notificationToast,
-  .navigationBanner ~ .offlineBanner {
+  .navigationBanner ~ .offlineBanner,
+  .navigationBanner ~ .connectionStatus,
+  .navigationBanner ~ .syncStatus {
     top: 92px !important;
   }
 }
+
+/* Banner de Espera de Salida (Chofer en PENDING) */
+.waitingBanner {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background-color: rgba(15, 23, 42, 0.9); /* Azul grisáceo oscuro ultra premium */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  max-width: 480px;
+  margin: 0 auto;
+  animation: slideDownNav 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.waitingIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background-color: rgba(59, 130, 246, 0.15); /* Azul translúcido */
+  color: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.15);
+  flex-shrink: 0;
+}
+
+.waitingInfo {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.waitingTitle {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #60a5fa; /* Azul claro brillante */
+}
+
+.waitingSubtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.2;
+}
+
+/* Indicador de Sincronización flotante superior */
+.syncStatus {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.syncStatus:hover {
+  background-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+.syncIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.syncPending {
+  color: #ef4444; /* Rojo */
+  animation: spin 3s linear infinite;
+}
+
+.syncOk {
+  color: #10b981; /* Verde */
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.8;
+  }
+}
+
 
 
 
