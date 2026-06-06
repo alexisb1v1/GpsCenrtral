@@ -7,6 +7,7 @@ import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import styles from './DashboardLayout.module.css';
 import { AccessControl } from '@/app/shared/utils/access-control';
+import { useSilentRefresh } from '@/app/features/auth/hooks/useSilentRefresh';
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default function DashboardLayout({
   noPadding?: boolean;
   hideBottomNav?: boolean;
 }) {
+  useSilentRefresh(); // Iniciar silent refresh de token
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);

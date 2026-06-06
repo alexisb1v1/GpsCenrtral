@@ -12,5 +12,6 @@ export const loginDtoToSession = (dto: LoginResponseDto): AuthSession => {
       role: dto.user.role,
     },
     token: dto.token,
+    refreshToken: dto.refreshToken,
   };
 };

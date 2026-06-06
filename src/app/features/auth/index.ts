@@ -13,3 +13,6 @@ export const getSessionUseCase = {
 export const logoutUseCase = {
     execute: () => authRepository.logout()
 };
+export const refreshSessionUseCase = {
+    execute: (refreshToken: string, deviceFingerprint: string) => authRepository.refreshSession(refreshToken, deviceFingerprint)
+};

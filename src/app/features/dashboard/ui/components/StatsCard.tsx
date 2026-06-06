@@ -26,7 +26,7 @@ export default function StatsCard({
     <div className={`${styles.card} ${styles[variant]}`}>
       <div className={styles.header}>
         <div className={styles.iconBox} style={{ backgroundColor: `${color}15`, color: color }}>
-          <span className="material-symbols-rounded" style={{ fontSize: variant === 'principal' ? '20px' : '24px' }}>
+          <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
             {iconName}
           </span>
         </div>

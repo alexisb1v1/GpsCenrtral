@@ -9,4 +9,5 @@ export interface LoginResponseDto {
     role?: string;
   };
   token: string;
+  refreshToken: string | null;
 }

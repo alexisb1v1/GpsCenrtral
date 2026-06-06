@@ -6,8 +6,9 @@ import { AuthRepository } from '../repositories/auth.repository';
 
 export interface LoginParams {
   email: string;
-  password?: string; // Opcional dependiendo del tipo de auth, pero usualmente requerido
+  password?: string;
   tenant: string;
+  deviceFingerprint?: string;
 }
 
 export class LoginUseCase {

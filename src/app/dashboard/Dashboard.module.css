@@ -120,19 +120,9 @@
 }
 
 .statsSection {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-.principalStat {
-  width: 100%;
-}
-
-.secondaryStats {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   width: 100%;
 }
 
@@ -193,6 +183,22 @@
 }
 
 @media (max-width: 768px) {
+  .statsSection {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 4px 4px 12px 4px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Ocultar barra de scroll en Firefox */
+  }
+  .statsSection::-webkit-scrollbar {
+    display: none; /* Ocultar barra de scroll en Chrome/Safari */
+  }
+  .statsSection > * {
+    flex: 0 0 260px; /* Ancho fijo para cada tarjeta en móvil para que scrolleen */
+    scroll-snap-align: start;
+  }
   .statsRow {
     grid-template-columns: 1fr;
   }

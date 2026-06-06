@@ -27,4 +27,26 @@ export class AuthApiService {
 
     return response.json();
   }
+
+  async refresh(refreshToken: string, deviceFingerprint: string): Promise<ApiResponseDto<{ token: string; refreshToken: string }>> {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken, deviceFingerprint }),
+    });
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        return errorData;
+      } catch {
+        throw new Error(`Auth API Error: ${response.status} ${response.statusText}`);
+      }
+    }
+
+    return response.json();
+  }
 }

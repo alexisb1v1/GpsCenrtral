@@ -55,4 +55,42 @@ export class AuthRepositoryImpl implements AuthRepository {
       return null;
     }
   }
+
+  refreshSession(refreshToken: string, deviceFingerprint: string): ResultAsync<AuthSession, DomainError> {
+    return ResultAsync.fromPromise(
+      this.api.refresh(refreshToken, deviceFingerprint),
+      (error) => new DomainError(
+        ERROR_CODES.NETWORK_ERROR.message,
+        ERROR_CODES.NETWORK_ERROR.code,
+        error
+      )
+    ).andThen(response => {
+      if (!response.success) {
+        // Si el refresh falla (expirado, mismatch de fingerprint, etc), destruimos la sesión local
+        this.logout();
+        return err(new DomainError(
+          response.errorMessage || 'Sesión expirada o inválida',
+          response.errorCode || 'UNAUTHORIZED'
+        ));
+      }
+
+      const currentSession = this.getSession();
+      if (!currentSession) {
+        return err(new DomainError('No existe sesión activa', 'UNAUTHORIZED'));
+      }
+
+      // Actualizar los tokens
+      currentSession.token = response.data.token;
+      currentSession.refreshToken = response.data.refreshToken;
+
+      // Persistir de nuevo
+      Cookies.set(AUTH_COOKIE_NAME, JSON.stringify(currentSession), { 
+        expires: 7,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      });
+
+      return ok(currentSession);
+    });
+  }
 }

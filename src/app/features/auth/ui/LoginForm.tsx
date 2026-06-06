@@ -9,6 +9,7 @@ import { getTenantBrandingUseCase } from '../../tenant/index';
 import { getTenantSlugClient } from '@/shared/utils/tenant.utils';
 import { TenantBranding } from '../../tenant/models/tenant.model';
 import { getBrandingImageUrl } from '@/app/shared/utils/image-url';
+import { generateDeviceFingerprint } from '@/shared/utils/fingerprint.util';
 
 import { useBranding } from '@/app/shared/providers/BrandingContext';
 
@@ -30,11 +31,13 @@ export default function LoginForm() {
     setError(null);
 
     const tenantSlug = getTenantSlugClient();
+    const deviceFingerprint = await generateDeviceFingerprint();
 
     const result = await loginUseCase.execute({
       email,
       password,
-      tenant: tenantSlug
+      tenant: tenantSlug,
+      deviceFingerprint
     });
 
     result.match(

@@ -8,4 +8,5 @@ export interface AuthRepository {
   login(params: LoginParams): ResultAsync<AuthSession, DomainError>;
   logout(): Promise<void>;
   getSession(): AuthSession | null;
+  refreshSession(refreshToken: string, deviceFingerprint: string): ResultAsync<AuthSession, DomainError>;
 }

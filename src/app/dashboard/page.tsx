@@ -225,32 +225,27 @@ export default function DashboardPage() {
           <>
             {/* Mobile-First Order: Stats */}
             <div className={styles.statsSection}>
-              <div className={styles.principalStat}>
-                <StatsCard 
-                  label="Pagos de Hoy" 
-                  value={metrics ? formatCurrency(metrics.kpis.totalRevenueToday) : 'S/ 0.00'} 
-                  trend={metrics?.kpis.revenueTrendLabel || '+0% vs ayer'} 
-                  trendType="success"
-                  iconName="payments"
-                  color="#0052cc"
-                  variant="principal"
-                />
-              </div>
-              <div className={styles.secondaryStats}>
-                <StatsCard 
-                  label="En Ruta" 
-                  value={metrics ? String(metrics.kpis.vehiclesInRouteCount).padStart(2, '0') : '00'} 
-                  iconName="directions_bus"
-                  color="#16a34a"
-                />
-                <StatsCard 
-                  label="Pendientes" 
-                  value={metrics ? String(metrics.kpis.vehiclesPendingCount).padStart(2, '0') : '00'} 
-                  iconName="schedule"
-                  color="#d97706"
-                  trendType="error"
-                />
-              </div>
+              <StatsCard 
+                label="Pagos de Hoy" 
+                value={metrics ? formatCurrency(metrics.kpis.totalRevenueToday) : 'S/ 0.00'} 
+                trend={metrics?.kpis.revenueTrendLabel || '+12.5% vs ayer'} 
+                trendType="success"
+                iconName="payments"
+                color="#0052cc"
+              />
+              <StatsCard 
+                label="En Ruta" 
+                value={metrics ? String(metrics.kpis.vehiclesInRouteCount).padStart(2, '0') : '00'} 
+                iconName="directions_bus"
+                color="#16a34a"
+              />
+              <StatsCard 
+                label="Pendientes" 
+                value={metrics ? String(metrics.kpis.vehiclesPendingCount).padStart(2, '0') : '00'} 
+                iconName="schedule"
+                color="#d97706"
+                trendType="error"
+              />
             </div>
 
             {/* Column Grid for Desktop / Stack for Mobile */}
