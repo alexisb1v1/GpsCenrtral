@@ -15,6 +15,12 @@ export function useSilentRefresh() {
     const performRefresh = async () => {
       if (isRefreshing.current) return;
 
+      // Si el navegador reporta estar offline, evitamos el refresco
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        console.log('[SilentRefresh] Navegador offline. Omitiendo refresco.');
+        return;
+      }
+
       const session = getSessionUseCase.execute();
       if (!session || !session.refreshToken) {
         // No hay sesión activa o no tiene token de refresco
@@ -33,9 +39,20 @@ export function useSilentRefresh() {
             console.log('[SilentRefresh] Sesión renovada con éxito.');
           },
           (err) => {
-            console.warn('[SilentRefresh] Error al renovar sesión, cerrando sesión local:', err.message);
-            // Si falla el refresco (por ejemplo, token expirado o fingerprint alterado),
-            // redirigimos al login
+            // Si el error es de red o fetch (offline), mantenemos la sesión y no deslogueamos
+            const isNetworkError = 
+              err.code === 'NETWORK_ERROR' || 
+              err.message?.toLowerCase().includes('network') || 
+              err.message?.toLowerCase().includes('fetch') ||
+              err.message?.toLowerCase().includes('failed to fetch');
+
+            if (isNetworkError) {
+              console.warn('[SilentRefresh] Error de red/conexión. Manteniendo sesión local offline.', err.message);
+              return;
+            }
+
+            console.warn('[SilentRefresh] Error de autorización al renovar sesión, cerrando sesión local:', err.message);
+            // Si falla el refresco por token expirado, inválido o fingerprint alterado, redirigimos
             window.location.href = '/login';
           }
         );

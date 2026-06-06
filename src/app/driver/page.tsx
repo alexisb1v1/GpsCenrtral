@@ -586,7 +586,7 @@ export default function DriverPage() {
             const from = turf.point([activeCoords.lng, activeCoords.lat]);
             const to = turf.point([stop.lng, stop.lat]);
             const dist = turf.distance(from, to, { units: 'meters' });
-            isInside = dist <= 15; // Ajustamos a 15 metros para mayor margen de tolerancia GPS en carretera
+            isInside = dist <= 30; // Ajustamos a 30 metros para dar mayor tolerancia en el GPS del móvil en movimiento
           }
         } catch (err) {
           console.error('[Chofer Offline] Error al procesar geocerca local para:', stop.name, err);
