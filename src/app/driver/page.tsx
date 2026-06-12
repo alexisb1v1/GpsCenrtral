@@ -60,6 +60,7 @@ export default function DriverPage() {
   const [localActiveVehicle, setLocalActiveVehicle] = useState<VehiclePosition | null>(null);
   const socketRef = useRef<any>(null);
   const wakeLockRef = useRef<any>(null);
+  const prevCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
   // 1. Cargar datos de la sesión del chofer desde las cookies
   useEffect(() => {
@@ -521,6 +522,7 @@ export default function DriverPage() {
       }
     };
     loadMarkedStops();
+    prevCoordsRef.current = null;
   }, [activeVehicle?.roundId]);
 
   // Auto-ocultar toasts que no sean infracciones
@@ -560,6 +562,8 @@ export default function DriverPage() {
     }
 
     const checkGeofences = async () => {
+      const prevCoords = prevCoordsRef.current;
+
       for (const stop of routeStops) {
         if (markedStopsThisRound.includes(stop.geofenceId)) continue;
 
@@ -581,12 +585,41 @@ export default function DriverPage() {
             const poly = turf.polygon([turfCoords]);
             const pt = turf.point([activeCoords.lng, activeCoords.lat]);
             isInside = turf.booleanPointInPolygon(pt, poly);
+
+            // Si el punto actual no está adentro pero tenemos posición previa, evaluar cruce/intersección del segmento
+            if (!isInside && prevCoords) {
+              const prevPt = turf.point([prevCoords.lng, prevCoords.lat]);
+              const prevInside = turf.booleanPointInPolygon(prevPt, poly);
+              
+              if (prevInside) {
+                isInside = true;
+              } else {
+                const line = turf.lineString([
+                  [prevCoords.lng, prevCoords.lat],
+                  [activeCoords.lng, activeCoords.lat]
+                ]);
+                const intersections = turf.lineIntersect(line, poly);
+                if (intersections.features.length > 0) {
+                  isInside = true;
+                }
+              }
+            }
           } else if (stop.lat && stop.lng) {
             // Geocerca circular de contingencia
-            const from = turf.point([activeCoords.lng, activeCoords.lat]);
-            const to = turf.point([stop.lng, stop.lat]);
-            const dist = turf.distance(from, to, { units: 'meters' });
-            isInside = dist <= 30; // Ajustamos a 30 metros para dar mayor tolerancia en el GPS del móvil en movimiento
+            const stopPt = turf.point([stop.lng, stop.lat]);
+            
+            if (prevCoords) {
+              const line = turf.lineString([
+                [prevCoords.lng, prevCoords.lat],
+                [activeCoords.lng, activeCoords.lat]
+              ]);
+              const dist = turf.pointToLineDistance(stopPt, line, { units: 'meters' });
+              isInside = dist <= 30; // Tolerancia de 30 metros del paradero
+            } else {
+              const pt = turf.point([activeCoords.lng, activeCoords.lat]);
+              const dist = turf.distance(pt, stopPt, { units: 'meters' });
+              isInside = dist <= 30;
+            }
           }
         } catch (err) {
           console.error('[Chofer Offline] Error al procesar geocerca local para:', stop.name, err);
@@ -678,6 +711,7 @@ export default function DriverPage() {
     };
 
     checkGeofences();
+    prevCoordsRef.current = { lat: activeCoords.lat, lng: activeCoords.lng };
   }, [activeCoords, routeStops, activeVehicle, markedStopsThisRound]);
 
   // 7. Sync Engine: Sincronizar paraderos locales al recuperar red
